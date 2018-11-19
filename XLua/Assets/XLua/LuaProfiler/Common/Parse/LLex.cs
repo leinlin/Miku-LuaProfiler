@@ -1,51 +1,50 @@
 ﻿
 using System;
-using System.IO;
-using System.Text;
 using System.Collections.Generic;
-
+using System.Text;
 using NumberStyles = System.Globalization.NumberStyles;
 
 namespace UniLua
 {
     public class LLexException : Exception
     {
-        public LLexException( string info ) : base( info ) { }
+        public LLexException(string info) : base(info) { }
     }
 
     public enum TK
     {
-		// reserved words
+        // reserved words
         AND = 257,
-		BREAK,
-		DO,
-		ELSE,
-		ELSEIF,
-		END,
-		FALSE,
-		FOR,
-		FUNCTION,
-		GOTO,
-		IF,
-		IN,
-		LOCAL,
-		NIL,
-		NOT,
-		OR,
-		REPEAT,
-		RETURN,
-		THEN,
-		TRUE,
-		UNTIL,
-		WHILE,
-		// other terminal symbols
+        BREAK,
+        CONTINUE,
+        DO,
+        ELSE,
+        ELSEIF,
+        END,
+        FALSE,
+        FOR,
+        FUNCTION,
+        GOTO,
+        IF,
+        IN,
+        LOCAL,
+        NIL,
+        NOT,
+        OR,
+        REPEAT,
+        RETURN,
+        THEN,
+        TRUE,
+        UNTIL,
+        WHILE,
+        // other terminal symbols
         CONCAT,
         DOTS,
         EQ,
         GE,
         LE,
         NE,
-		DBCOLON,
+        DBCOLON,
         NUMBER,
         STRING,
         NAME,
@@ -155,17 +154,20 @@ namespace UniLua
 
     public abstract class Token
     {
-        public abstract int TokenType{ get; }
+        public abstract int TokenType { get; }
 
-        public bool EqualsToToken( Token other ) {
+        public bool EqualsToToken(Token other)
+        {
             return TokenType == other.TokenType;
         }
 
-        public bool EqualsToToken( int other ) {
+        public bool EqualsToToken(int other)
+        {
             return TokenType == other;
         }
 
-        public bool EqualsToToken( TK other ) {
+        public bool EqualsToToken(TK other)
+        {
             return TokenType == (int)other;
         }
     }
@@ -191,7 +193,7 @@ namespace UniLua
     {
         private int _Literal;
 
-        public LiteralToken( int literal )
+        public LiteralToken(int literal)
         {
             _Literal = literal;
         }
@@ -203,7 +205,7 @@ namespace UniLua
 
         public override string ToString()
         {
-            return string.Format( "LiteralToken: {0}", (char)_Literal );
+            return string.Format("LiteralToken: {0}", (char)_Literal);
         }
     }
 
@@ -211,7 +213,7 @@ namespace UniLua
     {
         private TK _Type;
 
-        public TypedToken( TK type )
+        public TypedToken(TK type)
         {
             _Type = type;
         }
@@ -223,22 +225,22 @@ namespace UniLua
 
         public override string ToString()
         {
-            return string.Format( "TypedToken: {0}", _Type );
+            return string.Format("TypedToken: {0}", _Type);
         }
     }
 
     public class StringToken : TypedToken
     {
         public string SemInfo;
-        
-        public StringToken( string seminfo ) : base( TK.STRING )
+
+        public StringToken(string seminfo) : base(TK.STRING)
         {
             SemInfo = seminfo;
         }
 
         public override string ToString()
         {
-            return string.Format( "StringToken: {0}", SemInfo );
+            return string.Format("StringToken: {0}", SemInfo);
         }
     }
 
@@ -246,14 +248,14 @@ namespace UniLua
     {
         public string SemInfo;
 
-        public NameToken( string seminfo ) : base( TK.NAME )
+        public NameToken(string seminfo) : base(TK.NAME)
         {
             SemInfo = seminfo;
         }
 
         public override string ToString()
         {
-            return string.Format( "NameToken: {0}", SemInfo );
+            return string.Format("NameToken: {0}", SemInfo);
         }
     }
 
@@ -261,14 +263,14 @@ namespace UniLua
     {
         public double SemInfo;
 
-        public NumberToken( double seminfo ) : base( TK.NUMBER )
+        public NumberToken(double seminfo) : base(TK.NUMBER)
         {
             SemInfo = seminfo;
         }
 
         public override string ToString()
         {
-            return string.Format( "NumberToken: {0}", SemInfo );
+            return string.Format("NumberToken: {0}", SemInfo);
         }
     }
 
@@ -285,9 +287,9 @@ namespace UniLua
         }
         private int Current;
         public int LineNumber;
-		public int LastLine;
-		private StringLoadInfo LoadInfo;
-		public string Source;
+        public int LastLine;
+        private StringLoadInfo LoadInfo;
+        public string Source;
 
         public Token Token;
         private Token LookAhead;
@@ -295,49 +297,51 @@ namespace UniLua
         private StringBuilder _Saved;
         private StringBuilder Saved
         {
-            get {
-                if( _Saved == null ) { _Saved = new StringBuilder(); }
+            get
+            {
+                if (_Saved == null) { _Saved = new StringBuilder(); }
                 return _Saved;
             }
         }
 
-		private static Dictionary<string, TK> ReservedWordDict;
-		static LLex()
-		{
-			ReservedWordDict = new Dictionary<string, TK>();
-			ReservedWordDict.Add("and", TK.AND);
-			ReservedWordDict.Add("break", TK.BREAK);
-			ReservedWordDict.Add("do", TK.DO);
-			ReservedWordDict.Add("else", TK.ELSE);
-			ReservedWordDict.Add("elseif", TK.ELSEIF);
-			ReservedWordDict.Add("end", TK.END);
-			ReservedWordDict.Add("false", TK.FALSE);
-			ReservedWordDict.Add("for", TK.FOR);
-			ReservedWordDict.Add("function", TK.FUNCTION);
-			ReservedWordDict.Add("goto", TK.GOTO);
-			ReservedWordDict.Add("if", TK.IF);
-			ReservedWordDict.Add("in", TK.IN);
-			ReservedWordDict.Add("local", TK.LOCAL);
-			ReservedWordDict.Add("nil", TK.NIL);
-			ReservedWordDict.Add("not", TK.NOT);
-			ReservedWordDict.Add("or", TK.OR);
-			ReservedWordDict.Add("repeat", TK.REPEAT);
-			ReservedWordDict.Add("return", TK.RETURN);
-			ReservedWordDict.Add("then", TK.THEN);
-			ReservedWordDict.Add("true", TK.TRUE);
-			ReservedWordDict.Add("until", TK.UNTIL);
-			ReservedWordDict.Add("while", TK.WHILE);
-		}
-
-        public LLex(StringLoadInfo loadinfo, string name )
+        private static Dictionary<string, TK> ReservedWordDict;
+        static LLex()
         {
-            LoadInfo    = loadinfo;
-            LineNumber  = 1;
-			LastLine	= 1;
-            Token       = null;
-            LookAhead   = null;
-            _Saved      = null;
-			Source		= name;
+            ReservedWordDict = new Dictionary<string, TK>();
+            ReservedWordDict.Add("and", TK.AND);
+            ReservedWordDict.Add("break", TK.BREAK);
+            ReservedWordDict.Add("continue", TK.CONTINUE);
+            ReservedWordDict.Add("do", TK.DO);
+            ReservedWordDict.Add("else", TK.ELSE);
+            ReservedWordDict.Add("elseif", TK.ELSEIF);
+            ReservedWordDict.Add("end", TK.END);
+            ReservedWordDict.Add("false", TK.FALSE);
+            ReservedWordDict.Add("for", TK.FOR);
+            ReservedWordDict.Add("function", TK.FUNCTION);
+            ReservedWordDict.Add("goto", TK.GOTO);
+            ReservedWordDict.Add("if", TK.IF);
+            ReservedWordDict.Add("in", TK.IN);
+            ReservedWordDict.Add("local", TK.LOCAL);
+            ReservedWordDict.Add("nil", TK.NIL);
+            ReservedWordDict.Add("not", TK.NOT);
+            ReservedWordDict.Add("or", TK.OR);
+            ReservedWordDict.Add("repeat", TK.REPEAT);
+            ReservedWordDict.Add("return", TK.RETURN);
+            ReservedWordDict.Add("then", TK.THEN);
+            ReservedWordDict.Add("true", TK.TRUE);
+            ReservedWordDict.Add("until", TK.UNTIL);
+            ReservedWordDict.Add("while", TK.WHILE);
+        }
+
+        public LLex(StringLoadInfo loadinfo, string name)
+        {
+            LoadInfo = loadinfo;
+            LineNumber = 1;
+            LastLine = 1;
+            Token = null;
+            LookAhead = null;
+            _Saved = null;
+            Source = name;
 
             _Next();
         }
@@ -357,8 +361,8 @@ namespace UniLua
 
         public void Next()
         {
-			LastLine = LineNumber;
-            if( LookAhead != null )
+            LastLine = LineNumber;
+            if (LookAhead != null)
             {
                 Token = LookAhead;
                 LookAhead = null;
@@ -369,12 +373,12 @@ namespace UniLua
             }
         }
 
-		public Token GetLookAhead()
-		{
-			Utl.Assert( LookAhead == null );
-			LookAhead = _Lex();
-			return LookAhead;
-		}
+        public Token GetLookAhead()
+        {
+            Utl.Assert(LookAhead == null);
+            LookAhead = _Lex();
+            return LookAhead;
+        }
 
         public string Replace(int start, int end, string value)
         {
@@ -389,19 +393,19 @@ namespace UniLua
 
         private void _Next()
         {
-			var c = LoadInfo.ReadByte();
-			Current = (c == -1) ? EOZ : c;
+            var c = LoadInfo.ReadByte();
+            Current = (c == -1) ? EOZ : c;
         }
 
         private void _SaveAndNext()
         {
-            Saved.Append( (char)Current );
-			_Next();
+            Saved.Append((char)Current);
+            _Next();
         }
 
-        private void _Save( char c )
+        private void _Save(char c)
         {
-            Saved.Append( c );
+            Saved.Append(c);
         }
 
         private string _GetSavedString()
@@ -421,232 +425,233 @@ namespace UniLua
 
         private bool _CurrentIsDigit()
         {
-            return Char.IsDigit( (char)Current );
+            return Char.IsDigit((char)Current);
         }
 
-		private bool _CurrentIsXDigit()
-		{
-			return _CurrentIsDigit() ||
-				('A' <= Current && Current <= 'F') ||
-				('a' <= Current && Current <= 'f');
-		}
+        private bool _CurrentIsXDigit()
+        {
+            return _CurrentIsDigit() ||
+                ('A' <= Current && Current <= 'F') ||
+                ('a' <= Current && Current <= 'f');
+        }
 
         private bool _CurrentIsSpace()
         {
-            return Char.IsWhiteSpace( (char)Current );
+            return Char.IsWhiteSpace((char)Current);
         }
 
         private bool _CurrentIsAlpha()
         {
-            return Char.IsLetter( (char)Current );
+            return Char.IsLetter((char)Current);
         }
 
-		private bool _IsReserved( string identifier, out TK type )
-		{
-			return ReservedWordDict.TryGetValue( identifier, out type );
-		}
+        private bool _IsReserved(string identifier, out TK type)
+        {
+            return ReservedWordDict.TryGetValue(identifier, out type);
+        }
 
-		public bool IsReservedWord( string name )
-		{
-			return ReservedWordDict.ContainsKey( name );
-		}
+        public bool IsReservedWord(string name)
+        {
+            return ReservedWordDict.ContainsKey(name);
+        }
 
         private void _IncLineNumber()
         {
             var old = Current;
             _Next();
-            if( _CurrentIsNewLine() && Current != old )
+            if (_CurrentIsNewLine() && Current != old)
                 _Next();
-            if( ++LineNumber >= Int32.MaxValue )
-                _Error( "chunk has too many lines" );
+            if (++LineNumber >= Int32.MaxValue)
+                _Error("chunk has too many lines");
         }
 
-        private string _ReadLongString( int sep )
+        private string _ReadLongString(int sep)
         {
             _SaveAndNext();
 
-            if( _CurrentIsNewLine() )
+            if (_CurrentIsNewLine())
                 _IncLineNumber();
 
-            while( true )
+            while (true)
             {
-                switch( Current )
+                switch (Current)
                 {
                     case EOZ:
-                        _LexError( _GetSavedString(),
-							"unfinished long string/comment",
-							(int)TK.EOS );
+                        _LexError(_GetSavedString(),
+                            "unfinished long string/comment",
+                            (int)TK.EOS);
                         break;
 
                     case '[':
-                    {
-                        if( _SkipSep() == sep )
                         {
-                            _SaveAndNext();
-                            if( sep == 0 )
+                            if (_SkipSep() == sep)
                             {
-                                _LexError( _GetSavedString(),
-									"nesting of [[...]] is deprecated",
-									(int)TK.EOS );
+                                _SaveAndNext();
+                                if (sep == 0)
+                                {
+                                    _LexError(_GetSavedString(),
+                                        "nesting of [[...]] is deprecated",
+                                        (int)TK.EOS);
+                                }
                             }
+                            break;
                         }
-                        break;
-                    }
 
                     case ']':
-                    {
-                        if( _SkipSep() == sep )
                         {
-                            _SaveAndNext();
-                            goto endloop;
+                            if (_SkipSep() == sep)
+                            {
+                                _SaveAndNext();
+                                goto endloop;
+                            }
+                            break;
                         }
-                        break;
-                    }
 
                     case '\n':
                     case '\r':
-                    {
-                        _Save('\n');
-                        _IncLineNumber();
-                        break;
-                    }
+                        {
+                            _Save('\n');
+                            _IncLineNumber();
+                            break;
+                        }
 
                     default:
-                    {
-                        _SaveAndNext();
-                        break;
-                    }
+                        {
+                            _SaveAndNext();
+                            break;
+                        }
                 }
             }
-            endloop:
-			var r = _GetSavedString();
-            return r.Substring( 2+sep, r.Length - 2*(2+sep) );
+        endloop:
+            var r = _GetSavedString();
+            return r.Substring(2 + sep, r.Length - 2 * (2 + sep));
         }
 
-		private void _EscapeError( string info, string msg )
-		{
-			_LexError( "\\"+info, msg, (int)TK.STRING );
-		}
+        private void _EscapeError(string info, string msg)
+        {
+            _LexError("\\" + info, msg, (int)TK.STRING);
+        }
 
-		private byte _ReadHexEscape()
-		{
-			int r = 0;
-			var c = new char[3] { 'x', (char)0, (char)0 };
-			// read two hex digits
-			for( int i=1; i<3; ++i )
-			{
-				_Next();
-				c[i] = (char)Current;
-				if( !_CurrentIsXDigit() )
-				{
-					_EscapeError( new String(c, 0, i+1),
-						"hexadecimal digit expected" );
-					// error
-				}
-				r = (r << 4) + Int32.Parse( Current.ToString(),
-					NumberStyles.HexNumber );
-			}
-			return (byte)r;
-		}
+        private byte _ReadHexEscape()
+        {
+            int r = 0;
+            var c = new char[3] { 'x', (char)0, (char)0 };
+            // read two hex digits
+            for (int i = 1; i < 3; ++i)
+            {
+                _Next();
+                c[i] = (char)Current;
+                if (!_CurrentIsXDigit())
+                {
+                    _EscapeError(new String(c, 0, i + 1),
+                        "hexadecimal digit expected");
+                    // error
+                }
+                r = (r << 4) + Int32.Parse(Current.ToString(),
+                    NumberStyles.HexNumber);
+            }
+            return (byte)r;
+        }
 
-		private byte _ReadDecEscape()
-		{
-			int r = 0;
-			var c = new char[3];
-			// read up to 3 digits
-			int i = 0;
-			for( i=0; i<3 && _CurrentIsDigit(); ++i )
-			{
-				c[i] = (char)Current;
-				r = r*10 + Current - '0';
-				_Next();
-			}
-			if( r > Byte.MaxValue )
-				_EscapeError( new String(c, 0, i),
-					"decimal escape too large" );
-			return (byte)r;
-		}
+        private byte _ReadDecEscape()
+        {
+            int r = 0;
+            var c = new char[3];
+            // read up to 3 digits
+            int i = 0;
+            for (i = 0; i < 3 && _CurrentIsDigit(); ++i)
+            {
+                c[i] = (char)Current;
+                r = r * 10 + Current - '0';
+                _Next();
+            }
+            if (r > Byte.MaxValue)
+                _EscapeError(new String(c, 0, i),
+                    "decimal escape too large");
+            return (byte)r;
+        }
 
         private string _ReadString()
         {
             var del = Current;
             _Next();
-            while( Current != del )
+            while (Current != del)
             {
-                switch( Current )
+                switch (Current)
                 {
                     case EOZ:
-                        _Error( "unfinished string" );
+                        _Error("unfinished string");
                         continue;
 
                     case '\n':
                     case '\r':
-                        _Error( "unfinished string" );
+                        _Error("unfinished string");
                         continue;
 
                     case '\\':
-                    {
-                        byte c;
-                        _Next();
-                        switch( Current )
                         {
-                            case 'a': c=(byte)'\a'; break;
-                            case 'b': c=(byte)'\b'; break;
-                            case 'f': c=(byte)'\f'; break;
-                            case 'n': c=(byte)'\n'; break;
-                            case 'r': c=(byte)'\r'; break;
-                            case 't': c=(byte)'\t'; break;
-                            case 'v': c=(byte)'\v'; break;
-							case 'x': c=_ReadHexEscape(); break;
-
-                            case '\n':
-                            case '\r': _Save('\n'); _IncLineNumber(); continue;
-
-							case '\\':
-							case '\"':
-							case '\'': c=(byte)Current; break;
-
-                            case EOZ: continue;
-
-							// zap following span of spaces
-							case 'z': {
-								_Next(); // skip `z'
-								while( _CurrentIsSpace() )
-								{
-									if( _CurrentIsNewLine() )
-										_IncLineNumber();
-									else
-										_Next();
-								}
-								continue;
-							}
-
-                            default:
+                            byte c;
+                            _Next();
+                            switch (Current)
                             {
-                                if( !_CurrentIsDigit() )
-									_EscapeError( Current.ToString(),
-										"invalid escape sequence" );
+                                case 'a': c = (byte)'\a'; break;
+                                case 'b': c = (byte)'\b'; break;
+                                case 'f': c = (byte)'\f'; break;
+                                case 'n': c = (byte)'\n'; break;
+                                case 'r': c = (byte)'\r'; break;
+                                case 't': c = (byte)'\t'; break;
+                                case 'v': c = (byte)'\v'; break;
+                                case 'x': c = _ReadHexEscape(); break;
 
-								// digital escape \ddd
-								c = _ReadDecEscape();
-								_Save( (char)c );
-								continue;
-                                // {
-                                //     c = (char)0;
-                                //     for(int i=0; i<3 && _CurrentIsDigit(); ++i)
-                                //     {
-                                //         c = (char)(c*10 + Current - '0');
-                                //         _Next();
-                                //     }
-                                //     _Save( c );
-                                // }
-                                // continue;
+                                case '\n':
+                                case '\r': _Save('\n'); _IncLineNumber(); continue;
+
+                                case '\\':
+                                case '\"':
+                                case '\'': c = (byte)Current; break;
+
+                                case EOZ: continue;
+
+                                // zap following span of spaces
+                                case 'z':
+                                    {
+                                        _Next(); // skip `z'
+                                        while (_CurrentIsSpace())
+                                        {
+                                            if (_CurrentIsNewLine())
+                                                _IncLineNumber();
+                                            else
+                                                _Next();
+                                        }
+                                        continue;
+                                    }
+
+                                default:
+                                    {
+                                        if (!_CurrentIsDigit())
+                                            _EscapeError(Current.ToString(),
+                                                "invalid escape sequence");
+
+                                        // digital escape \ddd
+                                        c = _ReadDecEscape();
+                                        _Save((char)c);
+                                        continue;
+                                        // {
+                                        //     c = (char)0;
+                                        //     for(int i=0; i<3 && _CurrentIsDigit(); ++i)
+                                        //     {
+                                        //         c = (char)(c*10 + Current - '0');
+                                        //         _Next();
+                                        //     }
+                                        //     _Save( c );
+                                        // }
+                                        // continue;
+                                    }
                             }
+                            _Save((char)c);
+                            _Next();
+                            continue;
                         }
-                        _Save( (char)c );
-                        _Next();
-                        continue;
-                    }
 
                     default:
                         _SaveAndNext();
@@ -659,40 +664,40 @@ namespace UniLua
 
         private double _ReadNumber()
         {
-			var expo = new char[] { 'E', 'e' };
-			Utl.Assert( _CurrentIsDigit() );
-			var first = Current;
-			_SaveAndNext();
-			if( first == '0' && (Current == 'X' || Current == 'x'))
-			{
-				expo = new char[] { 'P', 'p' };
-				_SaveAndNext();
-			}
-            for(;;)
+            var expo = new char[] { 'E', 'e' };
+            Utl.Assert(_CurrentIsDigit());
+            var first = Current;
+            _SaveAndNext();
+            if (first == '0' && (Current == 'X' || Current == 'x'))
             {
-				if( Current == expo[0] || Current == expo[1] )
-				{
-					_SaveAndNext();
-					if( Current == '+' || Current == '-' )
-						_SaveAndNext();
-				}
-				if( _CurrentIsXDigit() || Current == '.' )
-					_SaveAndNext();
-				else
-					break;
+                expo = new char[] { 'P', 'p' };
+                _SaveAndNext();
+            }
+            for (; ; )
+            {
+                if (Current == expo[0] || Current == expo[1])
+                {
+                    _SaveAndNext();
+                    if (Current == '+' || Current == '-')
+                        _SaveAndNext();
+                }
+                if (_CurrentIsXDigit() || Current == '.')
+                    _SaveAndNext();
+                else
+                    break;
             }
 
             double ret;
-			var str = _GetSavedString();
-			if(O_Str2Decimal( str, out ret ) )
-			{
-				return ret;
-			}
-			else
-			{
-                _Error( "malformed number: " + str );
-				return 0.0;
-			}
+            var str = _GetSavedString();
+            if (O_Str2Decimal(str, out ret))
+            {
+                return ret;
+            }
+            else
+            {
+                _Error("malformed number: " + str);
+                return 0.0;
+            }
         }
 
         public static bool O_Str2Decimal(string s, out double result)
@@ -735,184 +740,199 @@ namespace UniLua
         //     return ret;
         // }
 
-        private void _Error( string error )
+        private void _Error(string error)
         {
-            throw new Exception(string.Format("{0}:{1}: {2}",Source, LineNumber, error));
+            throw new Exception(string.Format("{0}:{1}: {2}", Source, LineNumber, error));
         }
 
-		private void _LexError( string info, string msg, int tokenType )
-		{
-			// TODO
-			_Error( msg + ":" + info );
-		}
+        private void _LexError(string info, string msg, int tokenType)
+        {
+            // TODO
+            _Error(msg + ":" + info);
+        }
 
-		public void SyntaxError( string msg )
-		{
-			// TODO
-			_Error( msg );
-		}
+        public void SyntaxError(string msg)
+        {
+            // TODO
+            _Error(msg);
+        }
 
         private int _SkipSep()
         {
             int count = 0;
             var boundary = Current;
             _SaveAndNext();
-            while( Current == '=' ) {
+            while (Current == '=')
+            {
                 _SaveAndNext();
                 count++;
             }
-            return ( Current == boundary ? count : (-count)-1 );
+            return (Current == boundary ? count : (-count) - 1);
         }
 
         private Token _Lex()
         {
             _ClearSaved();
-            while( true )
+            while (true)
             {
-                switch( Current )
+                switch (Current)
                 {
                     case '\n':
-                    case '\r': {
-                        _IncLineNumber();
-                        continue;
-                    }
+                    case '\r':
+                        {
+                            _IncLineNumber();
+                            continue;
+                        }
 
-                    case '-': {
-                        _Next();
-                        if( Current != '-' ) return new LiteralToken('-');
+                    case '-':
+                        {
+                            _Next();
+                            if (Current != '-') return new LiteralToken('-');
 
-                        // else is a long comment
-                        _Next();
-                        if( Current == '[' )
+                            // else is a long comment
+                            _Next();
+                            if (Current == '[')
+                            {
+                                int sep = _SkipSep();
+                                _ClearSaved();
+                                if (sep >= 0)
+                                {
+                                    _ReadLongString(sep);
+                                    _ClearSaved();
+                                    return new CommentToken();
+                                }
+                            }
+
+                            // else is a short comment
+                            while (!_CurrentIsNewLine() && Current != EOZ)
+                                _Next();
+                            return new CommentToken();
+                        }
+
+                    case '[':
                         {
                             int sep = _SkipSep();
-                            _ClearSaved();
-                            if( sep >= 0 )
+                            if (sep >= 0)
                             {
-                                _ReadLongString( sep );
-                                _ClearSaved();
-                                return new CommentToken();
+                                string seminfo = _ReadLongString(sep);
+                                return new StringToken(seminfo);
                             }
+                            else if (sep == -1) return new LiteralToken('[');
+                            else _Error("invalid long string delimiter");
+                            continue;
                         }
 
-                        // else is a short comment
-                        while( !_CurrentIsNewLine() && Current != EOZ )
+                    case '=':
+                        {
                             _Next();
-                        return new CommentToken();
+                            if (Current != '=') return new LiteralToken('=');
+                            _Next();
+                            return new TypedToken(TK.EQ);
                         }
 
-                    case '[': {
-                        int sep = _SkipSep();
-                        if( sep >= 0 ) {
-                            string seminfo = _ReadLongString( sep );
-                            return new StringToken( seminfo );
+                    case '<':
+                        {
+                            _Next();
+                            if (Current != '=') return new LiteralToken('<');
+                            _Next();
+                            return new TypedToken(TK.LE);
                         }
-                        else if( sep == -1 ) return new LiteralToken('[');
-                        else _Error("invalid long string delimiter");
-                        continue;
-                    }
 
-                    case '=': {
-                        _Next();
-                        if( Current != '=' ) return new LiteralToken('=');
-                        _Next();
-                        return new TypedToken( TK.EQ );
-                    }
+                    case '>':
+                        {
+                            _Next();
+                            if (Current != '=') return new LiteralToken('>');
+                            _Next();
+                            return new TypedToken(TK.GE);
+                        }
 
-                    case '<': {
-                        _Next();
-                        if( Current != '=' ) return new LiteralToken('<');
-                        _Next();
-                        return new TypedToken( TK.LE );
-                    }
+                    case '~':
+                        {
+                            _Next();
+                            if (Current != '=') return new LiteralToken('~');
+                            _Next();
+                            return new TypedToken(TK.NE);
+                        }
 
-                    case '>': {
-                        _Next();
-                        if( Current != '=' ) return new LiteralToken('>');
-                        _Next();
-                        return new TypedToken( TK.GE );
-                    }
-
-                    case '~': {
-                        _Next();
-                        if( Current != '=' ) return new LiteralToken('~');
-                        _Next();
-                        return new TypedToken( TK.NE );
-                    }
-
-					case ':': {
-						_Next();
-						if( Current != ':' ) return new LiteralToken(':');
-						_Next();
-						return new TypedToken( TK.DBCOLON ); // new in 5.2 ?
-					}
+                    case ':':
+                        {
+                            _Next();
+                            if (Current != ':') return new LiteralToken(':');
+                            _Next();
+                            return new TypedToken(TK.DBCOLON); // new in 5.2 ?
+                        }
 
                     case '"':
-                    case '\'': {
-                        return new StringToken( _ReadString() );
-                    }
+                    case '\'':
+                        {
+                            return new StringToken(_ReadString());
+                        }
 
-                    case '.': {
-                        _SaveAndNext();
-                        if( Current == '.' )
+                    case '.':
                         {
                             _SaveAndNext();
-                            if( Current == '.' )
+                            if (Current == '.')
                             {
                                 _SaveAndNext();
-                                return new TypedToken( TK.DOTS );
+                                if (Current == '.')
+                                {
+                                    _SaveAndNext();
+                                    return new TypedToken(TK.DOTS);
+                                }
+                                else
+                                {
+                                    return new TypedToken(TK.CONCAT);
+                                }
+                            }
+                            else if (!_CurrentIsDigit())
+                                return new LiteralToken('.');
+                            else
+                                return new NumberToken(_ReadNumber());
+                        }
+
+                    case EOZ:
+                        {
+                            return new TypedToken(TK.EOS);
+                        }
+
+                    default:
+                        {
+                            if (_CurrentIsSpace())
+                            {
+                                _Next();
+                                continue;
+                            }
+                            else if (_CurrentIsDigit())
+                            {
+                                return new NumberToken(_ReadNumber());
+                            }
+                            else if (_CurrentIsAlpha() || Current == '_')
+                            {
+                                do
+                                {
+                                    _SaveAndNext();
+                                } while (_CurrentIsAlpha() ||
+                                         _CurrentIsDigit() ||
+                                         Current == '_');
+
+                                string identifier = _GetSavedString();
+                                TK type;
+                                if (_IsReserved(identifier, out type))
+                                {
+                                    return new TypedToken(type);
+                                }
+                                else
+                                {
+                                    return new NameToken(identifier);
+                                }
                             }
                             else
                             {
-                                return new TypedToken( TK.CONCAT );
+                                var c = Current;
+                                _Next();
+                                return new LiteralToken(c);
                             }
                         }
-                        else if( !_CurrentIsDigit() )
-                            return new LiteralToken('.');
-                        else
-                            return new NumberToken( _ReadNumber() );
-                    }
-
-                    case EOZ: {
-                        return new TypedToken( TK.EOS );
-                    }
-
-                    default: {
-                        if( _CurrentIsSpace() )
-                        {
-                            _Next();
-                            continue;
-                        }
-                        else if( _CurrentIsDigit() )
-                        {
-                            return new NumberToken( _ReadNumber() );
-                        }
-                        else if( _CurrentIsAlpha() || Current == '_' )
-                        {
-                            do {
-                                _SaveAndNext();
-                            } while( _CurrentIsAlpha() ||
-									 _CurrentIsDigit() ||
-									 Current == '_' );
-
-                            string identifier = _GetSavedString();
-							TK type;
-                            if( _IsReserved( identifier, out type ) )
-							{
-								return new TypedToken( type );
-							}
-							else
-							{
-								return new NameToken( identifier );
-							}
-                        }
-                        else
-                        {
-                            var c = Current;
-                            _Next();
-                            return new LiteralToken(c);
-                        }
-                    }
                 }
             }
         }

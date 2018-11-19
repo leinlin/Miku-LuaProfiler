@@ -73,7 +73,7 @@ namespace MikuLuaProfiler
 
                             if (tokenType == (int)')')
                             {
-                                l.InsertString(nextPos, "\r\nBeginMikuSample(\"" + l.Source 
+                                l.InsertString(nextPos - 1, "\r\nBeginMikuSample(\"" + l.Source 
                                     + ",line:" + l.LineNumber + " funName:" + funName + "\")\r\n");
                                 nextPos = l.pos;
                                 break;

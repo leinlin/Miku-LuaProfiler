@@ -155,7 +155,7 @@ namespace MikuLuaProfiler {
 
                 if (isPlaying == true && EditorApplication.isPlaying == false)
                 {
-                    LuaProfiler.SetMainLuaEnv(null);
+                    SetMainLuaEnv(null);
                 }
 
                 isPlaying = EditorApplication.isPlaying;

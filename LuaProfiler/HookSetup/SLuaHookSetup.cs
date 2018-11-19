@@ -2,7 +2,7 @@
 * ==============================================================================
 * Filename: SLuaHookSetup
 * Created:  2018/7/2 11:36:16
-* Author:   エル・プサイ・コングルゥ
+* Author:   エル・プサイ・コングリィ
 * Purpose:  
 * ==============================================================================
 */
@@ -155,7 +155,7 @@ namespace MikuLuaProfiler {
 
                 if (isPlaying == true && EditorApplication.isPlaying == false)
                 {
-                    LuaProfiler.SetMainLuaEnv(null);
+                    SetMainLuaEnv(null);
                 }
 
                 isPlaying = EditorApplication.isPlaying;

@@ -2,7 +2,7 @@
 * ==============================================================================
 * Filename: LuaDeepProfilerSetting
 * Created:  2018/7/13 14:29:22
-* Author:   エル・プサイ・コングルゥ
+* Author:   エル・プサイ・コングリィ
 * Purpose:  
 * ==============================================================================
 */
@@ -10,6 +10,7 @@
 namespace MikuLuaProfiler
 {
     using System.Collections.Generic;
+    using System.IO;
     using UnityEditor;
     using UnityEngine;
 
@@ -51,13 +52,32 @@ namespace MikuLuaProfiler
             }
         }
 
-        //[MenuItem("Tools/LuaProfilerSetting", priority = 10)]
+        [MenuItem("LuaProfiler/ExportFiles", priority = 10)]
         public static void EditSettings()
         {
-            //string text = System.IO.File.ReadAllText("Lua/TemplateCommon.lua");
-            //text = MikuLuaProfiler.Parse.InsertSample(text, "Template");
-            //System.IO.File.WriteAllText("TemplateCommon.lua", text);
+            string path = EditorUtility.OpenFolderPanel("请选择Lua脚本存放文件夹", "", "*");
+            path = path.Replace("/", "\\");
+            string rootProfilerDirPath = path + "Profiler";
+            DirectoryInfo dir = new DirectoryInfo(path);
+            FileInfo[] files = dir.GetFiles("*.lua");
+            int count = files.Length;
+            int process = 0;
+            foreach (FileInfo item in files)
+            {
+                process++;
 
+                EditorUtility.DisplayProgressBar("profiler lua", item.FullName, (float)process / count);
+                string allCode = File.ReadAllText(item.FullName);
+                allCode = MikuLuaProfiler.Parse.InsertSample(allCode, "Template");
+                string profilerPath = item.FullName.Replace(path, rootProfilerDirPath);
+                string profilerDirPath = profilerPath.Replace(item.Name, "");
+                if (!Directory.Exists(profilerDirPath))
+                {
+                    Directory.CreateDirectory(profilerDirPath);
+                }
+                File.WriteAllText(profilerPath, allCode);
+            }
+            EditorUtility.ClearProgressBar();
             Selection.activeObject = Instance;
 #if UNITY_2018_1_OR_NEWER
             EditorApplication.ExecuteMenuItem("Window/General/Inspector");
