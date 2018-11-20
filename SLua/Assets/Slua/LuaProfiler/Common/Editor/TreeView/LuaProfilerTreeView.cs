@@ -8,6 +8,7 @@
 */
 using System;
 using System.Collections.Generic;
+using System.Reflection;
 using UnityEditor.IMGUI.Controls;
 using UnityEngine;
 
@@ -448,8 +449,7 @@ namespace MikuLuaProfiler
 
         protected override void RowGUI(RowGUIArgs args)
         {
-            GUIStyle gs = new GUIStyle();
-            gs.normal.textColor = Color.green; //new Color32(0, 200, 0, 255);
+            GUIStyle gs = new GUIStyle(GUI.skin.label);
             gs.alignment = TextAnchor.MiddleCenter;
 
             var item = (LuaProfilerTreeViewItem)args.item;

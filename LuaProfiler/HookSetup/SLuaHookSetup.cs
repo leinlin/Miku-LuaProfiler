@@ -105,7 +105,10 @@ namespace MikuLuaProfiler {
         {
             public static void Ctor(LuaState env)
             {
+                HookSetup.Uninstall();
+                LuaProfiler.mainL = IntPtr.Zero;
                 Proxy(env);
+                Lua_MikuLuaProfiler_LuaProfiler.reg(env.L);
                 MikuLuaProfiler.HookSetup.SetMainLuaEnv(env);
             }
             public static void Proxy(LuaState env)
@@ -163,6 +166,15 @@ namespace MikuLuaProfiler {
 #endif
         }
 
+        public const string LOCAL_PROFILER = @"
+local BeginMikuSample = MikuLuaProfiler and MikuLuaProfiler.LuaProfiler.BeginSample
+local EndMikuSample = MikuLuaProfiler and MikuLuaProfiler.LuaProfiler.EndSample
+
+local function miku_unpack_return_value(...)
+    EndMikuSample()
+    return ...
+end
+";
 
         public static void SetMainLuaEnv(LuaState env)
         {
@@ -170,16 +182,6 @@ namespace MikuLuaProfiler {
             {
                 if (env != null)
                 {
-                    Lua_MikuLuaProfiler_LuaProfiler.reg(LuaProfiler.mainL);
-                    env.doString(@"
-BeginMikuSample = MikuLuaProfiler.LuaProfiler.BeginSample
-EndMikuSample = MikuLuaProfiler.LuaProfiler.EndSample
-
-function miku_unpack_return_value(...)
-	EndMikuSample()
-	return ...
-end
-");
                     HookSetup.HookLuaFuns();
                 }
             }
@@ -425,7 +427,7 @@ end
 #endregion
     }
 
-    #region bind
+#region bind
     [UnityEngine.Scripting.Preserve]
     public class Lua_MikuLuaProfiler_LuaProfiler : LuaObject
     {
@@ -470,7 +472,7 @@ end
             createTypeMetatable(l, typeof(MikuLuaProfiler.LuaProfiler));
         }
     }
-    #endregion
+#endregion
 }
 
 #endif

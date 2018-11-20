@@ -105,6 +105,8 @@ namespace MikuLuaProfiler {
         {
             public static void Ctor(LuaState env)
             {
+                HookSetup.Uninstall();
+                LuaProfiler.mainL = IntPtr.Zero;
                 Proxy(env);
                 MikuLuaProfiler.HookSetup.SetMainLuaEnv(env);
             }
@@ -163,24 +165,21 @@ namespace MikuLuaProfiler {
 #endif
         }
 
+        public const string LOCAL_PROFILER = @"
+local BeginMikuSample = CS.MikuLuaProfiler.LuaProfiler.BeginSample
+local EndMikuSample = CS.MikuLuaProfiler.LuaProfiler.EndSample
+
+local function miku_unpack_return_value(...)
+    EndMikuSample()
+    return ...
+end
+";
 
         public static void SetMainLuaEnv(LuaState env)
         {
             if (LuaDeepProfilerSetting.Instance.isDeepProfiler)
             {
-                if (env != null)
-                {
-                    env.DoString(@"
-BeginMikuSample = CS.MikuLuaProfiler.LuaProfiler.BeginSample
-EndMikuSample = CS.MikuLuaProfiler.LuaProfiler.EndSample
-
-function miku_unpack_return_value(...)
-	EndMikuSample()
-	return ...
-end
-");
-                    HookSetup.HookLuaFuns();
-                }
+                HookSetup.HookLuaFuns();
             }
 
             if (env == null)

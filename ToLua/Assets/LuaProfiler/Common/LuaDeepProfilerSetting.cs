@@ -79,7 +79,7 @@ namespace MikuLuaProfiler
             }
             EditorUtility.ClearProgressBar();
             Selection.activeObject = Instance;
-#if UNITY_2018_1_OR_NEWER
+#if UNITY_2018_2_OR_NEWER
             EditorApplication.ExecuteMenuItem("Window/General/Inspector");
 #else
             EditorApplication.ExecuteMenuItem("Window/Inspector");

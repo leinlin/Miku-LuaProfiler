@@ -11,6 +11,7 @@ namespace MikuLuaProfiler
         {
             LLex l = new LLex(new StringLoadInfo(value), name);
             l.InsertString(0, "BeginMikuSample(\"" + name + ", line:1 require file\")\r\n");
+            l.InsertString(0, HookSetup.LOCAL_PROFILER);
             int lastPos = 0;
             int nextPos = l.pos;
             l.Next();
@@ -129,10 +130,10 @@ namespace MikuLuaProfiler
                             {
                                 if (lastTokenType is CommentToken)
                                 {
-                                    lastPos = commentPos;
+                                    lastPos = commentPos + 1;
                                 }
 
-                                string returnStr = l.ReadString(insertPos, lastPos - 1); ;
+                                string returnStr = l.ReadString(insertPos, lastPos - 2);
 
                                 returnStr = returnStr.Trim();
 
@@ -142,7 +143,7 @@ namespace MikuLuaProfiler
                                 }
                                 returnStr = "\r\nreturn miku_unpack_return_value(" + returnStr.Substring(6, returnStr.Length - 6).Trim() + ")\r\n";
 
-                                l.Replace(insertPos, lastPos - 1, returnStr);
+                                l.Replace(insertPos, lastPos - 2, returnStr);
                                 nextPos = l.pos;
                                 if (tokenType == (int)TK.END)
                                 {
