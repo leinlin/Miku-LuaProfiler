@@ -132,8 +132,12 @@ namespace MikuLuaProfiler
                                 {
                                     lastPos = commentPos + 1;
                                 }
+                                if (lastTokenType is LiteralToken)
+                                {
+                                    lastPos = lastPos - 1;
+                                }
 
-                                string returnStr = l.ReadString(insertPos, lastPos - 2);
+                                string returnStr = l.ReadString(insertPos, lastPos - 1);
 
                                 returnStr = returnStr.Trim();
 
@@ -143,7 +147,7 @@ namespace MikuLuaProfiler
                                 }
                                 returnStr = "\r\nreturn miku_unpack_return_value(" + returnStr.Substring(6, returnStr.Length - 6).Trim() + ")\r\n";
 
-                                l.Replace(insertPos, lastPos - 2, returnStr);
+                                l.Replace(insertPos, lastPos - 1, returnStr);
                                 nextPos = l.pos;
                                 if (tokenType == (int)TK.END)
                                 {
