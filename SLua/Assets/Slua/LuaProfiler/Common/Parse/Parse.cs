@@ -173,7 +173,7 @@ namespace MikuLuaProfiler
                             {
                                 if (!hasReturn)
                                 {
-                                    l.InsertString(lastPos, "\r\nEndMikuSample()\r\n");
+                                    l.InsertString(lastPos - 1, "\r\nEndMikuSample()\r\n");
                                     lastPos = nextPos;
                                     nextPos = l.pos;
                                 }
