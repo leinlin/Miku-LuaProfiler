@@ -360,8 +360,7 @@ namespace MikuLuaProfiler
         {
             LuaProfilerTreeViewItem item;
             string f = sample.fullName;
-            string f1 = sample.fullName;
-            if (m_nodeDict.TryGetValue(sample.fullName, out item))
+            if (m_nodeDict.TryGetValue(f, out item))
             {
                 item.AddSample(sample);
             }

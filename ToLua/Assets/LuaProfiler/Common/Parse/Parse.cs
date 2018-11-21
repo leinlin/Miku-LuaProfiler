@@ -1,4 +1,5 @@
-﻿using System;
+﻿#if UNITY_EDITOR
+using System;
 using System.Collections.Generic;
 using UniLua;
 
@@ -6,12 +7,21 @@ namespace MikuLuaProfiler
 {
     public static class Parse
     {
+        public const string LOCAL_PROFILER = @"
+local BeginMikuSample = MikuLuaProfiler.LuaProfiler.BeginSample
+local EndMikuSample = MikuLuaProfiler.LuaProfiler.EndSample
+
+local function miku_unpack_return_value(...)
+    EndMikuSample()
+    return ...
+end
+";
         #region parse
         public static string InsertSample(string value, string name)
         {
             LLex l = new LLex(new StringLoadInfo(value), name);
             l.InsertString(0, "BeginMikuSample(\"" + name + ", line:1 require file\")\r\n");
-            l.InsertString(0, HookSetup.LOCAL_PROFILER);
+            l.InsertString(0, LOCAL_PROFILER);
             int lastPos = 0;
             int nextPos = l.pos;
             l.Next();
@@ -214,3 +224,4 @@ namespace MikuLuaProfiler
         #endregion
     }
 }
+#endif

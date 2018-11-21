@@ -1,4 +1,4 @@
-﻿
+﻿#if UNITY_EDITOR
 #define API_CHECK
 #define UNILUA_ASSERT
 
@@ -223,3 +223,4 @@ ret:
 
 }
 
+#endif

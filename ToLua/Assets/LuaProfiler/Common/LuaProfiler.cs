@@ -1,11 +1,16 @@
-#pragma warning disable CS0219//故意在c#这里产生于lua那边的等量GC
+/*
+* ==============================================================================
+* Filename: LuaExport
+* Created:  2018/7/13 14:29:22
+* Author:   エル・プサイ・コングリィ
+* Purpose:  
+* ==============================================================================
+*/
+
 #if UNITY_EDITOR
 using System;
 using System.Collections.Generic;
 using UnityEngine;
-#if UNITY_5_5_OR_NEWER
-using UnityEngine.Profiling;
-#endif
 using UnityEditorInternal;
 
 namespace MikuLuaProfiler
@@ -196,21 +201,6 @@ namespace MikuLuaProfiler
         {
             m_SampleEndAction = action;
         }
-        public static void BeginSample(string name)
-        {
-#if DEBUG
-            if (mainL != IntPtr.Zero)
-            {
-                BeginSample(mainL, name);
-            }
-#endif
-        }
-        public static void BeginSample(IntPtr luaState)
-        {
-#if DEBUG
-            BeginSample(luaState, "lua gc");
-#endif
-        }
         private static int m_currentFrame = 0;
         public static void BeginSample(IntPtr luaState, string name)
         {
@@ -225,10 +215,6 @@ namespace MikuLuaProfiler
             Sample sample = Sample.Create(Time.realtimeSinceStartup, memoryCount, name);
 
             beginSampleMemoryStack.Add(sample);
-            if (!isDeep)
-            {
-                Profiler.BeginSample(name);
-            }
 #endif
         }
         public static void PopAllSampleWhenLateUpdate()
@@ -242,15 +228,6 @@ namespace MikuLuaProfiler
                 }
             }
             beginSampleMemoryStack.Clear();
-        }
-        public static void EndSample()
-        {
-#if DEBUG
-            if (_mainL != IntPtr.Zero)
-            {
-                EndSample(_mainL);
-            }
-#endif
         }
         public static void EndSample(IntPtr luaState)
         {
@@ -271,18 +248,12 @@ namespace MikuLuaProfiler
                 long delta = nowMemoryCount - oldMemoryCount;
 
                 long tmpDelta = delta;
-                if (delta > 0)
-                {
-                    delta = Math.Max(delta - 40, 0);//byte[0] 的字节占用是40
-                    byte[] luagc = new byte[delta];
-                }
                 for (int i = 0, imax = beginSampleMemoryStack.Count; i < imax; i++)
                 {
                     Sample s = beginSampleMemoryStack[i];
                     s.currentLuaMemory += tmpDelta;
                     beginSampleMemoryStack[i] = s;
                 }
-                Profiler.EndSample();
             }
 
             sample.costTime = Time.realtimeSinceStartup - sample.currentTime;
