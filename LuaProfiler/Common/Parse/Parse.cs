@@ -130,9 +130,10 @@ namespace MikuLuaProfiler
                             {
                                 if (lastTokenType is CommentToken)
                                 {
-                                    lastPos = commentPos + 1;
+                                    lastPos = commentPos;
                                 }
-                                if (lastTokenType is LiteralToken)
+                                if ((lastTokenType is LiteralToken) 
+                                    && tokenType != (int)TK.EOS)
                                 {
                                     lastPos = lastPos - 1;
                                 }

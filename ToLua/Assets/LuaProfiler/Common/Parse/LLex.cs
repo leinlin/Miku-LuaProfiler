@@ -524,7 +524,15 @@ namespace UniLua
             }
         endloop:
             var r = _GetSavedString();
-            return r.Substring(2 + sep, r.Length - 2 * (2 + sep));
+            int len = r.Length - 2 * (2 + sep);
+            if (len <= 0)
+            {
+                return string.Empty;
+            }
+            else
+            {
+                return r.Substring(2 + sep, len);
+            }
         }
 
         private void _EscapeError(string info, string msg)
