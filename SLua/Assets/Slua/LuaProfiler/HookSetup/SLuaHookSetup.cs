@@ -231,15 +231,25 @@ end
             {
                 if (LuaDeepProfilerSetting.Instance.isDeepProfiler)//&& name != "chunk"
                 {
-                    var utf8WithoutBom = new System.Text.UTF8Encoding(true);
-                    string fileName = name.Replace("@", "").Replace("/", ".") + ".lua";
-                    string value = utf8WithoutBom.GetString(buff);
-                    value = Parse.InsertSample(value, fileName);
+                    string value = "";
+                    string hookedValue = "";
+                    try
+                    {
+                        var utf8WithoutBom = new System.Text.UTF8Encoding(true);
+                        string fileName = name.Replace("@", "").Replace("/", ".") + ".lua";
+                        value = utf8WithoutBom.GetString(buff);
+                        hookedValue = Parse.InsertSample(value, fileName);
 
-                    //System.IO.File.WriteAllText(fileName, value);
+                        //System.IO.File.WriteAllText(fileName, value);
 
-                    buff = utf8WithoutBom.GetBytes(value);
-                    size = buff.Length;
+                        buff = utf8WithoutBom.GetBytes(hookedValue);
+                        size = buff.Length;
+                    }
+                    catch (Exception e)
+                    {
+                        Debug.LogError(name + "\n解析出错:\n" + value);
+                        throw e;
+                    }
                 }
 
                 return ProxyLoadbuffer(L, buff, size, name);
