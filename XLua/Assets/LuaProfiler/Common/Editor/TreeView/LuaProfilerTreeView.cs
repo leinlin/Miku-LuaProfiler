@@ -199,12 +199,14 @@ namespace MikuLuaProfiler
         #region field
         private readonly LuaProfilerTreeViewItem root;
         private readonly List<TreeViewItem> treeViewItems = new List<TreeViewItem>();
+        private GUIStyle gs;
         #endregion
         public LuaProfilerTreeView(TreeViewState treeViewState, float width)
             : base(treeViewState, CreateDefaultMultiColumnHeaderState(width))
         {
             LuaProfiler.SetSampleEnd(LoadRootSample);
             root = LuaProfilerTreeViewItem.Create(null, -1, null);
+
             Reload();
         }
 
@@ -216,12 +218,12 @@ namespace MikuLuaProfiler
                 {
                     headerContent = new GUIContent("Overview"),
                     contextMenuText = "Overview",
-                    headerTextAlignment = TextAlignment.Center,
+                    headerTextAlignment = TextAlignment.Left,
                     sortedAscending = false,
                     sortingArrowAlignment = TextAlignment.Right,
-                    width = 500,
-                    minWidth = 500,
-                    maxWidth = 500,
+                    width = 800,
+                    minWidth = 200,
+                    maxWidth = 2000,
                     autoResize = true,
                     canSort = false,
                     allowToggleVisibility = true
@@ -284,8 +286,8 @@ namespace MikuLuaProfiler
                 },
                 new MultiColumnHeaderState.Column
                 {
-                    headerContent = new GUIContent("Now GC"),
-                    contextMenuText = "Now GC",
+                    headerContent = new GUIContent("GC"),
+                    contextMenuText = "GC",
                     headerTextAlignment = TextAlignment.Center,
                     sortedAscending = false,
                     sortingArrowAlignment = TextAlignment.Right,
@@ -312,8 +314,8 @@ namespace MikuLuaProfiler
                 },
                 new MultiColumnHeaderState.Column
                 {
-                    headerContent = new GUIContent("Now Calls"),
-                    contextMenuText = "Now Calls",
+                    headerContent = new GUIContent("Calls"),
+                    contextMenuText = "Calls",
                     headerTextAlignment = TextAlignment.Center,
                     sortedAscending = false,
                     sortingArrowAlignment = TextAlignment.Right,
@@ -448,43 +450,36 @@ namespace MikuLuaProfiler
 
         protected override void RowGUI(RowGUIArgs args)
         {
-            GUIStyle gs = new GUIStyle(GUI.skin.label);
-            gs.alignment = TextAnchor.MiddleCenter;
-
             var item = (LuaProfilerTreeViewItem)args.item;
-            Rect r = args.rowRect;
-
+            if (gs == null)
+            {
+                gs = new GUIStyle(GUI.skin.label);
+                gs.alignment = TextAnchor.MiddleCenter;
+            }
+            Rect r = args.GetCellRect(0);
+            args.rowRect = r;
             base.RowGUI(args);
 
-            //r.x = r.x + 30;
-            //GUI.Label(r, item.displayName);
+            r = args.GetCellRect(1);
 
-            r.x = r.x + 500;
-            r.width = 80;
             GUI.Label(r, LuaProfiler.GetMemoryString(item.totalMemory), gs);
 
-            r.x = r.x + 80;
-            r.width = 120;
+            r = args.GetCellRect(2);
             GUI.Label(r, item.currentTime.ToString("f6") + "s", gs);
 
-            r.x = r.x + 120;
-            r.width = 120;
+            r = args.GetCellRect(3);
             GUI.Label(r, ((float)item.averageTime / 1000000).ToString("f6") + "s", gs);
 
-            r.x = r.x + 120;
-            r.width = 120;
+            r = args.GetCellRect(4);
             GUI.Label(r, ((float)item.totalTime / 1000000).ToString("f6") + "s", gs);
 
-            r.x = r.x + 120;
-            r.width = 60;
+            r = args.GetCellRect(5);
             GUI.Label(r, LuaProfiler.GetMemoryString(item.showGC), gs);
 
-            r.x = r.x + 60;
-            r.width = 120;
+            r = args.GetCellRect(6);
             GUI.Label(r, LuaProfiler.GetMemoryString(item.totalCallTime, ""), gs);
 
-            r.x = r.x + 120;
-            r.width = 80;
+            r = args.GetCellRect(7);
             GUI.Label(r, item.frameCalls.ToString(), gs);
 
         }
