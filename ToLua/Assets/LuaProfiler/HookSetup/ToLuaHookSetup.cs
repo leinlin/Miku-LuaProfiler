@@ -433,31 +433,9 @@ end
         {
             try
             {
-                int count = LuaDLL.lua_gettop(L);
-
-                if (count == 1 && TypeChecker.CheckTypes<System.IntPtr>(L, 1))
-                {
-                    System.IntPtr arg0 = ToLua.CheckIntPtr(L, 1);
-                    MikuLuaProfiler.LuaProfiler.BeginSample(arg0);
-                    return 0;
-                }
-                else if (count == 1 && TypeChecker.CheckTypes<string>(L, 1))
-                {
-                    string arg0 = ToLua.ToString(L, 1);
-                    MikuLuaProfiler.LuaProfiler.BeginSample(arg0);
-                    return 0;
-                }
-                else if (count == 2)
-                {
-                    System.IntPtr arg0 = ToLua.CheckIntPtr(L, 1);
-                    string arg1 = ToLua.CheckString(L, 2);
-                    MikuLuaProfiler.LuaProfiler.BeginSample(arg0, arg1);
-                    return 0;
-                }
-                else
-                {
-                    return LuaDLL.luaL_throw(L, "invalid arguments to method: MikuLuaProfiler.LuaProfiler.BeginSample");
-                }
+                string arg0 = ToLua.ToString(L, 1);
+                MikuLuaProfiler.LuaProfiler.BeginSample(arg0);
+                return 0;
             }
             catch (Exception e)
             {
@@ -470,23 +448,8 @@ end
         {
             try
             {
-                int count = LuaDLL.lua_gettop(L);
-
-                if (count == 0)
-                {
-                    MikuLuaProfiler.LuaProfiler.EndSample();
-                    return 0;
-                }
-                else if (count == 1)
-                {
-                    System.IntPtr arg0 = ToLua.CheckIntPtr(L, 1);
-                    MikuLuaProfiler.LuaProfiler.EndSample(arg0);
-                    return 0;
-                }
-                else
-                {
-                    return LuaDLL.luaL_throw(L, "invalid arguments to method: MikuLuaProfiler.LuaProfiler.EndSample");
-                }
+                MikuLuaProfiler.LuaProfiler.EndSample();
+                return 0;
             }
             catch (Exception e)
             {
