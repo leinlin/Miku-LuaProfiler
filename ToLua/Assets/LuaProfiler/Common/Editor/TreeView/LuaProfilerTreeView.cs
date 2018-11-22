@@ -221,7 +221,7 @@ namespace MikuLuaProfiler
                     headerTextAlignment = TextAlignment.Left,
                     sortedAscending = false,
                     sortingArrowAlignment = TextAlignment.Right,
-                    width = 800,
+                    width = 500,
                     minWidth = 200,
                     maxWidth = 2000,
                     autoResize = true,
