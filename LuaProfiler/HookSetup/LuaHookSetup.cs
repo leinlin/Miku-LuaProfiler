@@ -177,7 +177,15 @@ namespace MikuLuaProfiler
                     try
                     {
                         string fileName = name.Replace("@", "").Replace("/", ".") + ".lua";
-                        value = Encoding.UTF8.GetString(buff);
+                        if (buff[0] == 239 && buff[1] == 187 && buff[2] == 191)
+                        {// utf-8
+                            value = Encoding.UTF8.GetString(buff, 3, buff.Length - 3);
+                        }
+                        else
+                        {
+                            value = Encoding.UTF8.GetString(buff);
+                        }
+                        
                         hookedValue = Parse.InsertSample(value, fileName);
 
                         //System.IO.File.WriteAllText(fileName, value);

@@ -7,20 +7,16 @@ namespace MikuLuaProfiler
 {
     public static class Parse
     {
-        public const string LOCAL_PROFILER = @"
-local BeginMikuSample = MikuLuaProfiler.LuaProfiler.BeginSample
-local EndMikuSample = MikuLuaProfiler.LuaProfiler.EndSample
-
-local function miku_unpack_return_value(...)
-    EndMikuSample()
-    return ...
-end
-";
+        public static readonly string LOCAL_PROFILER =
+            "local BeginMikuSample = MikuLuaProfiler.LuaProfiler.BeginSample "
+            + "local EndMikuSample = MikuLuaProfiler.LuaProfiler.EndSample " + "local function miku_unpack_return_value(...) "
+            + "EndMikuSample()"
+            + "return ... end ";
         #region parse
         public static string InsertSample(string value, string name)
         {
             LLex l = new LLex(new StringLoadInfo(value), name);
-            l.InsertString(0, "BeginMikuSample(\"" + name + ", line:1 require file\")\r\n");
+            l.InsertString(0, "BeginMikuSample(\"" + name + ", line:1 require file\") ");
             l.InsertString(0, LOCAL_PROFILER);
             int lastPos = 0;
             int nextPos = l.pos;
@@ -84,8 +80,8 @@ end
 
                             if (tokenType == (int)')')
                             {
-                                l.InsertString(nextPos - 1, "\r\nBeginMikuSample(\"" + l.Source 
-                                    + ",line:" + l.LineNumber + " funName:" + funName + "\")\r\n");
+                                l.InsertString(nextPos - 1, " BeginMikuSample(\"" + l.Source 
+                                    + ",line:" + l.LineNumber + " funName:" + funName + "\") ");
                                 nextPos = l.pos;
                                 break;
                             }
@@ -111,7 +107,12 @@ end
                         int commentPos = insertPos;
                         while (tokenType != (int)TK.EOS)
                         {
-                            lastTokenType = l.Token;
+                            if (!(lastTokenType is CommentToken)
+                                && !(l.Token is SpaceToken && lastTokenType is LineToken))
+                            {
+                                lastTokenType = l.Token;
+                            }
+
                             l.Next();
 
                             tokenType = l.Token.TokenType;
@@ -119,6 +120,7 @@ end
                             {
                                 commentPos = nextPos - 1;
                             }
+
                             lastPos = nextPos;
                             nextPos = l.pos;
 
@@ -130,7 +132,11 @@ end
                                 {
                                     commentPos = lastPos - 1;
                                 }
-                                lastTokenType = l.Token;
+                                if (!(lastTokenType is CommentToken)
+                                    && !(l.Token is SpaceToken && lastTokenType is LineToken))
+                                {
+                                    lastTokenType = l.Token;
+                                }
                             }
 
                             if (tokenType == (int)TK.END
@@ -142,7 +148,11 @@ end
                                 {
                                     lastPos = commentPos;
                                 }
-                                if ((lastTokenType is LiteralToken) 
+                                else if (lastTokenType is LineToken)
+                                {
+                                    lastPos = ((LineToken)lastTokenType).Pos - 1;
+                                }
+                                else if ((lastTokenType is LiteralToken) 
                                     && tokenType != (int)TK.EOS)
                                 {
                                     lastPos = lastPos - 1;
@@ -150,13 +160,30 @@ end
 
                                 string returnStr = l.ReadString(insertPos, lastPos - 1);
 
-                                returnStr = returnStr.Trim();
-
-                                if (returnStr.Length > 0 && returnStr[returnStr.Length - 1] == ';')
+                                string trimValue = returnStr.Trim();
+                                if (trimValue.Length > 0 && trimValue[trimValue.Length - 1] == ';')
                                 {
-                                    returnStr = returnStr.Substring(0, returnStr.Length - 1);
+                                    char[] value = new char[returnStr.Length - 1];
+                                    bool isFront = false;
+                                    for (int i = returnStr.Length - 1; i >= 0; i--)
+                                    {
+                                        if (returnStr[i] == ';')
+                                        {
+                                            isFront = true;
+                                            continue;
+                                        }
+                                        if (!isFront)
+                                        {
+                                            value[i - 1] = returnStr[i];
+                                        }
+                                        else
+                                        {
+                                            value[i] = returnStr[i];
+                                        }
+                                    }
+                                    returnStr = new string(value);
                                 }
-                                returnStr = "\r\nreturn miku_unpack_return_value(" + returnStr.Substring(6, returnStr.Length - 6).Trim() + ")\r\n";
+                                returnStr = " return miku_unpack_return_value(" + returnStr.Substring(6, returnStr.Length - 6) + ") ";
 
                                 l.Replace(insertPos, lastPos - 1, returnStr);
                                 nextPos = l.pos;
@@ -189,7 +216,7 @@ end
                             {
                                 if (!hasReturn)
                                 {
-                                    l.InsertString(lastPos - 1, "\r\nEndMikuSample()\r\n");
+                                    l.InsertString(lastPos - 1, " EndMikuSample() ");
                                     lastPos = nextPos;
                                     nextPos = l.pos;
                                 }
@@ -218,7 +245,7 @@ end
 
             if (needLastSample)
             {
-                l.InsertString(nextPos, "\r\nEndMikuSample()");
+                l.InsertString(nextPos, " EndMikuSample()");
             }
         }
         #endregion

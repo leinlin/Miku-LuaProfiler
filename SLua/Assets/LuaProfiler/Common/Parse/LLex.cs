@@ -208,7 +208,18 @@ namespace UniLua
             return string.Format("LiteralToken: {0}", (char)_Literal);
         }
     }
-
+    public class LineToken : LiteralToken
+    {
+        public int Pos;
+        public LineToken(int literal, int pos) : base(literal)
+        {
+            Pos = pos;
+        }
+    }
+    public class SpaceToken : LiteralToken
+    {
+        public SpaceToken(int literal) : base(literal) { }
+    }
     public class TypedToken : Token
     {
         private TK _Type;
@@ -258,7 +269,6 @@ namespace UniLua
             return string.Format("NameToken: {0}", SemInfo);
         }
     }
-
     public class NumberToken : TypedToken
     {
         public double SemInfo;
@@ -788,8 +798,9 @@ namespace UniLua
                     case '\n':
                     case '\r':
                         {
+                            var token = new LineToken(Current, pos);
                             _IncLineNumber();
-                            continue;
+                            return token;
                         }
 
                     case '-':
@@ -897,7 +908,6 @@ namespace UniLua
                             else
                                 return new NumberToken(_ReadNumber());
                         }
-
                     case EOZ:
                         {
                             return new TypedToken(TK.EOS);
@@ -908,7 +918,8 @@ namespace UniLua
                             if (_CurrentIsSpace())
                             {
                                 _Next();
-                                continue;
+                                return new SpaceToken(Current);
+                                //continue;
                             }
                             else if (_CurrentIsDigit())
                             {
