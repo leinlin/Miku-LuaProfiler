@@ -172,23 +172,18 @@ namespace UniLua
         }
     }
 
-    public class CommentToken : Token
+    public class JumpToken : Token
     {
-        public CommentToken()
+        public JumpToken(int pos)
         {
+            Pos = pos;
         }
-
+        public int Pos;
         public override int TokenType
         {
             get { return -1; }
         }
-
-        public override string ToString()
-        {
-            return "CommentToken";
-        }
     }
-
     public class LiteralToken : Token
     {
         private int _Literal;
@@ -207,18 +202,6 @@ namespace UniLua
         {
             return string.Format("LiteralToken: {0}", (char)_Literal);
         }
-    }
-    public class LineToken : LiteralToken
-    {
-        public int Pos;
-        public LineToken(int literal, int pos) : base(literal)
-        {
-            Pos = pos;
-        }
-    }
-    public class SpaceToken : LiteralToken
-    {
-        public SpaceToken(int literal) : base(literal) { }
     }
     public class TypedToken : Token
     {
@@ -798,7 +781,7 @@ namespace UniLua
                     case '\n':
                     case '\r':
                         {
-                            var token = new LineToken(Current, pos);
+                            var token = new JumpToken(pos);
                             _IncLineNumber();
                             return token;
                         }
@@ -818,14 +801,14 @@ namespace UniLua
                                 {
                                     _ReadLongString(sep);
                                     _ClearSaved();
-                                    return new CommentToken();
+                                    return new JumpToken(pos);
                                 }
                             }
 
                             // else is a short comment
                             while (!_CurrentIsNewLine() && Current != EOZ)
                                 _Next();
-                            return new CommentToken();
+                            return new JumpToken(pos);
                         }
 
                     case '[':
@@ -886,7 +869,6 @@ namespace UniLua
                         {
                             return new StringToken(_ReadString());
                         }
-
                     case '.':
                         {
                             _SaveAndNext();
@@ -917,9 +899,16 @@ namespace UniLua
                         {
                             if (_CurrentIsSpace())
                             {
+                                var token = new JumpToken(pos);
                                 _Next();
-                                return new SpaceToken(Current);
+                                return token;
                                 //continue;
+                            }
+                            else if (Current == ';')
+                            {
+                                var token = new JumpToken(pos);
+                                _Next();
+                                return token;
                             }
                             else if (_CurrentIsDigit())
                             {

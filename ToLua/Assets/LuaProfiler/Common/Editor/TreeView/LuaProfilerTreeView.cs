@@ -73,6 +73,7 @@ namespace MikuLuaProfiler
             private set;
         }
         public readonly List<LuaProfilerTreeViewItem> childs = new List<LuaProfilerTreeViewItem>();
+        public LuaProfilerTreeViewItem rootFather { private set; get; }
         public LuaProfilerTreeViewItem father { private set; get; }
         private int _frameCount;
         public LuaProfilerTreeViewItem()
@@ -123,6 +124,16 @@ namespace MikuLuaProfiler
                 }
             }
             this.father = father;
+
+            rootFather = this;
+            while (true)
+            {
+                if (rootFather.father == null)
+                {
+                    break;
+                }
+                rootFather = rootFather.father;
+            }
 
             _frameCount = Time.frameCount;
         }
@@ -197,6 +208,8 @@ namespace MikuLuaProfiler
         #endregion
 
         #region field
+        private List<int> m_expandIds = new List<int>();
+        private int m_showRootItemId = 0;
         private readonly LuaProfilerTreeViewItem root;
         private readonly List<TreeViewItem> treeViewItems = new List<TreeViewItem>();
         private GUIStyle gs;
@@ -206,7 +219,7 @@ namespace MikuLuaProfiler
         {
             LuaProfiler.SetSampleEnd(LoadRootSample);
             root = LuaProfilerTreeViewItem.Create(null, -1, null);
-
+            useScrollView = true;
             Reload();
         }
 
@@ -337,6 +350,8 @@ namespace MikuLuaProfiler
             roots.Clear();
             m_nodeDict.Clear();
             treeViewItems.Clear();
+            m_showRootItemId = -2;
+            m_expandIds.Clear();
         }
 
         protected override void DoubleClickedItem(int id)
@@ -354,6 +369,56 @@ namespace MikuLuaProfiler
             catch
             {
             }*/
+        }
+
+        private bool CheckIsRootId(int id)
+        {
+            bool result = false;
+
+            foreach (var item in roots)
+            {
+                if (item.id == id)
+                {
+                    result = true;
+                    break;
+                }
+            }
+
+            return result;
+        }
+
+        protected override void ExpandedStateChanged()
+        {
+            var ids = GetExpanded();
+            if (setting)
+            {
+                m_expandIds = new List<int>(ids);
+                return;
+            }
+            base.ExpandedStateChanged();
+
+            foreach (var id in m_expandIds)
+            {
+                if (!ids.Contains(id))
+                {
+                    if (m_showRootItemId == id)
+                    {
+                        SetExpanded(id, false);
+                        m_showRootItemId = -2;
+                    }
+                }
+            }
+
+            foreach (var id in ids)
+            {
+                if (!m_expandIds.Contains(id) && CheckIsRootId(id))
+                {
+                    m_showRootItemId = id;
+                    break;
+                }
+            }
+            m_expandIds = new List<int>();
+            m_expandIds.Add(m_showRootItemId);
         }
 
         public static Dictionary<string, LuaProfilerTreeViewItem> m_nodeDict = new Dictionary<string, LuaProfilerTreeViewItem>();
@@ -434,16 +499,26 @@ namespace MikuLuaProfiler
             foreach (var item in root.childs)
             {
                 AddOneNode(item);
+                if (m_showRootItemId != root.rootFather.id)
+                {
+                    break;
+                }
             }
         }
 
+        bool setting = false;
         protected override TreeViewItem BuildRoot()
         {
             ReLoadTreeItems();
-
             // Utility method that initializes the TreeViewItem.children and -parent for all items.
             SetupParentsAndChildrenFromDepths(root, treeViewItems);
 
+            setting = true;
+            foreach (var t in roots)
+            {
+                SetExpanded(t.id, t.id == m_showRootItemId);
+            }
+            setting = false;
             // Return root of the tree
             return root;
         }

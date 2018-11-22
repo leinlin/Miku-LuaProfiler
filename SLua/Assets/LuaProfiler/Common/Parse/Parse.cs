@@ -103,40 +103,21 @@ namespace MikuLuaProfiler
                         {
                             needLastSample = false;
                         }
-                        Token lastTokenType = null;
-                        int commentPos = insertPos;
                         while (tokenType != (int)TK.EOS)
                         {
-                            if (!(lastTokenType is CommentToken)
-                                && !(l.Token is SpaceToken && lastTokenType is LineToken))
-                            {
-                                lastTokenType = l.Token;
-                            }
-
                             l.Next();
 
                             tokenType = l.Token.TokenType;
-                            if (l.Token is CommentToken && !(lastTokenType is CommentToken) )
+                            if (!(l.Token is JumpToken))
                             {
-                                commentPos = nextPos - 1;
+                                lastPos = nextPos;
+                                nextPos = l.pos;
                             }
-
-                            lastPos = nextPos;
-                            nextPos = l.pos;
 
                             if (tokenType == (int)TK.FUNCTION)
                             {
                                 InsertSample(l, ref lastPos, ref nextPos, tokenType, true);
                                 tokenType = l.Token.TokenType;
-                                if (l.Token is CommentToken && !(lastTokenType is CommentToken))
-                                {
-                                    commentPos = lastPos - 1;
-                                }
-                                if (!(lastTokenType is CommentToken)
-                                    && !(l.Token is SpaceToken && lastTokenType is LineToken))
-                                {
-                                    lastTokenType = l.Token;
-                                }
                             }
 
                             if (tokenType == (int)TK.END
@@ -144,45 +125,12 @@ namespace MikuLuaProfiler
                                 || tokenType == (int)TK.ELSE
                                 || tokenType == (int)TK.EOS)
                             {
-                                if (lastTokenType is CommentToken)
-                                {
-                                    lastPos = commentPos;
-                                }
-                                else if (lastTokenType is LineToken)
-                                {
-                                    lastPos = ((LineToken)lastTokenType).Pos - 1;
-                                }
-                                else if ((lastTokenType is LiteralToken) 
-                                    && tokenType != (int)TK.EOS)
+                                if (tokenType != (int)TK.EOS)
                                 {
                                     lastPos = lastPos - 1;
                                 }
 
                                 string returnStr = l.ReadString(insertPos, lastPos - 1);
-
-                                string trimValue = returnStr.Trim();
-                                if (trimValue.Length > 0 && trimValue[trimValue.Length - 1] == ';')
-                                {
-                                    char[] value = new char[returnStr.Length - 1];
-                                    bool isFront = false;
-                                    for (int i = returnStr.Length - 1; i >= 0; i--)
-                                    {
-                                        if (returnStr[i] == ';')
-                                        {
-                                            isFront = true;
-                                            continue;
-                                        }
-                                        if (!isFront)
-                                        {
-                                            value[i - 1] = returnStr[i];
-                                        }
-                                        else
-                                        {
-                                            value[i] = returnStr[i];
-                                        }
-                                    }
-                                    returnStr = new string(value);
-                                }
                                 returnStr = " return miku_unpack_return_value(" + returnStr.Substring(6, returnStr.Length - 6) + ") ";
 
                                 l.Replace(insertPos, lastPos - 1, returnStr);
