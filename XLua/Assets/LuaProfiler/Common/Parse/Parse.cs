@@ -9,9 +9,7 @@ namespace MikuLuaProfiler
     {
         public static readonly string LOCAL_PROFILER =
             "local BeginMikuSample = MikuLuaProfiler.LuaProfiler.BeginSample "
-            + "local EndMikuSample = MikuLuaProfiler.LuaProfiler.EndSample " + "local function miku_unpack_return_value(...) "
-            + "EndMikuSample()"
-            + "return ... end ";
+            + "local EndMikuSample = MikuLuaProfiler.LuaProfiler.EndSample " + "local miku_unpack_return_value = miku_unpack_return_value ";
         #region parse
         public static string InsertSample(string value, string name)
         {

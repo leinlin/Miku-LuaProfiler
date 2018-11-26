@@ -277,26 +277,34 @@ namespace MikuLuaProfiler
         const long MaxM = MaxK * 1024;
         const long MaxG = MaxM * 1024;
 
+        static string memoryStr = EditableStringExtender.AllocateString(20);
         public static string GetMemoryString(long value, string unit = "B")
         {
-            string result = null;
+            memoryStr.UnsafeClear();
             if (value < MaxB)
             {
-                result = string.Format("{0}{1}", value, unit);
+                memoryStr.UnsafeAppend(value);
+                memoryStr.UnsafeAppend(unit);
             }
             else if (value < MaxK)
             {
-                result = string.Format("{0:N2}K{1}", (float)value / MaxB, unit);
+                memoryStr.UnsafeAppend((float)value / MaxB, 2);
+                memoryStr.UnsafeAppend("K");
+                memoryStr.UnsafeAppend(unit);
             }
             else if (value < MaxM)
             {
-                result = string.Format("{0:N2}M{1}", (float)value / MaxK, unit);
+                memoryStr.UnsafeAppend((float)value / MaxK, 2);
+                memoryStr.UnsafeAppend("M");
+                memoryStr.UnsafeAppend(unit);
             }
             else if (value < MaxG)
             {
-                result = string.Format("{0:N2}G{1}", (float)value / MaxM, unit);
+                memoryStr.UnsafeAppend((float)value / MaxM, 2);
+                memoryStr.UnsafeAppend("G");
+                memoryStr.UnsafeAppend(unit);
             }
-            return result;
+            return memoryStr;
         }
     }
 }

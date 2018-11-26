@@ -295,6 +295,17 @@ namespace MikuLuaProfiler
             LuaDLL.lua_setglobal(L, name);
 #endif
         }
+
+        public static void lua_getglobal(IntPtr L, string name)
+        {
+#if XLUA
+            LuaDLL.xlua_getglobal(L, name);
+#elif TOLUA
+            LuaDLL.lua_getglobal(L, name);
+#elif SLUA
+            LuaDLL.lua_getglobal(L, name);
+#endif
+        }
     }
 
     #region bind
@@ -318,8 +329,16 @@ namespace MikuLuaProfiler
 
             LuaDLL.lua_rawset(L, -3);
             LuaLib.lua_setglobal(L, "MikuLuaProfiler");
-        }
 
+            LuaLib.lua_pushstdcallcfunction(L, BeginSample);
+            LuaLib.lua_setglobal(L, "BeginMikuSample");
+
+            LuaLib.lua_pushstdcallcfunction(L, EndSample);
+            LuaLib.lua_setglobal(L, "EndMikuSample");
+
+            LuaLib.lua_pushstdcallcfunction(L, UnpackReturnValue);
+            LuaLib.lua_setglobal(L, "miku_unpack_return_value");
+        }
 
         [MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]
         static int BeginSample(IntPtr L)
@@ -327,6 +346,13 @@ namespace MikuLuaProfiler
             string _name = LuaDLL.lua_tostring(L, 1);
             MikuLuaProfiler.LuaProfiler.BeginSample(L, _name);
             return 0;
+        }
+
+        [MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]
+        static int UnpackReturnValue(IntPtr L)
+        {
+            MikuLuaProfiler.LuaProfiler.EndSample(L);
+            return LuaDLL.lua_gettop(L);
         }
 
         [MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]

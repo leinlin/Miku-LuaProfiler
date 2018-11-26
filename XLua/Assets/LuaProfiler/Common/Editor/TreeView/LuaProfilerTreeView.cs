@@ -66,7 +66,6 @@ namespace MikuLuaProfiler
         public long averageTime { private set; get; }
         public float currentTime { private set; get; }
         public int totalCallTime { private set; get; }
-
         public string fullName
         {
             get;
@@ -213,13 +212,14 @@ namespace MikuLuaProfiler
         private readonly LuaProfilerTreeViewItem root;
         private readonly List<TreeViewItem> treeViewItems = new List<TreeViewItem>();
         private GUIStyle gs;
+        private bool needRebuild = true;
         #endregion
         public LuaProfilerTreeView(TreeViewState treeViewState, float width)
             : base(treeViewState, CreateDefaultMultiColumnHeaderState(width))
         {
             LuaProfiler.SetSampleEnd(LoadRootSample);
             root = LuaProfilerTreeViewItem.Create(null, -1, null);
-            useScrollView = true;
+            needRebuild = true;
             Reload();
         }
 
@@ -419,6 +419,7 @@ namespace MikuLuaProfiler
             }
             m_expandIds = new List<int>();
             m_expandIds.Add(m_showRootItemId);
+            needRebuild = true;
         }
 
         public static Dictionary<string, LuaProfilerTreeViewItem> m_nodeDict = new Dictionary<string, LuaProfilerTreeViewItem>();
@@ -435,6 +436,7 @@ namespace MikuLuaProfiler
             {
                 item = LuaProfilerTreeViewItem.Create(sample, 0, null);
                 roots.Add(item);
+                needRebuild = true;
             }
         }
 
@@ -460,7 +462,7 @@ namespace MikuLuaProfiler
             }
             foreach (var item in rootList)
             {
-                AddOneNode(item);
+                AddOneNode(item, false);
                 SortChildren(sortIndex, sign, item);
             }
         }
@@ -487,18 +489,19 @@ namespace MikuLuaProfiler
             }
         }
 
-        private void AddOneNode(LuaProfilerTreeViewItem root)
+        private void AddOneNode(LuaProfilerTreeViewItem root, bool r)
         {
             treeViewItems.Add(root);
-            
             m_nodeDict[root.fullName] = root;
+
             if (root.children != null)
             {
                 root.children.Clear();
             }
+            if (r) return;
             foreach (var item in root.childs)
             {
-                AddOneNode(item);
+                AddOneNode(item, true);
                 if (m_showRootItemId != root.rootFather.id)
                 {
                     break;
@@ -509,6 +512,10 @@ namespace MikuLuaProfiler
         bool setting = false;
         protected override TreeViewItem BuildRoot()
         {
+            if (!needRebuild)
+            {
+                return root;
+            }
             ReLoadTreeItems();
             // Utility method that initializes the TreeViewItem.children and -parent for all items.
             SetupParentsAndChildrenFromDepths(root, treeViewItems);
@@ -519,10 +526,12 @@ namespace MikuLuaProfiler
                 SetExpanded(t.id, t.id == m_showRootItemId);
             }
             setting = false;
+            needRebuild = false;
             // Return root of the tree
             return root;
         }
 
+        static string memoryStr = EditableStringExtender.AllocateString(20);
         protected override void RowGUI(RowGUIArgs args)
         {
             var item = (LuaProfilerTreeViewItem)args.item;
@@ -540,13 +549,22 @@ namespace MikuLuaProfiler
             GUI.Label(r, LuaProfiler.GetMemoryString(item.totalMemory), gs);
 
             r = args.GetCellRect(2);
-            GUI.Label(r, item.currentTime.ToString("f6") + "s", gs);
+            memoryStr.UnsafeClear();
+            memoryStr.UnsafeAppend(item.currentTime, 6);
+            memoryStr.UnsafeAppend('s');
+            GUI.Label(r, memoryStr, gs);
 
             r = args.GetCellRect(3);
-            GUI.Label(r, ((float)item.averageTime / 1000000).ToString("f6") + "s", gs);
+            memoryStr.UnsafeClear();
+            memoryStr.UnsafeAppend((float)item.averageTime / 1000000, 6);
+            memoryStr.UnsafeAppend('s');
+            GUI.Label(r, memoryStr, gs);
 
             r = args.GetCellRect(4);
-            GUI.Label(r, ((float)item.totalTime / 1000000).ToString("f6") + "s", gs);
+            memoryStr.UnsafeClear();
+            memoryStr.UnsafeAppend((float)item.totalTime / 1000000, 6);
+            memoryStr.UnsafeAppend('s');
+            GUI.Label(r, memoryStr, gs);
 
             r = args.GetCellRect(5);
             GUI.Label(r, LuaProfiler.GetMemoryString(item.showGC), gs);
@@ -555,8 +573,9 @@ namespace MikuLuaProfiler
             GUI.Label(r, LuaProfiler.GetMemoryString(item.totalCallTime, ""), gs);
 
             r = args.GetCellRect(7);
-            GUI.Label(r, item.frameCalls.ToString(), gs);
-
+            memoryStr.UnsafeClear();
+            memoryStr.UnsafeAppend(item.frameCalls);
+            GUI.Label(r, memoryStr, gs);
         }
 
     }
