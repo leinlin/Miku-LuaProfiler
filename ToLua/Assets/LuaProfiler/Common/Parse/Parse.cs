@@ -14,8 +14,8 @@ namespace MikuLuaProfiler
         public static string InsertSample(string value, string name)
         {
             LLex l = new LLex(new StringLoadInfo(value), name);
-            l.InsertString(0, "BeginMikuSample(\"" + name + ", line:1 require file\") ");
-            l.InsertString(0, LOCAL_PROFILER);
+
+            l.InsertString(0, LOCAL_PROFILER + "BeginMikuSample(\"" + name + ", line:1 require file\") ");
             int lastPos = 0;
             int nextPos = l.pos;
             l.Next();

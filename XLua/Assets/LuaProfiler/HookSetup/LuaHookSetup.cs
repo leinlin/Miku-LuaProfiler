@@ -7,9 +7,9 @@
 * ==============================================================================
 */
 
-#define XLUA
+//#define XLUA
 //#define TOLUA
-//#define SLUA
+#define SLUA
 
 #if UNITY_EDITOR
 using System;

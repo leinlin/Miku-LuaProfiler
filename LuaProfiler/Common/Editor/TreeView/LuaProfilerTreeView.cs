@@ -141,7 +141,7 @@ namespace MikuLuaProfiler
             if (_frameCount == Time.frameCount)
             {
                 _gc[3] += sample.costGC;
-                frameCalls += sample.oneFrameCall;
+                frameCalls += 1;
                 currentTime += sample.costTime;
             }
             else
@@ -150,13 +150,13 @@ namespace MikuLuaProfiler
                 _gc[1] = _gc[2];
                 _gc[2] = _gc[3];
                 _gc[3] = sample.costGC;
-                frameCalls = sample.oneFrameCall;
+                frameCalls = 1;
                 currentTime = sample.costTime;
             }
             totalMemory += sample.costGC;
 
             totalTime += (long)(sample.costTime * 1000000);
-            totalCallTime += sample.oneFrameCall;
+            totalCallTime += 1;
             averageTime = totalTime / totalCallTime;
             for (int i = 0, imax = sample.childs.Count; i < imax; i++)
             {
@@ -352,6 +352,7 @@ namespace MikuLuaProfiler
             treeViewItems.Clear();
             m_showRootItemId = -2;
             m_expandIds.Clear();
+            needRebuild = true;
         }
 
         protected override void DoubleClickedItem(int id)
@@ -531,7 +532,6 @@ namespace MikuLuaProfiler
             return root;
         }
 
-        static string memoryStr = EditableStringExtender.AllocateString(20);
         protected override void RowGUI(RowGUIArgs args)
         {
             var item = (LuaProfilerTreeViewItem)args.item;
@@ -549,22 +549,13 @@ namespace MikuLuaProfiler
             GUI.Label(r, LuaProfiler.GetMemoryString(item.totalMemory), gs);
 
             r = args.GetCellRect(2);
-            memoryStr.UnsafeClear();
-            memoryStr.UnsafeAppend(item.currentTime, 6);
-            memoryStr.UnsafeAppend('s');
-            GUI.Label(r, memoryStr, gs);
+            GUI.Label(r, item.currentTime.ToString("f6") + "s", gs);
 
             r = args.GetCellRect(3);
-            memoryStr.UnsafeClear();
-            memoryStr.UnsafeAppend((float)item.averageTime / 1000000, 6);
-            memoryStr.UnsafeAppend('s');
-            GUI.Label(r, memoryStr, gs);
+            GUI.Label(r, ((float)item.averageTime / 1000000).ToString("f6") + "s", gs);
 
             r = args.GetCellRect(4);
-            memoryStr.UnsafeClear();
-            memoryStr.UnsafeAppend((float)item.totalTime / 1000000, 6);
-            memoryStr.UnsafeAppend('s');
-            GUI.Label(r, memoryStr, gs);
+            GUI.Label(r, ((float)item.totalTime / 1000000).ToString("f6") + "s", gs);
 
             r = args.GetCellRect(5);
             GUI.Label(r, LuaProfiler.GetMemoryString(item.showGC), gs);
@@ -573,9 +564,8 @@ namespace MikuLuaProfiler
             GUI.Label(r, LuaProfiler.GetMemoryString(item.totalCallTime, ""), gs);
 
             r = args.GetCellRect(7);
-            memoryStr.UnsafeClear();
-            memoryStr.UnsafeAppend(item.frameCalls);
-            GUI.Label(r, memoryStr, gs);
+            GUI.Label(r, item.frameCalls.ToString(), gs);
+
         }
 
     }

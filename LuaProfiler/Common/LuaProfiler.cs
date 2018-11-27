@@ -12,6 +12,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEditorInternal;
+using System.Runtime.Serialization.Formatters.Binary;
 
 namespace MikuLuaProfiler
 {
@@ -45,8 +46,75 @@ namespace MikuLuaProfiler
             return GetMemoryString(result);
         }
 
+        [Serializable]
         public class Sample
         {
+            public float currentTime;
+            public long realCurrentLuaMemory;
+            public string name;
+            public long currentLuaMemory;
+            public float costTime;
+            public long costGC;
+            public Sample _father;
+            public List<Sample> childs = new List<Sample>(256);
+            public string _fullName = null;
+
+            #region property
+            public string fullName
+            {
+                get
+                {
+                    if (_father == null) return name;
+
+                    if (_fullName == null)
+                    {
+                        Dictionary<string, string> childDict;
+                        if (!m_fullNamePool.TryGetValue(_father.fullName, out childDict))
+                        {
+                            childDict = new Dictionary<string, string>();
+                            m_fullNamePool.Add(_father.fullName, childDict);
+                        }
+
+                        if (!childDict.TryGetValue(name, out _fullName))
+                        {
+                            string value = name;
+                            var f = _father;
+                            while (f != null)
+                            {
+                                value = f.name + value;
+                                f = f.fahter;
+                            }
+                            _fullName = value;
+                            childDict[name] = _fullName;
+                        }
+
+                        return _fullName;
+                    }
+                    else
+                    {
+                        return _fullName;
+                    }
+                }
+            }
+            public Sample fahter
+            {
+                set
+                {
+                    _father = value;
+                    if (_father != null)
+                    {
+                        _father.childs.Add(this);
+                    }
+                }
+                get
+                {
+                    return _father;
+                }
+            }
+            #endregion
+
+            #region pool
+            private static Dictionary<string, Dictionary<string, string>> m_fullNamePool = new Dictionary<string, Dictionary<string, string>>();
             private static ObjectPool<Sample> samplePool = new ObjectPool<Sample>(250);
             public static Sample Create(float time, long memory, string name)
             {
@@ -72,115 +140,11 @@ namespace MikuLuaProfiler
                 }
                 samplePool.Store(this);
             }
+            #endregion
 
-            public int oneFrameCall
-            {
-                get
-                {
-                    return 1;
-                }
-            }
-            public float currentTime { private set; get; }
-            public long realCurrentLuaMemory { private set; get; }
-            private string _name;
-            public string name
-            {
-                private set
-                {
-                    _name = value;
-                }
-                get
-                {
-                    return _name;
-                }
-            }
-
-            private static Dictionary<string, Dictionary<string, string>> m_fullNamePool = new Dictionary<string, Dictionary<string, string>>();
-            private string _fullName = null;
-            public string fullName
-            {
-                get
-                {
-                    if (_father == null) return _name;
-
-                    if (_fullName == null)
-                    {
-                        Dictionary<string, string> childDict;
-                        if (!m_fullNamePool.TryGetValue(_father.fullName, out childDict))
-                        {
-                            childDict = new Dictionary<string, string>();
-                            m_fullNamePool.Add(_father.fullName, childDict);
-                        }
-
-                        if (!childDict.TryGetValue(_name, out _fullName))
-                        {
-                            string value = _name;
-                            var f = _father;
-                            while (f != null)
-                            {
-                                value = f.name + value;
-                                f = f.fahter;
-                            }
-                            _fullName = value;
-                            childDict[_name] = _fullName;
-                        }
-
-                        return _fullName;
-                    }
-                    else
-                    {
-                        return _fullName;
-                    }
-                }
-            }
-            //这玩意在统计的window里面没啥卵用
-            public long currentLuaMemory { set; get; }
-
-            private float _costTime;
-            public float costTime
-            {
-                set
-                {
-                    _costTime = value;
-                }
-                get
-                {
-                    float result = _costTime;
-                    return result;
-                }
-            }
-
-            private long _costGC;
-            public long costGC
-            {
-                set
-                {
-                    _costGC = value;
-                }
-                get
-                {
-                    return _costGC;
-                }
-            }
-            private Sample _father;
-            public Sample fahter
-            {
-                set
-                {
-                    _father = value;
-                    if (_father != null)
-                    {
-                        _father.childs.Add(this);
-                    }
-                }
-                get
-                {
-                    return _father;
-                }
-            }
-
-            public readonly List<Sample> childs = new List<Sample>(256);
         }
+
+
         //开始采样时候的lua内存情况，因为中间有可能会有二次采样，所以要丢到一个盏中
         public static readonly List<Sample> beginSampleMemoryStack = new List<Sample>();
 
@@ -277,34 +241,26 @@ namespace MikuLuaProfiler
         const long MaxM = MaxK * 1024;
         const long MaxG = MaxM * 1024;
 
-        static string memoryStr = EditableStringExtender.AllocateString(20);
         public static string GetMemoryString(long value, string unit = "B")
         {
-            memoryStr.UnsafeClear();
+            string result = null;
             if (value < MaxB)
             {
-                memoryStr.UnsafeAppend(value);
-                memoryStr.UnsafeAppend(unit);
+                result = string.Format("{0}{1}", value, unit);
             }
             else if (value < MaxK)
             {
-                memoryStr.UnsafeAppend((float)value / MaxB, 2);
-                memoryStr.UnsafeAppend("K");
-                memoryStr.UnsafeAppend(unit);
+                result = string.Format("{0:N2}K{1}", (float)value / MaxB, unit);
             }
             else if (value < MaxM)
             {
-                memoryStr.UnsafeAppend((float)value / MaxK, 2);
-                memoryStr.UnsafeAppend("M");
-                memoryStr.UnsafeAppend(unit);
+                result = string.Format("{0:N2}M{1}", (float)value / MaxK, unit);
             }
             else if (value < MaxG)
             {
-                memoryStr.UnsafeAppend((float)value / MaxM, 2);
-                memoryStr.UnsafeAppend("G");
-                memoryStr.UnsafeAppend(unit);
+                result = string.Format("{0:N2}G{1}", (float)value / MaxM, unit);
             }
-            return memoryStr;
+            return result;
         }
     }
 }

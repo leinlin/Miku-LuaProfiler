@@ -56,19 +56,27 @@ namespace MikuLuaProfiler
         public static void EditSettings()
         {
             string path = EditorUtility.OpenFolderPanel("请选择Lua脚本存放文件夹", "", "*");
+#if UNITY_EDITOR_WIN
             path = path.Replace("/", "\\");
+#endif
             string rootProfilerDirPath = path + "Profiler";
             DirectoryInfo dir = new DirectoryInfo(path);
-            FileInfo[] files = dir.GetFiles("*.lua");
+            FileInfo[] files = dir.GetFiles("*.lua", SearchOption.AllDirectories);
             int count = files.Length;
             int process = 0;
+
+            //实例化一个计时器
+            System.Diagnostics.Stopwatch watch = new System.Diagnostics.Stopwatch();
+
             foreach (FileInfo item in files)
             {
                 process++;
 
                 EditorUtility.DisplayProgressBar("profiler lua", item.FullName, (float)process / count);
                 string allCode = File.ReadAllText(item.FullName);
+                watch.Start();
                 allCode = MikuLuaProfiler.Parse.InsertSample(allCode, "Template");
+                watch.Stop();
                 string profilerPath = item.FullName.Replace(path, rootProfilerDirPath);
                 string profilerDirPath = profilerPath.Replace(item.Name, "");
                 if (!Directory.Exists(profilerDirPath))
@@ -77,6 +85,8 @@ namespace MikuLuaProfiler
                 }
                 File.WriteAllText(profilerPath, allCode);
             }
+            Debug.LogFormat("cost time: {0} ms", watch.ElapsedMilliseconds);
+
             EditorUtility.ClearProgressBar();
             Selection.activeObject = Instance;
 #if UNITY_2018_2_OR_NEWER
