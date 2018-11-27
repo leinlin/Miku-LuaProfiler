@@ -86,16 +86,14 @@ namespace UniLua
                 return Str[Pos];
         }
 
-        public string Replace(int start, int len, string value)
+        public void Replace(int start, int len, string value)
         {
-            string result = Str.ToString().Substring(start, len);
             Str = Str.Remove(start, len);
             Str = Str.Insert(start, value);
             if ((start + len) <= Pos)
             {
                 Pos = Pos - (len - value.Length);
             }
-            return result;
         }
         public string ReadString(int startPos, int len)
         {
@@ -373,9 +371,9 @@ namespace UniLua
             return LookAhead;
         }
 
-        public string Replace(int start, int end, string value)
+        public void Replace(int start, int end, string value)
         {
-            return LoadInfo.Replace(start, end + 1 - start, value);
+            LoadInfo.Replace(start, end + 1 - start, value);
         }
 
         public string ReadString(int start, int end)
