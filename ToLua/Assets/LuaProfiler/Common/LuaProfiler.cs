@@ -129,7 +129,8 @@ namespace MikuLuaProfiler
                 m_SampleEndAction(sample);
             }
 
-            if (sample.fahter == null)
+            //释放掉被累加的Sample
+            if (beginSampleMemoryStack.Count != 0 && sample.fahter == null)
             {
                 sample.Restore();
             }

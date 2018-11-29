@@ -7,9 +7,9 @@
 * ==============================================================================
 */
 
-//#define XLUA
+#define XLUA
 //#define TOLUA
-#define SLUA
+//#define SLUA
 
 #if UNITY_EDITOR
 using System;
@@ -113,7 +113,7 @@ namespace MikuLuaProfiler
 #if XLUA
                 MethodInfo tostringFun = typeLog.GetMethod("xluaL_loadbuffer");
 #else
-                MethodInfo tostringFun = typeLog.GetMethod("luaL_loadbuffer");
+                MethodInfo tostringFun = typeLog.GetMethod("luaL_loadbuffer", new Type[] { typeof(IntPtr), typeof(byte[]), typeof(int), typeof(string) });
 #endif
                 MethodInfo tostringReplace = typeLogReplace.GetMethod("luaL_loadbuffer");
                 MethodInfo tostringProxy = typeLogReplace.GetMethod("ProxyLoadbuffer");

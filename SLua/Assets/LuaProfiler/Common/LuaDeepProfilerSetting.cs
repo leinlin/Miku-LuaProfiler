@@ -52,6 +52,36 @@ namespace MikuLuaProfiler
             }
         }
 
+        [SerializeField]
+        private int m_captureGC = 50 * 1024;
+        public int captureGC
+        {
+            get
+            {
+                return m_captureGC;
+            }
+            set
+            {
+                if (m_captureGC == value) return;
+                m_captureGC = value;
+                EditorUtility.SetDirty(this);
+            }
+        }
+
+        [SerializeField]
+        private bool m_isRecord = true;
+        public bool isRecord
+        {
+            get
+            {
+                return m_isRecord;
+            }
+            set
+            {
+                m_isRecord = value;
+            }
+        }
+
         [MenuItem("LuaProfiler/ExportFiles", priority = 10)]
         public static void EditSettings()
         {

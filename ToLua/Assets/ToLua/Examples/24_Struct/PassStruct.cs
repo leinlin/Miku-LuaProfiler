@@ -107,8 +107,7 @@ public class PassStruct : LuaClient
 
     void ShowTips(string msg, string stackTrace, LogType type)
     {
-        tips += msg;
-        tips += "\r\n";
+        //tips = msg;
     }
 
     new void OnApplicationQuit()
@@ -167,7 +166,7 @@ public class PassStruct : LuaClient
 
     private void OnGUI()
     {
-        GUI.Label(new Rect(Screen.width / 2 - 220, Screen.height / 2 - 200, 400, 400), tips);        
+        GUI.Label(new Rect(Screen.width / 2, Screen.height / 2, 400, 400), Time.frameCount.ToString());        
     }
 
     //屏蔽，例子不需要运行

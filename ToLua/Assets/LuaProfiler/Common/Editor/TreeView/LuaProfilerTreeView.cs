@@ -41,7 +41,6 @@ namespace MikuLuaProfiler
         }
 
         public int frameCalls { private set; get; }
-        private long[] _gc = new long[] { 0, 0, 0, 0 };
         //没什么意义，因为Lua 执行代码的同时 异步GC，所以导致GC的数字一直闪烁，用上这个去闪烁
         private long _showGC = 0;
         public long showGC
@@ -52,16 +51,17 @@ namespace MikuLuaProfiler
             }
             get
             {
-                if (!UnityEditor.EditorApplication.isPlaying)
-                {
-                    return _showGC;
-                }
+                return _showGC;
+                //if (!UnityEditor.EditorApplication.isPlaying)
+                //{
+                //    return _showGC;
+                //}
 
-                if (Time.frameCount == _frameCount)
-                {
-                    return _showGC;
-                }
-                else { return 0; }
+                //if (Time.frameCount == _frameCount)
+                //{
+                //    return _showGC;
+                //}
+                //else { return 0; }
             }
         }
         public long totalMemory { private set; get; }
@@ -87,6 +87,7 @@ namespace MikuLuaProfiler
             if (sample != null)
             {
                 totalMemory = sample.costGC;
+                _showGC = sample.costGC;
                 totalTime = (long)(sample.costTime * 1000000);
                 displayName = sample.name;
                 fullName = sample.fullName;
@@ -141,25 +142,22 @@ namespace MikuLuaProfiler
         }
         public void AddSample(Sample sample)
         {
-            if (_frameCount == Time.frameCount)
+            if (_frameCount == sample.frameCount)
             {
-                _gc[3] += sample.costGC;
-                frameCalls += 1;
+                _showGC += sample.costGC;
+                frameCalls += sample.calls;
                 currentTime += sample.costTime;
             }
             else
             {
-                _gc[0] = _gc[1];
-                _gc[1] = _gc[2];
-                _gc[2] = _gc[3];
-                _gc[3] = sample.costGC;
-                frameCalls = 1;
+                _showGC = sample.costGC;
+                frameCalls = sample.calls;
                 currentTime = sample.costTime;
             }
             totalMemory += sample.costGC;
 
             totalTime += (long)(sample.costTime * 1000000);
-            totalCallTime += 1;
+            totalCallTime += sample.calls;
             averageTime = totalTime / totalCallTime;
             for (int i = 0, imax = sample.childs.Count; i < imax; i++)
             {
@@ -174,23 +172,6 @@ namespace MikuLuaProfiler
                     var treeItem = Create(sampleChild, depth + 1, this);
                     childs.Add(treeItem);
                 }
-            }
-            //以下代码只不过为了 gc的显示数值不闪烁
-            if (_gc[0] == _gc[1] || _gc[0] == _gc[2] || _gc[0] == _gc[3])
-            {
-                showGC = _gc[0];
-            }
-            else if (_gc[1] == _gc[2] || _gc[1] == _gc[3])
-            {
-                showGC = _gc[1];
-            }
-            else if (_gc[2] == _gc[3])
-            {
-                showGC = _gc[2];
-            }
-            else
-            {
-                showGC = _gc[3];
             }
             _frameCount = Time.frameCount;
         }
@@ -210,15 +191,18 @@ namespace MikuLuaProfiler
         #endregion
 
         #region field
-        private List<int> m_expandIds = new List<int>();
         private int m_showRootItemId = 0;
+        public bool m_seaching = false;
+
+        private List<int> m_expandIds = new List<int>();
         private readonly LuaProfilerTreeViewItem root;
         private readonly List<TreeViewItem> treeViewItems = new List<TreeViewItem>();
-
         public readonly List<Sample> history = new List<Sample>(216000);
-
         private GUIStyle gs;
-        private bool needRebuild = true;
+        public bool needRebuild = true;
+
+        public string startUrl = null;
+        public string endUrl = null;
         #endregion
         public LuaProfilerTreeView(TreeViewState treeViewState, float width)
             : base(treeViewState, CreateDefaultMultiColumnHeaderState(width))
@@ -226,6 +210,7 @@ namespace MikuLuaProfiler
             LuaProfiler.SetSampleEnd(LoadRootSample);
             root = LuaProfilerTreeViewItem.Create(null, -1, null);
             needRebuild = true;
+            multiColumnHeader.sortingChanged += (multiColumnHeader) => { needRebuild = true; };
             history.Clear();
             Reload();
         }
@@ -362,6 +347,8 @@ namespace MikuLuaProfiler
             if (includeHistory)
             {
                 history.Clear();
+                startUrl = null;
+                endUrl = null;
             }
             needRebuild = true;
         }
@@ -438,9 +425,16 @@ namespace MikuLuaProfiler
 
         public void ReLoadSamples(int start, int end)
         {
+            if (history.Count == 0) return;
             Clear(false);
+            end = Mathf.Max(Mathf.Min(end, history.Count - 1), 0);
+            start = Mathf.Max(Mathf.Min(start, history.Count - 1), 0);
+
+            startUrl = history[start].captureUrl;
+            endUrl = history[end].captureUrl;
+
             end = Mathf.Min(history.Count - 1, end);
-            for (int i = start; i < end; i++)
+            for (int i = start; i <= end; i++)
             {
                 LoadRootSample(history[i], false);
             }
@@ -458,15 +452,75 @@ namespace MikuLuaProfiler
             byte[] datas = File.ReadAllBytes(path);
             history.Clear();
             history.AddRange(Sample.DeserializeList(datas));
+            ReLoadSamples(0, history.Count);
         }
 
+        private Queue<Sample> samplesQueue = new Queue<Sample>(256);
         private void LoadRootSample(Sample sample)
         {
-            LoadRootSample(sample, LuaDeepProfilerSetting.Instance.isRecord);
+            samplesQueue.Enqueue(sample);
+        }
+
+        public int GetNextProgramFrame(int start)
+        {
+            int ret = start + 1;
+
+            for (int i = start + 1, imax = history.Count; i < imax; i++)
+            {
+                ret = i;
+                var s = history[i];
+                if (s.costGC > LuaDeepProfilerSetting.Instance.captureGC)
+                {
+                    break;
+                }
+                else if (s.costTime >= 1 / 30.0f)
+                {
+                    break;
+                }
+            }
+
+            return Mathf.Max(Mathf.Min(ret, history.Count - 1), 0);
+        }
+
+        public int GetPreProgramFrame(int start)
+        {
+            int ret = start - 1;
+
+            for (int i = start - 1; i >= 0; i--)
+            {
+                ret = i;
+                var s = history[i];
+                if (s.costGC > LuaDeepProfilerSetting.Instance.captureGC)
+                {
+                    break;
+                }
+                else if (s.costTime >= 1 / 30.0f)
+                {
+                    break;
+                }
+            }
+
+            return Mathf.Max(Mathf.Min(ret, history.Count - 1), 0);
         }
 
         private void LoadRootSample(Sample sample, bool needRecord)
         {
+            if (needRecord)
+            {
+                //迟钝了
+                if (sample.costTime >= 1 / 30.0f)
+                {
+                    sample.captureUrl = Sample.Capture();
+                }
+                else if (sample.costGC > LuaDeepProfilerSetting.Instance.captureGC)
+                {
+                    sample.captureUrl = Sample.Capture();
+                }
+                else
+                {
+                    sample.captureUrl = null;
+                }
+            }
             LuaProfilerTreeViewItem item;
             string f = sample.fullName;
             if (m_nodeDict.TryGetValue(f, out item))
@@ -547,7 +601,7 @@ namespace MikuLuaProfiler
             foreach (var item in root.childs)
             {
                 AddOneNode(item, true);
-                if (m_showRootItemId != root.rootFather.id)
+                if (m_showRootItemId != root.rootFather.id && !m_seaching)
                 {
                     break;
                 }
@@ -557,6 +611,13 @@ namespace MikuLuaProfiler
         bool setting = false;
         protected override TreeViewItem BuildRoot()
         {
+            while (samplesQueue.Count > 0)
+            {
+                Sample s = samplesQueue.Dequeue();
+                LoadRootSample(s, LuaDeepProfilerSetting.Instance.isRecord);
+                s.Restore();
+            }
+
             if (!needRebuild)
             {
                 return root;
