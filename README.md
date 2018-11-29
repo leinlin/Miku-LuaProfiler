@@ -26,7 +26,6 @@
 
 点击 "Window->Lua Profiler Window"在弹出窗口上打开 Deep Profiler,正常进入游戏即可看到profiler数据
 
-<br/>
 效果如下
 ![](doc/profiler.png)
 <br/>
@@ -43,7 +42,6 @@
 - 点击 __'<<'__ 、 __'>>'__ 两个按钮可以快速移动到效率出了问题的某些帧
 - 点击 __'start2end'__ 、 __'end2start'__ 两个按钮可以把start与end的sample帧设置为相同的值配合'>>'、'<<'可以帮助你快速了解到这些效率帧都发生了什么。
 
-<br/>
 使用效果
 ![](doc/profiler.gif)
 <br/>
