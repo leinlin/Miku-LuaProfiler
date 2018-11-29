@@ -2,7 +2,7 @@
 <br/>
 
 ### 部署安装
-目前支持XLua、SLua、ToLua
+目前支持XLua、SLua、ToLua,Unity的版本在5.6（包括5.6）以上
 
 
 - 首先把LuaProfiler文件夹Copy到Assets 非Plugin、Editor目录下。
