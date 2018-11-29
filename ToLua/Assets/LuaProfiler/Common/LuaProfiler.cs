@@ -12,7 +12,6 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEditorInternal;
-using System.Runtime.Serialization.Formatters.Binary;
 
 namespace MikuLuaProfiler
 {
@@ -45,105 +44,6 @@ namespace MikuLuaProfiler
 
             return GetMemoryString(result);
         }
-
-        [Serializable]
-        public class Sample
-        {
-            public float currentTime;
-            public long realCurrentLuaMemory;
-            public string name;
-            public long currentLuaMemory;
-            public float costTime;
-            public long costGC;
-            public Sample _father;
-            public List<Sample> childs = new List<Sample>(256);
-            public string _fullName = null;
-
-            #region property
-            public string fullName
-            {
-                get
-                {
-                    if (_father == null) return name;
-
-                    if (_fullName == null)
-                    {
-                        Dictionary<string, string> childDict;
-                        if (!m_fullNamePool.TryGetValue(_father.fullName, out childDict))
-                        {
-                            childDict = new Dictionary<string, string>();
-                            m_fullNamePool.Add(_father.fullName, childDict);
-                        }
-
-                        if (!childDict.TryGetValue(name, out _fullName))
-                        {
-                            string value = name;
-                            var f = _father;
-                            while (f != null)
-                            {
-                                value = f.name + value;
-                                f = f.fahter;
-                            }
-                            _fullName = value;
-                            childDict[name] = _fullName;
-                        }
-
-                        return _fullName;
-                    }
-                    else
-                    {
-                        return _fullName;
-                    }
-                }
-            }
-            public Sample fahter
-            {
-                set
-                {
-                    _father = value;
-                    if (_father != null)
-                    {
-                        _father.childs.Add(this);
-                    }
-                }
-                get
-                {
-                    return _father;
-                }
-            }
-            #endregion
-
-            #region pool
-            private static Dictionary<string, Dictionary<string, string>> m_fullNamePool = new Dictionary<string, Dictionary<string, string>>();
-            private static ObjectPool<Sample> samplePool = new ObjectPool<Sample>(250);
-            public static Sample Create(float time, long memory, string name)
-            {
-                Sample s = samplePool.GetObject();
-                s.currentTime = time;
-                s.currentLuaMemory = memory;
-                s.realCurrentLuaMemory = memory;
-                s.costGC = 0;
-                s.name = name;
-                s.costTime = 0;
-                s.childs.Clear();
-                s._father = null;
-                s._fullName = null;
-
-                return s;
-            }
-
-            public void Restore()
-            {
-                for (int i = 0, imax = childs.Count; i < imax; i++)
-                {
-                    childs[i].Restore();
-                }
-                samplePool.Store(this);
-            }
-            #endregion
-
-        }
-
 
         //开始采样时候的lua内存情况，因为中间有可能会有二次采样，所以要丢到一个盏中
         public static readonly List<Sample> beginSampleMemoryStack = new List<Sample>();

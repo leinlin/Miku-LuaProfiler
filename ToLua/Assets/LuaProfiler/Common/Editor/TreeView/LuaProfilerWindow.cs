@@ -20,6 +20,8 @@ namespace MikuLuaProfiler
 
         LuaProfilerTreeView m_TreeView;
         SearchField m_SearchField;
+        int startFrame = 0;
+        int endFrame = 0;
 
         void OnEnable()
         {
@@ -27,6 +29,8 @@ namespace MikuLuaProfiler
                 m_TreeViewState = new TreeViewState();
 
             LuaProfilerTreeView.m_nodeDict.Clear();
+            startFrame = 0;
+            endFrame = 0;
             m_TreeView = new LuaProfilerTreeView(m_TreeViewState, position.width - 40);
             m_SearchField = new SearchField();
             m_SearchField.downOrUpArrowKeyPressed += m_TreeView.SetFocusAndEnsureSelectedItem;
@@ -38,15 +42,16 @@ namespace MikuLuaProfiler
         }
 
         private bool m_isStop = false;
+        private int m_lastCount = 0;
         void DoToolbar()
         {
-            GUILayout.BeginHorizontal(EditorStyles.toolbar);
+            EditorGUILayout.BeginHorizontal(EditorStyles.toolbar);
 
             #region clear
             bool isClear = GUILayout.Button("Clear", EditorStyles.toolbarButton, GUILayout.Height(30));
             if (isClear)
             {
-                m_TreeView.Clear();
+                m_TreeView.Clear(true);
             }
             GUILayout.Space(5);
             #endregion
@@ -87,7 +92,57 @@ namespace MikuLuaProfiler
             {
                 LuaLib.RunGC();
             }
-            GUILayout.Space(20);
+            GUILayout.Space(5);
+            #endregion
+
+            #region history
+            flag = GUILayout.Toggle(LuaDeepProfilerSetting.Instance.isRecord,
+                "Record", EditorStyles.toolbarButton, GUILayout.Height(30));
+            if (flag != LuaDeepProfilerSetting.Instance.isRecord)
+            {
+                LuaDeepProfilerSetting.Instance.isRecord = flag;
+                EditorApplication.isPlaying = false;
+            }
+
+            GUILayout.Space(5);
+            if (LuaDeepProfilerSetting.Instance.isRecord)
+            {
+                int count = m_TreeView.history.Count - 1;
+                int delta = Mathf.Max(0, count - m_lastCount);
+                endFrame += delta;
+
+                int oldStartFrame = startFrame;
+                GUILayout.Label("start", EditorStyles.toolbarButton, GUILayout.Height(30));
+                startFrame = EditorGUILayout.IntSlider(startFrame, 0, count, GUILayout.Width(150));
+
+                GUILayout.Space(25);
+
+                int oldEndFrame = endFrame;
+                GUILayout.Label("end", EditorStyles.toolbarButton, GUILayout.Height(30));
+                endFrame = EditorGUILayout.IntSlider(endFrame, 0, count, GUILayout.Width(150));
+
+                m_lastCount = count;
+
+                if (oldStartFrame != startFrame || oldEndFrame != endFrame)
+                {
+                    m_TreeView.ReLoadSamples(startFrame, endFrame);
+                    if(EditorApplication.isPlaying)
+                        EditorApplication.isPaused = true;
+                }
+
+                bool isSave = GUILayout.Button("Save", EditorStyles.toolbarButton, GUILayout.Height(30));
+                if (isSave)
+                {
+                    m_TreeView.SaveHisotry();
+                }
+
+                bool isLoad = GUILayout.Button("Load", EditorStyles.toolbarButton, GUILayout.Height(30));
+                if (isLoad)
+                {
+                    m_TreeView.LoadHistory();
+                }
+            }
+            GUILayout.Space(5);
             GUILayout.FlexibleSpace();
             #endregion
 
@@ -98,7 +153,7 @@ namespace MikuLuaProfiler
             GUILayout.Space(100);
             GUILayout.FlexibleSpace();
             //m_TreeView.searchString = m_SearchField.OnToolbarGUI(m_TreeView.searchString);
-            GUILayout.EndHorizontal();
+            EditorGUILayout.EndHorizontal();
         }
 
         void DoTreeView()

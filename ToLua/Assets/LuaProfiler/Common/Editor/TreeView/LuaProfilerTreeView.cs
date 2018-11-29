@@ -6,22 +6,25 @@
 * Purpose:  
 * ==============================================================================
 */
-using System;
-using System.Collections.Generic;
-using System.Reflection;
-using UnityEditor.IMGUI.Controls;
-using UnityEngine;
 
 namespace MikuLuaProfiler
 {
 #if UNITY_5_6_OR_NEWER
+    using System;
+    using System.Collections.Generic;
+    using System.IO;
+    using System.Reflection;
+    using UnityEditor;
+    using UnityEditor.IMGUI.Controls;
+    using UnityEngine;
+
+
     #region item
-    [Serializable]
     //The TreeElement data class is extended to hold extra data, which you can show and edit in the front-end TreeView.
     public class LuaProfilerTreeViewItem : TreeViewItem
     {
         private static ObjectPool<LuaProfilerTreeViewItem> objectPool = new ObjectPool<LuaProfilerTreeViewItem>(30);
-        public static LuaProfilerTreeViewItem Create(LuaProfiler.Sample sample, int depth, LuaProfilerTreeViewItem father)
+        public static LuaProfilerTreeViewItem Create(Sample sample, int depth, LuaProfilerTreeViewItem father)
         {
             var dict = LuaProfilerTreeView.m_nodeDict;
 
@@ -79,7 +82,7 @@ namespace MikuLuaProfiler
         {
         }
 
-        public void ResetBySample(LuaProfiler.Sample sample, int depth, LuaProfilerTreeViewItem father)
+        public void ResetBySample(Sample sample, int depth, LuaProfilerTreeViewItem father)
         {
             if (sample != null)
             {
@@ -136,7 +139,7 @@ namespace MikuLuaProfiler
 
             _frameCount = Time.frameCount;
         }
-        public void AddSample(LuaProfiler.Sample sample)
+        public void AddSample(Sample sample)
         {
             if (_frameCount == Time.frameCount)
             {
@@ -211,6 +214,9 @@ namespace MikuLuaProfiler
         private int m_showRootItemId = 0;
         private readonly LuaProfilerTreeViewItem root;
         private readonly List<TreeViewItem> treeViewItems = new List<TreeViewItem>();
+
+        public readonly List<Sample> history = new List<Sample>(216000);
+
         private GUIStyle gs;
         private bool needRebuild = true;
         #endregion
@@ -220,6 +226,7 @@ namespace MikuLuaProfiler
             LuaProfiler.SetSampleEnd(LoadRootSample);
             root = LuaProfilerTreeViewItem.Create(null, -1, null);
             needRebuild = true;
+            history.Clear();
             Reload();
         }
 
@@ -345,13 +352,17 @@ namespace MikuLuaProfiler
             return new MultiColumnHeader(state);
         }
 
-        public void Clear()
+        public void Clear(bool includeHistory)
         {
             roots.Clear();
             m_nodeDict.Clear();
             treeViewItems.Clear();
             m_showRootItemId = -2;
             m_expandIds.Clear();
+            if (includeHistory)
+            {
+                history.Clear();
+            }
             needRebuild = true;
         }
 
@@ -425,7 +436,36 @@ namespace MikuLuaProfiler
 
         public static Dictionary<string, LuaProfilerTreeViewItem> m_nodeDict = new Dictionary<string, LuaProfilerTreeViewItem>();
 
-        private void LoadRootSample(LuaProfiler.Sample sample)
+        public void ReLoadSamples(int start, int end)
+        {
+            Clear(false);
+            end = Mathf.Min(history.Count - 1, end);
+            for (int i = start; i < end; i++)
+            {
+                LoadRootSample(history[i], false);
+            }
+        }
+
+        public void SaveHisotry()
+        {
+            string path = EditorUtility.SaveFilePanel("Save Sample", "", DateTime.Now.ToString("yyyy-MM-dd-HH-MM-ss"), "sample");
+            File.WriteAllBytes(path, Sample.SerializeList(history));
+        }
+
+        public void LoadHistory()
+        {
+            string path = EditorUtility.OpenFilePanel("Load Sample", "", "sample");
+            byte[] datas = File.ReadAllBytes(path);
+            history.Clear();
+            history.AddRange(Sample.DeserializeList(datas));
+        }
+
+        private void LoadRootSample(Sample sample)
+        {
+            LoadRootSample(sample, LuaDeepProfilerSetting.Instance.isRecord);
+        }
+
+        private void LoadRootSample(Sample sample, bool needRecord)
         {
             LuaProfilerTreeViewItem item;
             string f = sample.fullName;
@@ -438,6 +478,10 @@ namespace MikuLuaProfiler
                 item = LuaProfilerTreeViewItem.Create(sample, 0, null);
                 roots.Add(item);
                 needRebuild = true;
+            }
+            if (needRecord)
+            {
+                history.Add(sample.Clone());
             }
         }
 
