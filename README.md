@@ -63,15 +63,15 @@
 ### 感谢
 
 #### 第三方库
-[Misaka Mikoto 的MonoHooker](https://github.com/easy66/MonoHooker)
-[xebecnan 的 UniLua](https://github.com/xebecnan/UniLua)
+[Misaka Mikoto 的MonoHooker](https://github.com/easy66/MonoHooker) <br/>
+[xebecnan 的 UniLua](https://github.com/xebecnan/UniLua) <br/>
 
 #### 关键问题解决者
 [Xavier](https://github.com/starwing)
 
 #### 关键测试的成员
-[Jay](https://github.com/Jayatubi)
-[ZhangDi](https://github.com/ZhangDi2018)
+[Jay](https://github.com/Jayatubi) <br/>
+[ZhangDi](https://github.com/ZhangDi2018) <br/>
 以及[LuaProfiler](https://jq.qq.com/?_wv=1027&k=5QkOBSc)群中的所有群成员
 
 ### 已知使用项目
