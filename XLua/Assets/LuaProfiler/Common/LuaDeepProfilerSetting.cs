@@ -49,6 +49,10 @@ namespace MikuLuaProfiler
             set
             {
                 m_isDeepProfiler = value;
+                if (value && LuaDeepProfilerSetting.Instance.isRecord)
+                {
+                    GameViewUtility.ChangeGameViewSize(480, 270);
+                }
             }
         }
 

@@ -89,6 +89,10 @@ namespace MikuLuaProfiler
                     MikuLuaProfilerLuaProfilerWrap.__Register(l);
                     Install();
                     LuaProfiler.mainL = l;
+                    if (LuaDeepProfilerSetting.Instance.isRecord)
+                    {
+                        GameViewUtility.ChangeGameViewSize(480, 270);
+                    }
                 }
                 return l;
             }

@@ -137,7 +137,7 @@ namespace MikuLuaProfiler
                 LuaDeepProfilerSetting.Instance.isRecord = flag;
                 if (flag)
                 {
-                    EditorUtility.DisplayDialog("", "suggest you to set resolution to 480*270", "OK");
+                    GameViewUtility.ChangeGameViewSize(480, 270);
                 }
                 EditorApplication.isPlaying = false;
             }
