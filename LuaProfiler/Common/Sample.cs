@@ -143,9 +143,14 @@ namespace MikuLuaProfiler
             calls += s.calls;
             costGC += s.costGC;
             costTime += s.costTime;
-            foreach (var item in s.childs)
+            for (int i =s.childs.Count -1;i>=0;i--)
             {
+                var item = s.childs[i];
                 item.fahter = this;
+                if (item.fahter != s)
+                {
+                    s.childs.RemoveAt(i);
+                }
             }
         }
         public static string Capture()

@@ -154,15 +154,6 @@ namespace MikuLuaProfiler
             GUILayout.FlexibleSpace();
 
             m_TreeView.searchString = m_SearchField.OnToolbarGUI(m_TreeView.searchString);
-            if (!string.IsNullOrEmpty(m_TreeView.searchString))
-            {
-                m_TreeView.m_seaching = true;
-                m_TreeView.needRebuild = true;
-            }
-            else
-            {
-                m_TreeView.m_seaching = false;
-            }
 
             EditorGUILayout.EndHorizontal();
         }

@@ -191,9 +191,6 @@ namespace MikuLuaProfiler
         #endregion
 
         #region field
-        private int m_showRootItemId = 0;
-        public bool m_seaching = false;
-
         private List<int> m_expandIds = new List<int>();
         private readonly LuaProfilerTreeViewItem root;
         private readonly List<TreeViewItem> treeViewItems = new List<TreeViewItem>();
@@ -298,7 +295,7 @@ namespace MikuLuaProfiler
                     sortingArrowAlignment = TextAlignment.Right,
                     width = 60,
                     minWidth = 60,
-                    maxWidth = 60,
+                    maxWidth = 120,
                     autoResize = true,
                     canSort = true,
                     allowToggleVisibility = false
@@ -342,7 +339,6 @@ namespace MikuLuaProfiler
             roots.Clear();
             m_nodeDict.Clear();
             treeViewItems.Clear();
-            m_showRootItemId = -2;
             m_expandIds.Clear();
             if (includeHistory)
             {
@@ -384,41 +380,6 @@ namespace MikuLuaProfiler
             }
 
             return result;
-        }
-
-        protected override void ExpandedStateChanged()
-        {
-            var ids = GetExpanded();
-            if (setting)
-            {
-                m_expandIds = new List<int>(ids);
-                return;
-            }
-            base.ExpandedStateChanged();
-
-            foreach (var id in m_expandIds)
-            {
-                if (!ids.Contains(id))
-                {
-                    if (m_showRootItemId == id)
-                    {
-                        SetExpanded(id, false);
-                        m_showRootItemId = -2;
-                    }
-                }
-            }
-
-            foreach (var id in ids)
-            {
-                if (!m_expandIds.Contains(id) && CheckIsRootId(id))
-                {
-                    m_showRootItemId = id;
-                    break;
-                }
-            }
-            m_expandIds = new List<int>();
-            m_expandIds.Add(m_showRootItemId);
-            needRebuild = true;
         }
 
         public static Dictionary<string, LuaProfilerTreeViewItem> m_nodeDict = new Dictionary<string, LuaProfilerTreeViewItem>();
@@ -561,7 +522,7 @@ namespace MikuLuaProfiler
             }
             foreach (var item in rootList)
             {
-                AddOneNode(item, false);
+                AddOneNode(item);
                 SortChildren(sortIndex, sign, item);
             }
         }
@@ -588,7 +549,7 @@ namespace MikuLuaProfiler
             }
         }
 
-        private void AddOneNode(LuaProfilerTreeViewItem root, bool r)
+        private void AddOneNode(LuaProfilerTreeViewItem root)
         {
             treeViewItems.Add(root);
             m_nodeDict[root.fullName] = root;
@@ -597,18 +558,12 @@ namespace MikuLuaProfiler
             {
                 root.children.Clear();
             }
-            if (r) return;
             foreach (var item in root.childs)
             {
-                AddOneNode(item, true);
-                if (m_showRootItemId != root.rootFather.id && !m_seaching)
-                {
-                    break;
-                }
+                AddOneNode(item);
             }
         }
 
-        bool setting = false;
         protected override TreeViewItem BuildRoot()
         {
             while (samplesQueue.Count > 0)
@@ -626,12 +581,6 @@ namespace MikuLuaProfiler
             // Utility method that initializes the TreeViewItem.children and -parent for all items.
             SetupParentsAndChildrenFromDepths(root, treeViewItems);
 
-            setting = true;
-            foreach (var t in roots)
-            {
-                SetExpanded(t.id, t.id == m_showRootItemId);
-            }
-            setting = false;
             needRebuild = false;
             // Return root of the tree
             return root;

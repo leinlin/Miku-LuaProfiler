@@ -50,17 +50,6 @@ namespace MikuLuaProfiler
 
         private static Action<Sample> m_SampleEndAction;
 
-        private static bool isDeep
-        {
-            get
-            {
-#if UNITY_EDITOR
-                return ProfilerDriver.deepProfiling;
-#else
-            return false;
-#endif
-            }
-        }
         public static void SetSampleEnd(Action<Sample> action)
         {
             m_SampleEndAction = action;
@@ -105,24 +94,12 @@ namespace MikuLuaProfiler
             long oldMemoryCount = sample.currentLuaMemory;
             beginSampleMemoryStack.RemoveAt(count - 1);
             long nowMemoryCount = LuaLib.GetLuaMemory(luaState);
-            sample.fahter = count > 1 ? beginSampleMemoryStack[count - 2] : null;
-
-            if (!isDeep)
-            {
-                long delta = nowMemoryCount - oldMemoryCount;
-
-                long tmpDelta = delta;
-                for (int i = 0, imax = beginSampleMemoryStack.Count; i < imax; i++)
-                {
-                    Sample s = beginSampleMemoryStack[i];
-                    s.currentLuaMemory += tmpDelta;
-                    beginSampleMemoryStack[i] = s;
-                }
-            }
 
             sample.costTime = Time.realtimeSinceStartup - sample.currentTime;
             var gc = nowMemoryCount - sample.realCurrentLuaMemory;
             sample.costGC = gc > 0 ? gc : 0;
+
+            sample.fahter = count > 1 ? beginSampleMemoryStack[count - 2] : null;
 
             if (m_SampleEndAction != null && beginSampleMemoryStack.Count == 0)
             {

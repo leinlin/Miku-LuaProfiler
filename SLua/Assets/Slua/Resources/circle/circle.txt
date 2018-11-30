@@ -61,8 +61,23 @@ function class:init(count)
 	end
 end
 
+
+function test1()
+    return {}
+end
+
+function test2()
+    return {}
+end
+
+function test3()
+    test2()
+    test1()
+    return {}
+end
+
 function class:update() -- gc alloc is zero
-	
+    --[[
 	for i,v in ipairs(self.cubes) do
 		local offset = i%2==1 and 5 or -5
 		local r = self.r+math.sin(Time.time)*offset
@@ -91,4 +106,9 @@ function class:update() -- gc alloc is zero
 		self.f=0
 		self.framet=self.framet-1
 	end
+    ]]
+
+    for _ = 1,10 do
+        test3()
+    end
 end
