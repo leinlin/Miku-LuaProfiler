@@ -249,9 +249,17 @@ namespace MikuLuaProfiler
                 b.Write(datas);
             }
 
-            datas = Encoding.UTF8.GetBytes(captureUrl);
-            b.Write(datas.Length);
-            b.Write(datas);
+            if (string.IsNullOrEmpty(captureUrl))
+            {
+                b.Write(false);
+            }
+            else
+            {
+                b.Write(true);
+                datas = Encoding.UTF8.GetBytes(captureUrl);
+                b.Write(datas.Length);
+                b.Write(datas);
+            }
 
             result = ms.ToArray();
             b.Close();
@@ -284,9 +292,13 @@ namespace MikuLuaProfiler
                 child.fahter = s;
             }
 
-            len = b.ReadInt32();
-            datas = b.ReadBytes(len);
-            s.captureUrl = Encoding.UTF8.GetString(datas);
+            bool hasCapture = b.ReadBoolean();
+            if (hasCapture)
+            {
+                len = b.ReadInt32();
+                datas = b.ReadBytes(len);
+                s.captureUrl = Encoding.UTF8.GetString(datas);
+            }
 
             b.Close();
 
