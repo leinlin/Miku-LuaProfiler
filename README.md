@@ -33,7 +33,7 @@
 ---
 #### Record模式
 &nbsp;&nbsp;&nbsp;&nbsp;也是默认模式，如果关闭点击Profiler窗口下的Record按钮即可开启。在这个模式下将保存每次Profiler采样的历史记录，并且会将出现帧率下降、或者超大GC申请的Sample进行截屏保存,需要截屏的GC的阈值你可以在 __capture gc__ 后面的输入框中进行配置。
-&nbsp;&nbsp;&nbsp;&nbsp;当你在编辑器下暂停或者关闭游戏的时候你可以拖动 __start__ 以及__end__的进度条进行历史记录查阅,sample列表中将显示__start__到 __end__ 的累计采样值。要单独观察某一个sample的消耗可以把__start__和 __end__ 设置为相同值。
+&nbsp;&nbsp;&nbsp;&nbsp;当你在编辑器下暂停或者关闭游戏的时候你可以拖动 __start__ 以及**end**的进度条进行历史记录查阅,sample列表中将显示**start**到 **end** 的累计采样值。要单独观察某一个sample的消耗可以把**start**和 __end__ 设置为相同值。
 
 ##### 按钮功能介绍
 
