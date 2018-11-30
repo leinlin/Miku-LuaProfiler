@@ -172,10 +172,6 @@ namespace MikuLuaProfiler
             {
                 endFrame = count;
             }
-            GUILayout.Label("capture gc", EditorStyles.toolbarButton, GUILayout.Height(30), GUILayout.Width(80));
-            LuaDeepProfilerSetting.Instance.captureGC
-                = EditorGUILayout.IntField(LuaDeepProfilerSetting.Instance.captureGC, GUILayout.Height(16), GUILayout.Width(50));
-            LuaDeepProfilerSetting.Instance.captureGC = Mathf.Max(0, LuaDeepProfilerSetting.Instance.captureGC);
 
             int oldStartFrame = startFrame;
             GUILayout.Label("start", EditorStyles.toolbarButton, GUILayout.Height(30), GUILayout.Width(45));
@@ -183,6 +179,7 @@ namespace MikuLuaProfiler
             if (GUILayout.Button("<< ", EditorStyles.toolbarButton, GUILayout.Height(30), GUILayout.Width(30)))
             {
                 startFrame = m_TreeView.GetPreProgramFrame(startFrame);
+                endFrame = startFrame;
             }
             if (GUILayout.Button("< ", EditorStyles.toolbarButton, GUILayout.Height(30), GUILayout.Width(30)))
             {
@@ -195,13 +192,10 @@ namespace MikuLuaProfiler
             if (GUILayout.Button(" >>", EditorStyles.toolbarButton, GUILayout.Height(30), GUILayout.Width(30)))
             {
                 startFrame = m_TreeView.GetNextProgramFrame(startFrame);
+                endFrame = startFrame;
             }
 
             int oldEndFrame = endFrame;
-            if (GUILayout.Button("end2start", EditorStyles.toolbarButton, GUILayout.Height(30), GUILayout.Width(70)))
-            {
-                startFrame = endFrame;
-            }
             GUILayout.Space(15);
 
             GUILayout.Label("end", EditorStyles.toolbarButton, GUILayout.Height(30), GUILayout.Width(45));
@@ -210,6 +204,7 @@ namespace MikuLuaProfiler
             if (GUILayout.Button("<< ", EditorStyles.toolbarButton, GUILayout.Height(30), GUILayout.Width(30)))
             {
                 endFrame = m_TreeView.GetPreProgramFrame(endFrame);
+                startFrame = endFrame;
             }
             if (GUILayout.Button("< ", EditorStyles.toolbarButton, GUILayout.Height(30), GUILayout.Width(30)))
             {
@@ -222,15 +217,19 @@ namespace MikuLuaProfiler
             if (GUILayout.Button(" >>", EditorStyles.toolbarButton, GUILayout.Height(30), GUILayout.Width(30)))
             {
                 endFrame = m_TreeView.GetNextProgramFrame(endFrame);
+                startFrame = endFrame;
             }
-            if (GUILayout.Button("start2end", EditorStyles.toolbarButton, GUILayout.Height(30), GUILayout.Width(70)))
-            {
-                endFrame = startFrame;
-            }
+
+            GUILayout.Space(25);
+            GUILayout.Label("capture gc", EditorStyles.toolbarButton, GUILayout.Height(30), GUILayout.Width(80));
+            LuaDeepProfilerSetting.Instance.captureGC
+                = EditorGUILayout.IntField(LuaDeepProfilerSetting.Instance.captureGC, GUILayout.Height(16), GUILayout.Width(50));
+            LuaDeepProfilerSetting.Instance.captureGC = Mathf.Max(0, LuaDeepProfilerSetting.Instance.captureGC);
 
             m_lastCount = count;
 
             GUILayout.Space(25);
+            GUILayout.FlexibleSpace();
 
             if (oldStartFrame != startFrame || oldEndFrame != endFrame)
             {
@@ -251,8 +250,7 @@ namespace MikuLuaProfiler
                 m_TreeView.LoadHistory();
             }
 
-            GUILayout.Space(100);
-            GUILayout.FlexibleSpace();
+            GUILayout.Space(10);
             EditorGUILayout.EndHorizontal();
         }
 
@@ -318,7 +316,6 @@ namespace MikuLuaProfiler
 
             EditorGUILayout.EndHorizontal();
         }
-
 
         void DoTreeView()
         {

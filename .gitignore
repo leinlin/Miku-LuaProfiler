@@ -2,7 +2,7 @@
 .idea
 Library
 ProjectSettings
-captures
+capture*
 *.sample
 Temp
 /Assets/XLua/Gen
@@ -32,3 +32,4 @@ manifest.json
 /XLua/Assets/XLua/Gen.meta
 /XLua/Assets/XLua/Gen
 /XLua/XLua.userprefs
+

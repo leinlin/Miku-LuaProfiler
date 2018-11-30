@@ -91,7 +91,6 @@ namespace MikuLuaProfiler
             }
             int count = beginSampleMemoryStack.Count;
             Sample sample = beginSampleMemoryStack[beginSampleMemoryStack.Count - 1];
-            long oldMemoryCount = sample.currentLuaMemory;
             beginSampleMemoryStack.RemoveAt(count - 1);
             long nowMemoryCount = LuaLib.GetLuaMemory(luaState);
 
@@ -103,6 +102,22 @@ namespace MikuLuaProfiler
 
             if (m_SampleEndAction != null && beginSampleMemoryStack.Count == 0)
             {
+                if (LuaDeepProfilerSetting.Instance.isRecord)
+                {
+                    //迟钝了
+                    if (sample.costTime >= 1 / 30.0f)
+                    {
+                        sample.captureUrl = Sample.Capture();
+                    }
+                    else if (sample.costGC > LuaDeepProfilerSetting.Instance.captureGC)
+                    {
+                        sample.captureUrl = Sample.Capture();
+                    }
+                    else
+                    {
+                        sample.captureUrl = null;
+                    }
+                }
                 m_SampleEndAction(sample);
             }
 

@@ -104,6 +104,7 @@ namespace MikuLuaProfiler
         #endregion
 
         #region pool
+        private static string capturePath = "";
         private static Dictionary<string, Dictionary<string, string>> m_fullNamePool = new Dictionary<string, Dictionary<string, string>>();
         private static ObjectPool<Sample> samplePool = new ObjectPool<Sample>(250);
         public static Sample Create(float time, long memory, string name)
@@ -155,11 +156,11 @@ namespace MikuLuaProfiler
         }
         public static string Capture()
         {
-            if (!Directory.Exists("captures"))
-            {
-                Directory.CreateDirectory("captures");
-            }
-            string result = "captures/" + DateTime.Now.Ticks.ToString();
+            if (string.IsNullOrEmpty(capturePath)) capturePath = "capture" + DateTime.Now.Ticks.ToString();
+
+            Directory.CreateDirectory(capturePath);
+
+            string result = capturePath + "/" + UnityEngine.Time.frameCount.ToString() + ".png";
             Application.CaptureScreenshot(result, 0);
 
             return result;
@@ -187,28 +188,34 @@ namespace MikuLuaProfiler
         #endregion
 
         #region 序列化
-        public static byte[] SerializeList(List<Sample> samples)
+        public static void SerializeList(List<Sample> samples, string path)
         {
-            byte[] result = null;
-            MemoryStream ms = new MemoryStream();
-            BinaryWriter b = new BinaryWriter(ms);
-
+            FileStream fs = new FileStream(path, FileMode.CreateNew, FileAccess.Write);
+            BinaryWriter b = new BinaryWriter(fs);
+#if UNITY_EDITOR
+            UnityEditor.EditorUtility.ClearProgressBar();
+#endif
             b.Write(samples.Count);
             for (int i = 0, imax = samples.Count; i < imax; i++)
             {
-                byte[] datas = samples[i].Serialize();
+                Sample s = samples[i];
+#if UNITY_EDITOR
+                UnityEditor.EditorUtility.DisplayProgressBar("serialize profiler data", "serialize " + s.name, (float)i / (float)imax);
+#endif
+                byte[] datas = s.Serialize();
                 b.Write(datas.Length);
                 b.Write(datas);
             }
-            result = ms.ToArray();
-            b.Close();
 
-            return result;
+            b.Close();
+#if UNITY_EDITOR
+            UnityEditor.EditorUtility.ClearProgressBar();
+#endif
         }
 
-        public static List<Sample> DeserializeList(byte[] datas)
+        public static List<Sample> DeserializeList(string path)
         {
-            MemoryStream ms = new MemoryStream(datas);
+            FileStream ms = new FileStream(path, FileMode.Open, FileAccess.Read);
             BinaryReader b = new BinaryReader(ms);
 
             int count = b.ReadInt32();
@@ -249,7 +256,7 @@ namespace MikuLuaProfiler
                 b.Write(datas);
             }
 
-            if (string.IsNullOrEmpty(captureUrl))
+            if (string.IsNullOrEmpty(captureUrl) || !File.Exists(captureUrl))
             {
                 b.Write(false);
             }
@@ -257,6 +264,11 @@ namespace MikuLuaProfiler
             {
                 b.Write(true);
                 datas = Encoding.UTF8.GetBytes(captureUrl);
+                b.Write(datas.Length);
+                b.Write(datas);
+
+                //写入图片数据
+                datas = File.ReadAllBytes(captureUrl);
                 b.Write(datas.Length);
                 b.Write(datas);
             }
@@ -298,11 +310,51 @@ namespace MikuLuaProfiler
                 len = b.ReadInt32();
                 datas = b.ReadBytes(len);
                 s.captureUrl = Encoding.UTF8.GetString(datas);
+
+                if (!File.Exists(s.captureUrl))
+                {
+                    string dir = Path.GetDirectoryName(s.captureUrl);
+                    if (!Directory.Exists(dir))
+                    {
+                        Directory.CreateDirectory(dir);
+                    }
+
+                    len = b.ReadInt32();
+                    datas = b.ReadBytes(len);
+                    //写入图片数据
+                    File.WriteAllBytes(s.captureUrl, datas);
+                }
+
             }
 
             b.Close();
 
             return s;
+        }
+
+        public static void DeleteFiles(string str)
+        {
+            DirectoryInfo fatherFolder = new DirectoryInfo(str);
+            //删除当前文件夹内文件
+            FileInfo[] files = fatherFolder.GetFiles();
+            foreach (FileInfo file in files)
+            {
+                string fileName = file.Name;
+                try
+                {
+                    File.Delete(file.FullName);
+                }
+                catch (Exception ex)
+                {
+                    Debug.LogError(ex);
+                }
+            }
+            //递归删除子文件夹内文件
+            foreach (DirectoryInfo childFolder in fatherFolder.GetDirectories())
+            {
+                DeleteFiles(childFolder.FullName);
+            }
+            Directory.Delete(str, true);
         }
         #endregion
 
