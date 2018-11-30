@@ -82,7 +82,7 @@ namespace MikuLuaProfiler
             }
         }
 
-        [MenuItem("LuaProfiler/ExportFiles", priority = 10)]
+        //[MenuItem("LuaProfiler/ExportFiles", priority = 10)]
         public static void EditSettings()
         {
             string path = EditorUtility.OpenFolderPanel("请选择Lua脚本存放文件夹", "", "*");

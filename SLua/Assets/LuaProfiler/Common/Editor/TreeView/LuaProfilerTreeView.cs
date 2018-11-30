@@ -564,9 +564,10 @@ namespace MikuLuaProfiler
             }
         }
 
+        const int MAX_DEAL_COUNT = 1;
         protected override TreeViewItem BuildRoot()
         {
-            while (samplesQueue.Count > 0)
+            if (samplesQueue.Count > 0)
             {
                 Sample s = samplesQueue.Dequeue();
                 LoadRootSample(s, LuaDeepProfilerSetting.Instance.isRecord);
