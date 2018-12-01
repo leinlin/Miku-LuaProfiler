@@ -47,7 +47,7 @@
 ![](doc/profiler.gif)
 <br/>
 
-- 设置完IDE和Lua代码工程路径后，双击Profiler上的记录可以直接用IDE打开对应的代码位置，目前支持的IDE有VSCode、SubLime、IDEA、Clion、Rider
+设置完IDE和Lua代码工程路径后，双击Profiler上的记录可以直接用IDE打开对应的代码位置，目前支持的IDE有VSCode、SubLime、IDEA、Clion、Rider
 ![](doc/toide.gif)
 <br/>
 
