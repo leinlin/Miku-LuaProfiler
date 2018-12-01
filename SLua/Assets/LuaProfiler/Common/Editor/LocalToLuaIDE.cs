@@ -63,14 +63,65 @@ public class LocalToLuaIDE : Editor
         {
             filePath = filePath + ".bytes";
         }
-        //到处找Resources目录
-        else if(!GetResourcesPath(file, out filePath))
+        //到处找Resources目录,找不到就在 unity 工程目录全部找一遍
+        else if(!GetResourcesPath(file, out filePath) 
+            && !GetLuaPathInCurrentFile(file, out filePath)
+            )
         {
             Debug.LogError("this is chunk file");
             return;
         }
 
         OpenFileAtLineExternal(filePath, line);
+    }
+
+    //这尼玛 已经不讲道理了啊
+    public static bool GetLuaPathInCurrentFile(string fileName, out string path)
+    {
+        bool result = false;
+        path = "";
+
+        string curPath = Directory.GetCurrentDirectory();
+        string[] pathArray = Directory.GetFiles(
+            curPath, "*.lua",
+            SearchOption.AllDirectories);
+
+        foreach (var item in pathArray)
+        {
+            if (Path.GetFileNameWithoutExtension(item) == fileName)
+            {
+                path = Path.Combine(item, fileName + ".lua");
+                return true;
+            }
+        }
+
+        pathArray = Directory.GetFiles(
+            curPath, "*.txt",
+            SearchOption.AllDirectories);
+
+        foreach (var item in pathArray)
+        {
+            if (Path.GetFileNameWithoutExtension(item) == fileName)
+            {
+                path = Path.Combine(item, fileName + ".txt");
+                return true;
+            }
+        }
+
+        pathArray = Directory.GetFiles(
+            curPath, "*.bytes",
+            SearchOption.AllDirectories);
+
+        foreach (var item in pathArray)
+        {
+            if (Path.GetFileNameWithoutExtension(item) == fileName)
+            {
+                path = Path.Combine(item, fileName + ".bytes");
+                return true;
+            }
+        }
+
+        return result;
     }
 
     public static bool GetResourcesPath(string fileName, out string path)

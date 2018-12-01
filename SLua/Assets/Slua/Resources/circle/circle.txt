@@ -62,7 +62,7 @@ function class:init(count)
 end
 
 
-function test1()
+test1 = function()
     return {}
 end
 

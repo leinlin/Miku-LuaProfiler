@@ -40,6 +40,7 @@ namespace MikuLuaProfiler
         static void InsertSample(LLex l, ref int lastPos, ref int nextPos, int tokenType, bool onlyFun)
         {
             Stack<int> tokens = new Stack<int>();
+            List<Token> history = new List<Token>(1024);
 
             bool needLastSample = true;
             bool hasReturn = false;
@@ -55,6 +56,54 @@ namespace MikuLuaProfiler
                         string funName = "";
                         bool isLeft = false;
 
+                        bool isForward = false;
+                        int index = history.Count - 2;
+                        if (index >= 0)
+                        {
+                            var hisToken = history[index];
+                            while (hisToken is JumpToken)
+                            {
+                                if (index < 0) break;
+                                index--;
+                                hisToken = history[index];
+                            }
+                            isForward = hisToken.TokenType == (int)'=';
+                            index--;
+                            if (isForward && index >= 0)
+                            {
+                                hisToken = history[index];
+                                while (hisToken is JumpToken)
+                                {
+                                    index--;
+                                    if (index < 0) break;
+                                    hisToken = history[index];
+                                }
+                                while (!(hisToken is JumpToken))
+                                {
+                                    if (hisToken is NameToken)
+                                    {
+                                        funName = ((NameToken)hisToken).SemInfo + funName;
+                                    }
+                                    else if ((hisToken.TokenType == (int)':'))
+                                    {
+                                        funName = ':' + funName;
+                                    }
+                                    else if ((hisToken.TokenType == (int)'.') 
+                                        || (hisToken.TokenType == (int)'['))
+                                    {
+                                        funName = '.' + funName;
+                                    }
+                                    else if (hisToken is StringToken)
+                                    {
+                                        funName = ((StringToken)hisToken).SemInfo + funName;
+                                    }
+                                    index--;
+                                    if (index < 0) break;
+                                    hisToken = history[index];
+                                }
+                            }
+                        }
+
                         while (tokenType != (int)TK.EOS)
                         {
                             l.Next();
@@ -62,7 +111,9 @@ namespace MikuLuaProfiler
 
                             lastPos = nextPos;
                             nextPos = l.pos;
-                            if (!isLeft)
+ 
+
+                            if (!isLeft && !isForward)
                             {
                                 if (l.Token is NameToken)
                                 {
@@ -77,7 +128,6 @@ namespace MikuLuaProfiler
                                     funName += '.';
                                 }
                             }
-
 
                             if (tokenType == (int)'(')
                             {
@@ -192,6 +242,8 @@ namespace MikuLuaProfiler
                         break;
                 }
                 l.Next();
+                history.Add(l.Token);
+
                 tokenType = l.Token.TokenType;
                 lastPos = nextPos;
                 nextPos = l.pos;

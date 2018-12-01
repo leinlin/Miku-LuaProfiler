@@ -1,3 +1,20 @@
+
+--[[]]local self.xx = function()
+end
+
+self['x1'] = function()
+end
+
+local self:x2 = function()
+end
+
+local self.x3 = function()
+end
+
+local xx = function()
+
+end
+
 function()
     return
 end
