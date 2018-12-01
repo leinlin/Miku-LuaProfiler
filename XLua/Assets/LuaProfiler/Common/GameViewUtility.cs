@@ -34,18 +34,25 @@ namespace MikuLuaProfiler
         #region private
         private static void Update()
         {
-            var sizesType = typeof(Editor).Assembly.GetType("UnityEditor.GameViewSizes");
-            var singleType = typeof(ScriptableSingleton<>).MakeGenericType(sizesType);
-            var instanceProp = singleType.GetProperty("instance");
-            s_GetGroup = sizesType.GetMethod("GetGroup");
-            s_GameViewSizesInstance = instanceProp.GetValue(null, null);
-
-            if (!SizeExists(GetCurrentGroupType(), s_MiKuProfiler))
+            try
             {
-                AddCustomSize(GameViewSizeType.FixedResolution, GetCurrentGroupType(), m_width, m_height, s_MiKuProfiler);
+                var sizesType = typeof(Editor).Assembly.GetType("UnityEditor.GameViewSizes");
+                var singleType = typeof(ScriptableSingleton<>).MakeGenericType(sizesType);
+                var instanceProp = singleType.GetProperty("instance");
+                s_GetGroup = sizesType.GetMethod("GetGroup");
+                s_GameViewSizesInstance = instanceProp.GetValue(null, null);
+
+                if (!SizeExists(GetCurrentGroupType(), s_MiKuProfiler))
+                {
+                    AddCustomSize(GameViewSizeType.FixedResolution, GetCurrentGroupType(), m_width, m_height, s_MiKuProfiler);
+                }
+                int type = FindSize(GetCurrentGroupType(), s_MiKuProfiler);
+                SetSize(type);
             }
-            int type = FindSize(GetCurrentGroupType(), s_MiKuProfiler);
-            SetSize(type);
+            catch(Exception e)
+            {
+                Debug.LogError(e);
+            }
             EditorApplication.update -= callback;
         }
 
@@ -54,7 +61,10 @@ namespace MikuLuaProfiler
             var group = GetGroup(sizeGroupType);
             var addCustomSize = s_GetGroup.ReturnType.GetMethod("AddCustomSize");
             var gvsType = typeof(Editor).Assembly.GetType("UnityEditor.GameViewSize");
-            var ctor = gvsType.GetConstructor(new Type[] { typeof(int), typeof(int), typeof(int), typeof(string) });
+
+            Type sizeType = typeof(Editor).Assembly.GetType("UnityEditor.GameViewSizeType");
+
+            var ctor = gvsType.GetConstructor(new Type[] { sizeType, typeof(int), typeof(int), typeof(string) });
             var newSize = ctor.Invoke(new object[] { (int)viewSizeType, width, height, text });
             addCustomSize.Invoke(group, new object[] { newSize });
         }
