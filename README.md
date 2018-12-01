@@ -42,10 +42,13 @@
 - 点击 __'<'__ 、 __'>'__ 两个按钮一次只增加或减少1帧
 - 点击 __'<<'__ 、 __'>>'__ 两个按钮可以快速移动到效率出了问题的某些帧
 - Save跟Load 两个按钮可以保存和载入Sample的采样信息
-- 设置完IDE和Lua代码工程路径后，双击Profiler上的记录可以直接用IDE打开对应的代码位置
+- 设置完IDE和Lua代码工程路径后，双击Profiler上的记录可以直接用IDE打开对应的代码位置，目前支持的IDE有VSCode、SubLime、IDEA、Clion、Rider
 
 使用效果
 ![](doc/profiler.gif)
+<br/>
+
+![](doc/toide.gif)
 <br/>
 
 ---

@@ -40,7 +40,7 @@ namespace MikuLuaProfiler
         static void InsertSample(LLex l, ref int lastPos, ref int nextPos, int tokenType, bool onlyFun)
         {
             Stack<int> tokens = new Stack<int>();
-            List<Token> history = new List<Token>(1024);
+            List<Token> history = new List<Token>(16);
 
             bool needLastSample = true;
             bool hasReturn = false;
@@ -243,6 +243,10 @@ namespace MikuLuaProfiler
                 }
                 l.Next();
                 history.Add(l.Token);
+                if (history.Count >= 16)
+                {
+                    history.RemoveAt(0);
+                }
 
                 tokenType = l.Token.TokenType;
                 lastPos = nextPos;
