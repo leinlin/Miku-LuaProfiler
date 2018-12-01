@@ -1,4 +1,12 @@
-﻿#if UNITY_EDITOR
+﻿/*
+* ==============================================================================
+* Filename: Parse
+* Created:  2018/7/13 14:29:22
+* Author:   エル・プサイ・コングリィ
+* Purpose:  
+* ==============================================================================
+*/
+#if UNITY_EDITOR
 using System;
 using System.Collections.Generic;
 using UniLua;

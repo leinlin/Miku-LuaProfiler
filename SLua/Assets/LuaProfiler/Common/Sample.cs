@@ -18,7 +18,6 @@ namespace MikuLuaProfiler
 {
     public class Sample
     {
-        public long realCurrentLuaMemory;
         public long currentLuaMemory;
         private string _fullName = null;
         public float currentTime;
@@ -114,7 +113,6 @@ namespace MikuLuaProfiler
             s.calls = 1;
             s.currentTime = time;
             s.currentLuaMemory = memory;
-            s.realCurrentLuaMemory = memory;
             s.frameCount = UnityEngine.Time.frameCount;
             s.costGC = 0;
             s.name = name;
@@ -183,6 +181,8 @@ namespace MikuLuaProfiler
                 child.fahter = s;
             }
             s.captureUrl = captureUrl;
+            s.currentLuaMemory = currentLuaMemory;
+
             return s;
         }
         #endregion
@@ -206,7 +206,6 @@ namespace MikuLuaProfiler
                 b.Write(datas.Length);
                 b.Write(datas);
             }
-
             b.Close();
 #if UNITY_EDITOR
             UnityEditor.EditorUtility.ClearProgressBar();
@@ -272,6 +271,7 @@ namespace MikuLuaProfiler
                 b.Write(datas.Length);
                 b.Write(datas);
             }
+            b.Write(currentLuaMemory);
 
             result = ms.ToArray();
             b.Close();
@@ -326,6 +326,7 @@ namespace MikuLuaProfiler
                 }
 
             }
+            s.currentLuaMemory = b.ReadInt64();
 
             b.Close();
 

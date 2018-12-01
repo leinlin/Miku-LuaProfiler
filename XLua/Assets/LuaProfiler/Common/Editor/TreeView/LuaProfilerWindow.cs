@@ -1,6 +1,6 @@
 ﻿/*
 * ==============================================================================
-* Filename: LuaExport
+* Filename: LuaProfilerWindow
 * Created:  2018/7/13 14:29:22
 * Author:   エル・プサイ・コングリィ
 * Purpose:  
@@ -141,13 +141,28 @@ namespace MikuLuaProfiler
                 }
                 EditorApplication.isPlaying = false;
             }
+            GUILayout.Space(25);
+            #endregion
 
-            GUILayout.Space(5);
-            GUILayout.FlexibleSpace();
+            #region path
+            if (GUILayout.Button("Lua Path", EditorStyles.toolbarButton, GUILayout.Height(30)))
+            {
+                LocalToLuaIDE.SetExternalProjectRootPath();
+            }
+            if (GUILayout.Button("IDE Path", EditorStyles.toolbarButton, GUILayout.Height(30)))
+            {
+                LocalToLuaIDE.SetExternalEditorPath();
+            }
+            if (GUILayout.Button("Clear Path", EditorStyles.toolbarButton, GUILayout.Height(30)))
+            {
+                LocalToLuaIDE.ClearPath();
+            }
             #endregion
 
             #region gc value
-            GUILayout.Label(string.Format("Lua Total:{0}", LuaProfiler.GetLuaMemory()), EditorStyles.toolbarButton, GUILayout.Height(30));
+            GUILayout.Space(5);
+            GUILayout.FlexibleSpace();
+            GUILayout.Label(string.Format("Lua Total:{0}", m_TreeView.GetLuaMemory()), EditorStyles.toolbarButton, GUILayout.Height(30));
             #endregion
 
             GUILayout.Space(100);

@@ -1,6 +1,6 @@
 ﻿/*
 * ==============================================================================
-* Filename: LuaExport
+* Filename: LuaProfilerTreeView
 * Created:  2018/7/13 14:29:22
 * Author:   エル・プサイ・コングリィ
 * Purpose:  
@@ -14,6 +14,7 @@ namespace MikuLuaProfiler
     using System.Collections.Generic;
     using System.IO;
     using System.Reflection;
+    using System.Text.RegularExpressions;
     using UnityEditor;
     using UnityEditor.IMGUI.Controls;
     using UnityEngine;
@@ -91,15 +92,21 @@ namespace MikuLuaProfiler
                 totalTime = (long)(sample.costTime * 1000000);
                 displayName = sample.name;
                 fullName = sample.fullName;
+                frameCalls = sample.calls;
+                currentTime = sample.costTime;
+                totalCallTime = sample.calls;
             }
             else
             {
                 totalMemory = 0;
+                _showGC = 0;
                 totalTime = 0;
                 displayName = "root";
                 fullName = "root";
+                frameCalls = 0;
+                currentTime = 0;
+                totalCallTime = 1;
             }
-            totalCallTime = 1;
             averageTime = totalTime / totalCallTime;
 
             this.id = LuaProfilerTreeView.GetUniqueId();
@@ -192,20 +199,24 @@ namespace MikuLuaProfiler
 
         #region field
         private List<int> m_expandIds = new List<int>();
-        private readonly LuaProfilerTreeViewItem root;
-        private readonly List<TreeViewItem> treeViewItems = new List<TreeViewItem>();
-        public readonly List<Sample> history = new List<Sample>(216000);
-        private GUIStyle gs;
-        public bool needRebuild = true;
+        private readonly LuaProfilerTreeViewItem m_root;
+        private readonly List<TreeViewItem> m_treeViewItems = new List<TreeViewItem>();
+        private GUIStyle m_gs;
+        private Queue<Sample> m_historySamplesQueue = new Queue<Sample>(256);
+        private Queue<Sample> m_runningSamplesQueue = new Queue<Sample>(256);
+        private long m_luaMemory = 0;
 
+        public bool needRebuild = true;
+        public readonly List<Sample> history = new List<Sample>(216000);
         public string startUrl = null;
         public string endUrl = null;
         #endregion
+
         public LuaProfilerTreeView(TreeViewState treeViewState, float width)
             : base(treeViewState, CreateDefaultMultiColumnHeaderState(width))
         {
             LuaProfiler.SetSampleEnd(LoadRootSample);
-            root = LuaProfilerTreeViewItem.Create(null, -1, null);
+            m_root = LuaProfilerTreeViewItem.Create(null, -1, null);
             needRebuild = true;
             multiColumnHeader.sortingChanged += (multiColumnHeader) => { needRebuild = true; };
             history.Clear();
@@ -338,7 +349,7 @@ namespace MikuLuaProfiler
         {
             roots.Clear();
             m_nodeDict.Clear();
-            treeViewItems.Clear();
+            m_treeViewItems.Clear();
             m_expandIds.Clear();
             if (includeHistory)
             {
@@ -351,19 +362,18 @@ namespace MikuLuaProfiler
 
         protected override void DoubleClickedItem(int id)
         {
-            /*
             base.DoubleClickedItem(id);
             var selectItem = FindItem(id, BuildRoot());
-            string fileName = "/" + selectItem.displayName.Split(new char[] { ',' }, 2)[0].Replace(".", "/").Replace("/lua", ".lua").Trim();
+            string fileName = selectItem.displayName.Split(new char[] { ',' }, 2)[0].Trim();
             try
             {
                 int line = 0;
                 int.TryParse(Regex.Match(selectItem.displayName, @"(?<=(line:))\d*(?=( ))").Value, out line);
-                //LocalToLuaIDE.OnOpenAsset(fileName, line);
+                LocalToLuaIDE.OnOpenAsset(fileName, line);
             }     
             catch
             {
-            }*/
+            }
         }
 
         private bool CheckIsRootId(int id)
@@ -413,18 +423,26 @@ namespace MikuLuaProfiler
             history.AddRange(Sample.DeserializeList(path));
             ReLoadSamples(0, history.Count);
         }
-
-        private Queue<Sample> historySamplesQueue = new Queue<Sample>(256);
-        private Queue<Sample> runningSamplesQueue = new Queue<Sample>(256);
+        public string GetLuaMemory()
+        {
+            if (LuaProfiler.mainL != IntPtr.Zero)
+            {
+                return LuaProfiler.GetLuaMemory();
+            }
+            else
+            {
+                return LuaProfiler.GetMemoryString(m_luaMemory);
+            }
+        }
 
         private void LoadHistoryRootSample(Sample sample)
         {
-            historySamplesQueue.Enqueue(sample);
+            m_historySamplesQueue.Enqueue(sample);
         }
 
         private void LoadRootSample(Sample sample)
         {
-            runningSamplesQueue.Enqueue(sample);
+            m_runningSamplesQueue.Enqueue(sample);
         }
 
         public int GetNextProgramFrame(int start)
@@ -473,6 +491,7 @@ namespace MikuLuaProfiler
         {
             LuaProfilerTreeViewItem item;
             string f = sample.fullName;
+            m_luaMemory = sample.currentLuaMemory;
             if (m_nodeDict.TryGetValue(f, out item))
             {
                 item.AddSample(sample);
@@ -491,7 +510,7 @@ namespace MikuLuaProfiler
 
         private void ReLoadTreeItems()
         {
-            treeViewItems.Clear();
+            m_treeViewItems.Clear();
             List<LuaProfilerTreeViewItem> rootList = new List<LuaProfilerTreeViewItem>(roots);
             int sortIndex = multiColumnHeader.sortedColumnIndex;
             int sign = 0;
@@ -540,7 +559,7 @@ namespace MikuLuaProfiler
 
         private void AddOneNode(LuaProfilerTreeViewItem root)
         {
-            treeViewItems.Add(root);
+            m_treeViewItems.Add(root);
             m_nodeDict[root.fullName] = root;
 
             if (root.children != null)
@@ -556,43 +575,57 @@ namespace MikuLuaProfiler
         const int MAX_DEAL_COUNT = 5;
         protected override TreeViewItem BuildRoot()
         {
-            if (runningSamplesQueue.Count > 0)
+            if (m_runningSamplesQueue.Count > 0)
             {
-                Sample s = runningSamplesQueue.Dequeue();
+                Sample s = m_runningSamplesQueue.Dequeue();
                 LoadRootSample(s, LuaDeepProfilerSetting.Instance.isRecord);
                 s.Restore();
             }
-            else if (historySamplesQueue.Count > 0)
+            else if (m_historySamplesQueue.Count > 0)
             {
                 int delNum = 0;
-                while (historySamplesQueue.Count > 0 && delNum < MAX_DEAL_COUNT)
+                while (m_historySamplesQueue.Count > 0 && delNum < MAX_DEAL_COUNT)
                 {
-                    Sample s = historySamplesQueue.Dequeue();
+                    Sample s = m_historySamplesQueue.Dequeue();
                     LoadRootSample(s, false);
                 }
-
+                if (m_historySamplesQueue.Count == 0)
+                {
+                    foreach (var t in roots)
+                    {
+                        ExpandNodeRecursive(t);
+                    }
+                }
             }
 
             if (!needRebuild)
             {
-                return root;
+                return m_root;
             }
             ReLoadTreeItems();
             // Utility method that initializes the TreeViewItem.children and -parent for all items.
-            SetupParentsAndChildrenFromDepths(root, treeViewItems);
-
+            SetupParentsAndChildrenFromDepths(m_root, m_treeViewItems);
             needRebuild = false;
             // Return root of the tree
-            return root;
+            return m_root;
+        }
+
+        private void ExpandNodeRecursive(LuaProfilerTreeViewItem t)
+        {
+            SetExpanded(t.id, true);
+            foreach (var child in t.childs)
+            {
+                ExpandNodeRecursive(child);
+            }
         }
 
         protected override void RowGUI(RowGUIArgs args)
         {
             var item = (LuaProfilerTreeViewItem)args.item;
-            if (gs == null)
+            if (m_gs == null)
             {
-                gs = new GUIStyle(GUI.skin.label);
-                gs.alignment = TextAnchor.MiddleCenter;
+                m_gs = new GUIStyle(GUI.skin.label);
+                m_gs.alignment = TextAnchor.MiddleCenter;
             }
             Rect r = args.GetCellRect(0);
             args.rowRect = r;
@@ -600,25 +633,25 @@ namespace MikuLuaProfiler
 
             r = args.GetCellRect(1);
 
-            GUI.Label(r, LuaProfiler.GetMemoryString(item.totalMemory), gs);
+            GUI.Label(r, LuaProfiler.GetMemoryString(item.totalMemory), m_gs);
 
             r = args.GetCellRect(2);
-            GUI.Label(r, item.currentTime.ToString("f6") + "s", gs);
+            GUI.Label(r, item.currentTime.ToString("f6") + "s", m_gs);
 
             r = args.GetCellRect(3);
-            GUI.Label(r, ((float)item.averageTime / 1000000).ToString("f6") + "s", gs);
+            GUI.Label(r, ((float)item.averageTime / 1000000).ToString("f6") + "s", m_gs);
 
             r = args.GetCellRect(4);
-            GUI.Label(r, ((float)item.totalTime / 1000000).ToString("f6") + "s", gs);
+            GUI.Label(r, ((float)item.totalTime / 1000000).ToString("f6") + "s", m_gs);
 
             r = args.GetCellRect(5);
-            GUI.Label(r, LuaProfiler.GetMemoryString(item.showGC), gs);
+            GUI.Label(r, LuaProfiler.GetMemoryString(item.showGC), m_gs);
 
             r = args.GetCellRect(6);
-            GUI.Label(r, LuaProfiler.GetMemoryString(item.totalCallTime, ""), gs);
+            GUI.Label(r, LuaProfiler.GetMemoryString(item.totalCallTime, ""), m_gs);
 
             r = args.GetCellRect(7);
-            GUI.Label(r, item.frameCalls.ToString(), gs);
+            GUI.Label(r, item.frameCalls.ToString(), m_gs);
 
         }
 

@@ -18,6 +18,7 @@ using System.Reflection;
 using System.Text;
 using UnityEditor;
 using UnityEngine;
+using System.IO;
 
 #if XLUA
 using XLua;
@@ -180,7 +181,9 @@ namespace MikuLuaProfiler
                     string hookedValue = "";
                     try
                     {
-                        string fileName = name.Replace("@", "").Replace("/", ".") + ".lua";
+                        string fileName = name.Replace(".lua", "");
+
+                        fileName = name.Replace("@", "").Replace('.', '/');
                         if (buff[0] == 239 && buff[1] == 187 && buff[2] == 191)
                         {// utf-8
                             value = Encoding.UTF8.GetString(buff, 3, buff.Length - 3);

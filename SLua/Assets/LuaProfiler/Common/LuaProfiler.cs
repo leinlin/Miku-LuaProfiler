@@ -95,7 +95,7 @@ namespace MikuLuaProfiler
             long nowMemoryCount = LuaLib.GetLuaMemory(luaState);
 
             sample.costTime = Time.realtimeSinceStartup - sample.currentTime;
-            var gc = nowMemoryCount - sample.realCurrentLuaMemory;
+            var gc = nowMemoryCount - sample.currentLuaMemory;
             sample.costGC = gc > 0 ? gc : 0;
 
             sample.fahter = count > 1 ? beginSampleMemoryStack[count - 2] : null;
