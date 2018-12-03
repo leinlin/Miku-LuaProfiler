@@ -102,7 +102,7 @@ namespace MikuLuaProfiler
 
             if (m_SampleEndAction != null && beginSampleMemoryStack.Count == 0)
             {
-                if (LuaDeepProfilerSetting.Instance.isRecord)
+                if (LuaDeepProfilerSetting.Instance.isRecord && LuaDeepProfilerSetting.Instance.isNeedRecord)
                 {
                     //迟钝了
                     if (sample.costTime >= 1 / 30.0f)

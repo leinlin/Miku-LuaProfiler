@@ -181,6 +181,13 @@ namespace MikuLuaProfiler
 
             EditorGUILayout.BeginHorizontal(EditorStyles.toolbar);
 
+            bool flag = GUILayout.Toggle(LuaDeepProfilerSetting.Instance.isNeedRecord,
+    "NeedRecord", EditorStyles.toolbarButton, GUILayout.Height(30));
+            if (flag != LuaDeepProfilerSetting.Instance.isNeedRecord)
+            {
+                LuaDeepProfilerSetting.Instance.isNeedRecord = flag;
+            }
+
             int count = m_TreeView.history.Count - 1;
             int delta = Mathf.Max(0, count - m_lastCount);
             if (delta != 0)

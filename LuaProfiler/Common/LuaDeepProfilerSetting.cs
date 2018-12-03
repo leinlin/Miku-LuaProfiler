@@ -86,6 +86,20 @@ namespace MikuLuaProfiler
             }
         }
 
+        [SerializeField]
+        private bool m_isNeedRecord = true;
+        public bool isNeedRecord
+        {
+            get
+            {
+                return m_isNeedRecord;
+            }
+            set
+            {
+                m_isNeedRecord = value;
+            }
+        }
+
         //[MenuItem("LuaProfiler/ExportFiles", priority = 10)]
         public static void EditSettings()
         {

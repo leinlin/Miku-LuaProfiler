@@ -204,6 +204,7 @@ namespace MikuLuaProfiler
         private GUIStyle m_gs;
         private Queue<Sample> m_historySamplesQueue = new Queue<Sample>(256);
         private Queue<Sample> m_runningSamplesQueue = new Queue<Sample>(256);
+        private Dictionary<string, Sample> m_runingSampleDict = new Dictionary<string, Sample>(256);
         private long m_luaMemory = 0;
 
         public bool needRebuild = true;
@@ -447,15 +448,14 @@ namespace MikuLuaProfiler
         {
             lock (this)
             {
-                foreach (var item in m_runningSamplesQueue)
+                Sample item = null;
+                if (m_runingSampleDict.TryGetValue(sample.name, out item))
                 {
-                    if (item.name == sample.name)
-                    {
-                        item.AddSample(sample);
-                        sample.Restore();
-                        return;
-                    }
+                    item.AddSample(sample);
+                    sample.Restore();
+                    return;
                 }
+                m_runingSampleDict.Add(sample.name, sample);
                 m_runningSamplesQueue.Enqueue(sample);
             }
         }
@@ -592,8 +592,7 @@ namespace MikuLuaProfiler
         {
             if (m_runningSamplesQueue.Count > 0)
             {
-                int delNum = 0;
-                while (m_runningSamplesQueue.Count > 0 && delNum < MAX_DEAL_COUNT)
+                while (m_runningSamplesQueue.Count > 0)
                 {
                     Sample s = null;
                     lock (this)
@@ -602,8 +601,8 @@ namespace MikuLuaProfiler
                         LoadRootSample(s, LuaDeepProfilerSetting.Instance.isRecord);
                         s.Restore();
                     }
-                    delNum++;
                 }
+                m_runingSampleDict.Clear();
             }
             else if (m_historySamplesQueue.Count > 0)
             {
