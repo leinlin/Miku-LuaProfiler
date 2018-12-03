@@ -90,7 +90,7 @@ public class LocalToLuaIDE : Editor
         {
             if (Path.GetFileNameWithoutExtension(item) == fileName)
             {
-                path = Path.Combine(item, fileName + ".lua");
+                path = item;
                 return true;
             }
         }
@@ -103,7 +103,7 @@ public class LocalToLuaIDE : Editor
         {
             if (Path.GetFileNameWithoutExtension(item) == fileName)
             {
-                path = Path.Combine(item, fileName + ".txt");
+                path = item;
                 return true;
             }
         }
@@ -116,7 +116,7 @@ public class LocalToLuaIDE : Editor
         {
             if (Path.GetFileNameWithoutExtension(item) == fileName)
             {
-                path = Path.Combine(item, fileName + ".bytes");
+                path = item;
                 return true;
             }
         }

@@ -22,14 +22,17 @@ namespace MikuLuaProfiler
         }
         public T GetObject()
         {
-            if (m_objStack.Count > 0)
+            lock (this)
             {
-                T t = m_objStack.Pop();
-                if (m_resetAction != null)
+                if (m_objStack.Count > 0)
                 {
-                    m_resetAction(t);
+                    T t = m_objStack.Pop();
+                    if (m_resetAction != null)
+                    {
+                        m_resetAction(t);
+                    }
+                    return t;
                 }
-                return t;
             }
             return (m_createFunc != null) ? m_createFunc() : new T();
         }
@@ -50,9 +53,12 @@ namespace MikuLuaProfiler
         {
             if (obj == null)
                 return;
-            if (m_resetAction != null)
-                m_resetAction(obj);
-            m_objStack.Push(obj);
+            lock (this)
+            {
+                if (m_resetAction != null)
+                    m_resetAction(obj);
+                m_objStack.Push(obj);
+            }
         }
 
         // 少用，调用这个池的作用就没有了

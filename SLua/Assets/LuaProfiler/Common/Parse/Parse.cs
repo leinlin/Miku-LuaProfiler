@@ -63,8 +63,8 @@ namespace MikuLuaProfiler
                             var hisToken = history[index];
                             while (hisToken is JumpToken)
                             {
+                                index--; 
                                 if (index < 0) break;
-                                index--;
                                 hisToken = history[index];
                             }
                             isForward = hisToken.TokenType == (int)'=';

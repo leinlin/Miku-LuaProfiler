@@ -437,12 +437,27 @@ namespace MikuLuaProfiler
 
         private void LoadHistoryRootSample(Sample sample)
         {
-            m_historySamplesQueue.Enqueue(sample);
+            lock (this)
+            {
+                m_historySamplesQueue.Enqueue(sample);
+            }
         }
 
         private void LoadRootSample(Sample sample)
         {
-            m_runningSamplesQueue.Enqueue(sample);
+            lock (this)
+            {
+                foreach (var item in m_runningSamplesQueue)
+                {
+                    if (item.name == sample.name)
+                    {
+                        item.AddSample(sample);
+                        sample.Restore();
+                        return;
+                    }
+                }
+                m_runningSamplesQueue.Enqueue(sample);
+            }
         }
 
         public int GetNextProgramFrame(int start)
@@ -572,22 +587,35 @@ namespace MikuLuaProfiler
             }
         }
 
-        const int MAX_DEAL_COUNT = 5;
+        const int MAX_DEAL_COUNT = 1024;
         protected override TreeViewItem BuildRoot()
         {
             if (m_runningSamplesQueue.Count > 0)
             {
-                Sample s = m_runningSamplesQueue.Dequeue();
-                LoadRootSample(s, LuaDeepProfilerSetting.Instance.isRecord);
-                s.Restore();
+                int delNum = 0;
+                while (m_runningSamplesQueue.Count > 0 && delNum < MAX_DEAL_COUNT)
+                {
+                    Sample s = null;
+                    lock (this)
+                    {
+                        s = m_runningSamplesQueue.Dequeue();
+                        LoadRootSample(s, LuaDeepProfilerSetting.Instance.isRecord);
+                        s.Restore();
+                    }
+                    delNum++;
+                }
             }
             else if (m_historySamplesQueue.Count > 0)
             {
                 int delNum = 0;
                 while (m_historySamplesQueue.Count > 0 && delNum < MAX_DEAL_COUNT)
                 {
-                    Sample s = m_historySamplesQueue.Dequeue();
-                    LoadRootSample(s, false);
+                    lock (this)
+                    {
+                        Sample s = m_historySamplesQueue.Dequeue();
+                        LoadRootSample(s, false);
+                    }
+                    delNum++;
                 }
                 if (m_historySamplesQueue.Count == 0)
                 {

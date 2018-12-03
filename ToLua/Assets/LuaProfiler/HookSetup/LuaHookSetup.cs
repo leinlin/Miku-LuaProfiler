@@ -182,8 +182,7 @@ namespace MikuLuaProfiler
                     try
                     {
                         string fileName = name.Replace(".lua", "");
-
-                        fileName = name.Replace("@", "").Replace('.', '/');
+                        fileName = fileName.Replace("@", "").Replace('.', '/');
                         if (buff[0] == 239 && buff[1] == 187 && buff[2] == 191)
                         {// utf-8
                             value = Encoding.UTF8.GetString(buff, 3, buff.Length - 3);
