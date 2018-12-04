@@ -1,3 +1,4 @@
+#define TOLUA
 /*
 * ==============================================================================
 * Filename: LuaHookSetup
@@ -6,10 +7,9 @@
 * Purpose:  
 * ==============================================================================
 */
-
 //#define XLUA
 //#define TOLUA
-#define SLUA
+//#define SLUA
 
 #if UNITY_EDITOR
 using System;
