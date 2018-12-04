@@ -336,16 +336,69 @@ namespace MikuLuaProfiler
             LuaDLL.lua_rawset(L, -3);
             LuaLib.lua_setglobal(L, "MikuLuaProfiler");
 
-            LuaLib.lua_pushstdcallcfunction(L, BeginSample);
-            LuaLib.lua_setglobal(L, "BeginMikuSample");
-
-            LuaLib.lua_pushstdcallcfunction(L, EndSample);
-            LuaLib.lua_setglobal(L, "EndMikuSample");
-
             LuaLib.lua_pushstdcallcfunction(L, UnpackReturnValue);
             LuaLib.lua_setglobal(L, "miku_unpack_return_value");
-        }
 
+#if XLUA
+            DoString(L);
+#endif
+        }
+#if XLUA
+        private static void DoString(IntPtr L)
+        {
+            const string script = @"
+local function getfunction(level)
+    local info = debug.getinfo(level + 1, 'f')
+    return info and info.func
+end
+
+function setfenv(fn, env)
+    if type(fn) == 'number' then fn = getfunction(fn + 1) end
+    local i = 1
+    while true do
+    local name = debug.getupvalue(fn, i)
+    if name == '_ENV' then
+        debug.upvaluejoin(fn, i, (function()
+        return env
+        end), 1)
+        break
+    elseif not name then
+        break
+    end
+
+    i = i + 1
+    end
+
+    return fn
+end
+
+function getfenv(fn)
+    if type(fn) == 'number' then fn = getfunction(fn + 1) end
+    local i = 1
+    while true do
+    local name, val = debug.getupvalue(fn, i)
+    if name == '_ENV' then
+        return val
+    elseif not name then
+        break
+    end
+    i = i + 1
+    end
+end
+";
+            int oldTop = LuaDLL.lua_gettop(L);
+            int errFunc = LuaDLL.load_error_func(L, -1);
+            byte[] chunk = Encoding.UTF8.GetBytes(script);
+            if (LuaDLL.xluaL_loadbuffer(L, chunk, chunk.Length, "env") == 0)
+            {
+                if (LuaDLL.lua_pcall(L, 0, -1, errFunc) == 0)
+                {
+                    LuaDLL.lua_remove(L, errFunc);
+                }
+            }
+            LuaDLL.lua_settop(L, oldTop);
+        }
+#endif
         [MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]
         static int BeginSample(IntPtr L)
         {

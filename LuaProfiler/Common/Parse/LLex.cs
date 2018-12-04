@@ -78,6 +78,14 @@ namespace UniLua
             }
         }
 
+        public int Length
+        {
+            get
+            {
+                return Str.Length;
+            }
+        }
+
         public int PeekByte()
         {
             if (Pos >= Str.Length)
@@ -369,6 +377,14 @@ namespace UniLua
             Utl.Assert(LookAhead == null);
             LookAhead = _Lex();
             return LookAhead;
+        }
+
+        public int Length
+        {
+            get
+            {
+                return LoadInfo.Length;
+            }
         }
 
         public void Replace(int start, int end, string value)

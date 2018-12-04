@@ -68,5 +68,8 @@ function()
     return KuafuModule
 end
 
+if true then
+	return {};
+end
 
-return {}
+return Mathf

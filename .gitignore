@@ -33,3 +33,6 @@ manifest.json
 /XLua/Assets/XLua/Gen
 /XLua/XLua.userprefs
 
+/SLua/Assets/LuaProfiler/Common
+/ToLua/Assets/LuaProfiler/Common
+/XLua/Assets/LuaProfiler/Common

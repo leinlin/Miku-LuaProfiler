@@ -219,7 +219,7 @@ namespace MikuLuaProfiler
             LuaProfiler.SetSampleEnd(LoadRootSample);
             m_root = LuaProfilerTreeViewItem.Create(null, -1, null);
             needRebuild = true;
-            multiColumnHeader.sortingChanged += (multiColumnHeader) => { needRebuild = true; };
+            multiColumnHeader.sortingChanged += (header) => { needRebuild = true; };
             history.Clear();
             Reload();
         }

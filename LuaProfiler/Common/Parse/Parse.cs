@@ -181,15 +181,15 @@ namespace MikuLuaProfiler
                                 || tokenType == (int)TK.ELSE
                                 || tokenType == (int)TK.EOS)
                             {
-                                if (tokenType != (int)TK.EOS)
+                                if (lastPos != l.Length)
                                 {
                                     lastPos = lastPos - 1;
                                 }
 
                                 string returnStr = l.ReadString(insertPos, lastPos - 1);
                                 returnStr = " return miku_unpack_return_value(" + returnStr.Substring(6, returnStr.Length - 6) + ") ";
-
                                 l.Replace(insertPos, lastPos - 1, returnStr);
+
                                 nextPos = l.pos;
                                 if (tokenType == (int)TK.END)
                                 {
