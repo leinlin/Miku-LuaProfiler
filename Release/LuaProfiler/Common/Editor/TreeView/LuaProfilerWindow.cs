@@ -98,6 +98,7 @@ namespace MikuLuaProfiler
             {
                 LuaDeepProfilerSetting.Instance.isDeepProfiler = flag;
                 EditorApplication.isPlaying = false;
+                InjectMethods.Recompile();
             }
             GUILayout.Space(5);
 
@@ -106,6 +107,16 @@ namespace MikuLuaProfiler
             if (flag != LuaDeepProfilerSetting.Instance.profilerMono)
             {
                 LuaDeepProfilerSetting.Instance.profilerMono = flag;
+                EditorApplication.isPlaying = false;
+                InjectMethods.Recompile();
+            }
+            GUILayout.Space(5);
+
+            flag = GUILayout.Toggle(LuaDeepProfilerSetting.Instance.includeCSLua,
+                "Contain C# Lua", EditorStyles.toolbarButton, GUILayout.Height(30));
+            if (flag != LuaDeepProfilerSetting.Instance.includeCSLua)
+            {
+                LuaDeepProfilerSetting.Instance.includeCSLua = flag;
                 EditorApplication.isPlaying = false;
                 InjectMethods.Recompile();
             }

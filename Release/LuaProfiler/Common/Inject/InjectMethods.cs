@@ -10,13 +10,14 @@
 #if UNITY_EDITOR
 using Mono.Cecil;
 using Mono.Cecil.Cil;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Runtime;
+using System.Security.Cryptography;
 using UnityEditor;
-using UnityEngine;
 
 namespace MikuLuaProfiler
 {
@@ -29,6 +30,9 @@ namespace MikuLuaProfiler
         public static void InjectAllMethods()
         {
             string assemblyPath = "./Library/ScriptAssemblies/Assembly-CSharp.dll";
+            string md5 = GetMD5HashFromFile(assemblyPath);
+            if (md5 == LuaDeepProfilerSetting.Instance.assMd5) return;
+
             bool flag = File.Exists(assemblyPath + ".mdb");
             AssemblyDefinition assembly;
 
@@ -61,24 +65,29 @@ namespace MikuLuaProfiler
                 }
                 if (m.Name == "GetMethodLineString")
                 {
-                    m_getMethodString = m;
+                    m_getMethodString = m; 
                 }
             }
 
             var module = assembly.MainModule;
+            bool includeCSLua = LuaDeepProfilerSetting.Instance.includeCSLua;
             foreach (var type in assembly.MainModule.Types)
             {
                 if (type.FullName.Contains("MikuLuaProfiler"))
                 {
                     continue;
                 }
-                if (type.FullName.Contains("XLua")
-                    || type.FullName.Contains("SLua")
-                    || type.FullName.Contains("LuaInterface"))
+                if (!includeCSLua)
                 {
-                    if (!type.FullName.EndsWith("Wrap"))
-                        continue;
+                    if (type.FullName.Contains("XLua")
+                        || type.FullName.Contains("SLua")
+                        || type.FullName.Contains("LuaInterface"))
+                    {
+                        if (!type.FullName.EndsWith("Wrap"))
+                            continue;
+                    }
                 }
+
                 foreach (var item in type.Methods)
                 {
                     if (item.IsConstructor) continue;
@@ -98,10 +107,9 @@ namespace MikuLuaProfiler
             {
                 assembly.Write(assemblyPath);
             }
+            LuaDeepProfilerSetting.Instance.assMd5 = GetMD5HashFromFile(assemblyPath);
 
-            GCSettings.LargeObjectHeapCompactionMode = GCLargeObjectHeapCompactionMode.CompactOnce;
-            GCSettings.LatencyMode = GCLatencyMode.SustainedLowLatency;
-            Debug.Log("inject success");
+            GCSettings.LatencyMode = GCLatencyMode.LowLatency;
         }
 
         public static void Recompile()
@@ -127,6 +135,32 @@ namespace MikuLuaProfiler
             }
 
             PlayerSettings.SetScriptingDefineSymbolsForGroup(BuildTargetGroup.Standalone, path);
+        }
+
+        private static string GetMD5HashFromFile(string path)
+        {
+            if (!File.Exists(path))
+                throw new ArgumentException(string.Format("<{0}>, 不存在", path));
+            int bufferSize = 1024 * 1024;//自定义缓冲区大小16K 
+            byte[] buffer = new byte[bufferSize];
+            Stream inputStream = File.Open(path, FileMode.Open, FileAccess.Read, FileShare.Read);
+            HashAlgorithm hashAlgorithm = new MD5CryptoServiceProvider();
+            int readLength = 0;//每次读取长度 
+            var output = new byte[bufferSize];
+            while ((readLength = inputStream.Read(buffer, 0, buffer.Length)) > 0)
+            {
+                //计算MD5 
+                hashAlgorithm.TransformBlock(buffer, 0, readLength, output, 0);
+            }
+            //完成最后计算，必须调用(由于上一部循环已经完成所有运算，所以调用此方法时后面的两个参数都为0) 
+            hashAlgorithm.TransformFinalBlock(buffer, 0, 0);
+            string md5 = BitConverter.ToString(hashAlgorithm.Hash);
+            hashAlgorithm.Clear();
+            inputStream.Close();
+            inputStream.Dispose();
+
+            md5 = md5.Replace("-", "");
+            return md5;
         }
 
         private static void AddResolver(AssemblyDefinition assembly)

@@ -12,10 +12,11 @@ namespace MikuLuaProfiler
     using System.IO;
     using UnityEditor;
     using UnityEngine;
+    using System.Text;
 
-    public class LuaDeepProfilerSetting : ScriptableObject
+    public class LuaDeepProfilerSetting
     {
-        public const string SettingsAssetName = "LuaDeepProfilerSettings";
+        public const string SettingsAssetName = "LuaDeepProfilerSettings.config";
         private static LuaDeepProfilerSetting instance;
         public static LuaDeepProfilerSetting Instance
         {
@@ -23,21 +24,12 @@ namespace MikuLuaProfiler
             {
                 if (instance == null)
                 {
-                    instance = AssetDatabase.LoadAssetAtPath<LuaDeepProfilerSetting>("Assets/" + SettingsAssetName + ".asset");
-                    if (instance == null)
-                    {
-                        Debug.Log("Lua Profiler: cannot find integration settings, creating default settings");
-                        instance = CreateInstance<LuaDeepProfilerSetting>();
-                        instance.name = "Lua Profiler Integration Settings";
-#if UNITY_EDITOR
-                        AssetDatabase.CreateAsset(instance, "Assets/" + SettingsAssetName + ".asset");
-#endif
-                    }
+                    instance = Load(); 
                 }
                 return instance;
             }
         }
-        [SerializeField]
+
         private bool m_isDeepProfiler = false;
         public bool isDeepProfiler
         {
@@ -47,15 +39,16 @@ namespace MikuLuaProfiler
             }
             set
             {
+                if (m_isDeepProfiler == value) return;
                 m_isDeepProfiler = value;
                 if (value && LuaDeepProfilerSetting.Instance.isRecord)
                 {
                     GameViewUtility.ChangeGameViewSize(480, 270);
                 }
+                Save();
             }
         }
 
-        [SerializeField]
         private int m_captureGC = 50 * 1024;
         public int captureGC
         {
@@ -67,11 +60,10 @@ namespace MikuLuaProfiler
             {
                 if (m_captureGC == value) return;
                 m_captureGC = value;
-                EditorUtility.SetDirty(this);
+                Save();
             }
         }
 
-        [SerializeField]
         private bool m_profilerMono = true;
         public bool profilerMono
         {
@@ -83,11 +75,25 @@ namespace MikuLuaProfiler
             {
                 if (m_profilerMono == value) return;
                 m_profilerMono = value;
-                //EditorUtility.SetDirty(this);
+                Save();
             }
         }
 
-        [SerializeField]
+        private bool m_includeCSLua = false;
+        public bool includeCSLua
+        {
+            get
+            {
+                return m_includeCSLua;
+            }
+            set
+            {
+                if (m_includeCSLua == value) return;
+                m_includeCSLua = value;
+                Save();
+            }
+        }
+
         private bool m_isRecord = false;
         public bool isRecord
         {
@@ -97,11 +103,12 @@ namespace MikuLuaProfiler
             }
             set
             {
+                if (m_isRecord == value) return;
                 m_isRecord = value;
+                Save();
             }
         }
 
-        [SerializeField]
         private bool m_isNeedRecord = true;
         public bool isNeedRecord
         {
@@ -111,8 +118,72 @@ namespace MikuLuaProfiler
             }
             set
             {
+                if (m_isNeedRecord == value) return;
                 m_isNeedRecord = value;
+                Save();
             }
+        }
+
+        private string m_assMd5 = "";
+        public string assMd5
+        {
+            get
+            {
+                return m_assMd5;
+            }
+            set
+            {
+                if (m_assMd5 == value) return;
+                m_assMd5 = value;
+                Save();
+            }
+        }
+        public void Save()
+        {
+            FileStream fs = new FileStream(SettingsAssetName, FileMode.Create);
+            BinaryWriter b = new BinaryWriter(fs);
+
+            b.Write(m_isDeepProfiler);
+            b.Write(m_captureGC);
+            b.Write(m_profilerMono);
+            b.Write(m_includeCSLua);
+            b.Write(m_isRecord);
+            b.Write(m_isNeedRecord);
+
+            byte[] datas = Encoding.UTF8.GetBytes(m_assMd5);
+            b.Write(datas.Length);
+            b.Write(datas);
+
+            b.Close();
+        }
+
+        public static LuaDeepProfilerSetting Load()
+        {
+            LuaDeepProfilerSetting result = new LuaDeepProfilerSetting();
+
+            if (File.Exists(SettingsAssetName))
+            {
+                FileStream fs = new FileStream(SettingsAssetName, FileMode.OpenOrCreate);
+                BinaryReader b = new BinaryReader(fs);
+
+                result.m_isDeepProfiler = b.ReadBoolean();
+                result.m_captureGC = b.ReadInt32();
+                result.m_profilerMono = b.ReadBoolean();
+                result.m_includeCSLua = b.ReadBoolean();
+                result.m_isRecord = b.ReadBoolean();
+                result.m_isNeedRecord = b.ReadBoolean();
+
+                int len = b.ReadInt32();
+                result.m_assMd5 = Encoding.UTF8.GetString(b.ReadBytes(len));
+
+                b.Close();
+            }
+            else
+            {
+                result.Save();
+            }
+
+            return result;
         }
 
         //[MenuItem("LuaProfiler/ExportFiles", priority = 10)]
@@ -151,12 +222,6 @@ namespace MikuLuaProfiler
             Debug.LogFormat("cost time: {0} ms", watch.ElapsedMilliseconds);
 
             EditorUtility.ClearProgressBar();
-            Selection.activeObject = Instance;
-#if UNITY_2018_2_OR_NEWER
-            EditorApplication.ExecuteMenuItem("Window/General/Inspector");
-#else
-            EditorApplication.ExecuteMenuItem("Window/Inspector");
-#endif
         }
     }
 }

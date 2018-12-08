@@ -529,7 +529,7 @@ namespace MikuLuaProfiler
                 Sample item = null;
                 if (m_runingSampleDict.TryGetValue(sample.name, out item))
                 {
-                    item.AddSample(sample);
+                    item.AddSample(sample); 
                     sample.Restore();
                     return;
                 }

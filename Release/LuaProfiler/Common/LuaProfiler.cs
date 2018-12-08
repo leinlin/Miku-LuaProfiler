@@ -54,7 +54,6 @@ namespace MikuLuaProfiler
         public static readonly List<Sample> beginSampleMemoryStack = new List<Sample>();
 
         private static Action<Sample> m_SampleEndAction;
-
         public static void SetSampleEnd(Action<Sample> action)
         {
             m_SampleEndAction = action;
@@ -68,30 +67,49 @@ namespace MikuLuaProfiler
             {
                 System.Diagnostics.StackTrace st = new System.Diagnostics.StackTrace(true);
                 System.Diagnostics.StackFrame sf = st.GetFrame(1);
-                string fileName = sf.GetFileName().Replace(Environment.CurrentDirectory, "").Replace("\\", "/");
-                fileName = fileName.Substring(1, fileName.Length - 1);
-                methodName = string.Format("{0},line:{1} {2}::{3}",
-                    fileName, sf.GetFileLineNumber(), m.ReflectedType.FullName, m.Name);
+                if (sf != null)
+                {
+                    string fileName = sf.GetFileName();
+                    if (!string.IsNullOrEmpty(fileName))
+                    {
+                        fileName = fileName.Replace(Environment.CurrentDirectory, "").Replace("\\", "/");
+                        fileName = fileName.Substring(1, fileName.Length - 1);
+                        methodName = string.Format("{0},line:{1} {2}::{3}",
+                            fileName, sf.GetFileLineNumber(), m.ReflectedType.FullName, m.Name);
+                    }
+
+                }
+                
+                if(string.IsNullOrEmpty(methodName))
+                {
+                    methodName = methodName = string.Format("{0}::{1}", m.ReflectedType.FullName, m.Name);
+                }
                 m_methodNameDict.Add(m, methodName);
             }
 
             return methodName;
         }
-        static int mainThreadId = System.Threading.Thread.CurrentThread.ManagedThreadId;
 
-        // If called in the non main thread, will return false;
-        public static bool IsMainThread
-        {
-            get { return System.Threading.Thread.CurrentThread.ManagedThreadId == mainThreadId; }
-        }
-
+        private static object m_lock = 1;
         public static void BeginSampleCSharp(string name)
         {
-            BeginSample(_mainL, name);
+#if UNITY_EDITOR
+            if (!HookLuaUtil.isPlaying) return;
+#endif
+            lock (m_lock)
+            {
+                BeginSample(_mainL, name);
+            }
         }
         public static void EndSampleCSharp()
         {
-            EndSample(_mainL);
+#if UNITY_EDITOR
+            if (!HookLuaUtil.isPlaying) return;
+#endif
+            lock (m_lock)
+            {
+                EndSample(_mainL);
+            }
         }
         public static int m_frameCount = 0;
         public static long getcurrentTime
@@ -103,10 +121,7 @@ namespace MikuLuaProfiler
         }
         public static void BeginSample(IntPtr luaState, string name)
         {
-            if (IsMainThread)
-            {
-                m_frameCount = Time.frameCount;
-            }
+            m_frameCount = HookLuaUtil.frameCount;
 
             if (m_currentFrame != m_frameCount)
             {
@@ -117,7 +132,6 @@ namespace MikuLuaProfiler
 #if DEBUG
             long memoryCount = LuaLib.GetLuaMemory(luaState);
             Sample sample = Sample.Create(getcurrentTime, memoryCount, name);
-
             beginSampleMemoryStack.Add(sample);
 #endif
         }
@@ -150,7 +164,7 @@ namespace MikuLuaProfiler
             var monoGC = GC.GetTotalMemory(false) - sample.currentMonoMemory;
             var luaGC = nowMemoryCount - sample.currentLuaMemory;
             sample.costLuaGC = luaGC > 0 ? luaGC : 0;
-            sample.costMonoGC = monoGC > 0? monoGC: 0;
+            sample.costMonoGC = monoGC > 0 ? monoGC : 0;
 
             sample.fahter = count > 1 ? beginSampleMemoryStack[count - 2] : null;
 
@@ -159,7 +173,7 @@ namespace MikuLuaProfiler
                 if (LuaDeepProfilerSetting.Instance.isRecord && LuaDeepProfilerSetting.Instance.isNeedRecord)
                 {
                     //迟钝了
-                    if (sample.costTime >= (1 / 30.0f)* 10000000)
+                    if (sample.costTime >= (1 / 30.0f) * 10000000)
                     {
                         sample.captureUrl = Sample.Capture();
                     }

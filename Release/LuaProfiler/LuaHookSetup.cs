@@ -44,7 +44,8 @@ namespace MikuLuaProfiler
     public static class HookLuaUtil
     {
         private static MethodHooker hookNewLuaEnv;
-
+        public static int frameCount { private set; get; }
+        public static bool isPlaying { private set; get; }
         static HookLuaUtil()
         {
             if (hookNewLuaEnv == null)
@@ -63,17 +64,25 @@ namespace MikuLuaProfiler
                 clickProxy = envReplace.GetMethod("ProxyClose", BindingFlags.Public | BindingFlags.Static);
                 hookNewLuaEnv = new MethodHooker(newstateFun, clickReplace, clickProxy);
                 hookNewLuaEnv.Install();
+
+                if (LuaDeepProfilerSetting.Instance.isDeepProfiler && LuaDeepProfilerSetting.Instance.profilerMono)
+                {
+                    InjectMethods.InjectAllMethods();
+                }
+
+                EditorApplication.update += () =>
+                {
+                    frameCount = Time.frameCount;
+                };
             }
-            if (LuaDeepProfilerSetting.Instance.isDeepProfiler && LuaDeepProfilerSetting.Instance.profilerMono)
-            {
-                InjectMethods.InjectAllMethods();
-            }
+
         }
 
         public static class LuaEnvReplace
         {
             public static void lua_close(IntPtr luaState)
             {
+                isPlaying = false;
                 if (LuaProfiler.mainL == luaState)
                 {
                     LuaProfiler.mainL = IntPtr.Zero;
@@ -92,6 +101,7 @@ namespace MikuLuaProfiler
                 LuaProfiler.mainL = l;
                 if (LuaDeepProfilerSetting.Instance.isDeepProfiler)
                 {
+                    isPlaying = true;
                     MikuLuaProfilerLuaProfilerWrap.__Register(l);
                     Install();
                     if (LuaDeepProfilerSetting.Instance.isRecord)

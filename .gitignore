@@ -22,8 +22,7 @@ UnityVS
 
 ToLua/Assets/Source/Generate/*Wrap*
 ToLua/Assets/Source/Generate/*Wrap*
-/Assets/LuaDeepProfilerSettings.asset
-/Assets/LuaDeepProfilerSettings.asset.meta
+LuaDeepProfilerSettings.config
 obj
 Packages
 manifest.json
