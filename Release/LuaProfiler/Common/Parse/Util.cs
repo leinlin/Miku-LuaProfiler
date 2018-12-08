@@ -4,7 +4,7 @@
 
 using System;
 
-namespace UniLua
+namespace MikuLuaProfiler
 {
 	using DebugS = System.Diagnostics.Debug;
 	using NumberStyles = System.Globalization.NumberStyles;

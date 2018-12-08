@@ -71,6 +71,7 @@ namespace MikuLuaProfiler
         {
             EditorGUILayout.BeginVertical();
             DoToolbar();
+            GUILayout.Space(20);
             DoRecord();
             DoCapture();
             DoTreeView();
@@ -92,11 +93,21 @@ namespace MikuLuaProfiler
 
             #region deep
             bool flag = GUILayout.Toggle(LuaDeepProfilerSetting.Instance.isDeepProfiler,
-                "Deep Profiler", EditorStyles.toolbarButton, GUILayout.Height(30));
+                "Deep Profiler Lua", EditorStyles.toolbarButton, GUILayout.Height(30));
             if (flag != LuaDeepProfilerSetting.Instance.isDeepProfiler)
             {
                 LuaDeepProfilerSetting.Instance.isDeepProfiler = flag;
                 EditorApplication.isPlaying = false;
+            }
+            GUILayout.Space(5);
+
+            flag = GUILayout.Toggle(LuaDeepProfilerSetting.Instance.profilerMono,
+                "Include Mono", EditorStyles.toolbarButton, GUILayout.Height(30));
+            if (flag != LuaDeepProfilerSetting.Instance.profilerMono)
+            {
+                LuaDeepProfilerSetting.Instance.profilerMono = flag;
+                EditorApplication.isPlaying = false;
+                InjectMethods.Recompile();
             }
             GUILayout.Space(5);
             #endregion
@@ -157,6 +168,15 @@ namespace MikuLuaProfiler
             {
                 LocalToLuaIDE.ClearPath();
             }
+            GUILayout.Space(100);
+            if (GUILayout.Button("Save Result", EditorStyles.toolbarButton, GUILayout.Height(30)))
+            {
+                m_TreeView.SaveResult();
+            }
+            if (GUILayout.Button("Load Result", EditorStyles.toolbarButton, GUILayout.Height(30)))
+            {
+                m_TreeView.LoadHistory();
+            }
             #endregion
 
             #region gc value
@@ -176,8 +196,6 @@ namespace MikuLuaProfiler
         void DoRecord()
         {
             if (!LuaDeepProfilerSetting.Instance.isRecord) return;
-
-            GUILayout.Space(5);
 
             EditorGUILayout.BeginHorizontal(EditorStyles.toolbar);
 

@@ -12,10 +12,15 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEditorInternal;
+using System.Reflection;
+using System.Reflection.Emit;
+#if UNITY_5_5_OR_NEWER
+using UnityEngine.Profiling;
+#endif
 
 namespace MikuLuaProfiler
 {
-    public class LuaProfiler
+    public static class LuaProfiler
     {
         private static IntPtr _mainL = IntPtr.Zero;
         public static IntPtr mainL
@@ -55,17 +60,63 @@ namespace MikuLuaProfiler
             m_SampleEndAction = action;
         }
         private static int m_currentFrame = 0;
+        private static Dictionary<MethodBase, string> m_methodNameDict = new Dictionary<MethodBase, string>(4096);
+        public static string GetMethodLineString(MethodBase m)
+        {
+            string methodName = "";
+            if (!m_methodNameDict.TryGetValue(m, out methodName))
+            {
+                System.Diagnostics.StackTrace st = new System.Diagnostics.StackTrace(true);
+                System.Diagnostics.StackFrame sf = st.GetFrame(1);
+                string fileName = sf.GetFileName().Replace(Environment.CurrentDirectory, "").Replace("\\", "/");
+                fileName = fileName.Substring(1, fileName.Length - 1);
+                methodName = string.Format("{0},line:{1} {2}::{3}",
+                    fileName, sf.GetFileLineNumber(), m.ReflectedType.FullName, m.Name);
+                m_methodNameDict.Add(m, methodName);
+            }
+
+            return methodName;
+        }
+        static int mainThreadId = System.Threading.Thread.CurrentThread.ManagedThreadId;
+
+        // If called in the non main thread, will return false;
+        public static bool IsMainThread
+        {
+            get { return System.Threading.Thread.CurrentThread.ManagedThreadId == mainThreadId; }
+        }
+
+        public static void BeginSampleCSharp(string name)
+        {
+            BeginSample(_mainL, name);
+        }
+        public static void EndSampleCSharp()
+        {
+            EndSample(_mainL);
+        }
+        public static int m_frameCount = 0;
+        public static long getcurrentTime
+        {
+            get
+            {
+                return DateTime.UtcNow.Ticks;
+            }
+        }
         public static void BeginSample(IntPtr luaState, string name)
         {
-            if (m_currentFrame != Time.frameCount)
+            if (IsMainThread)
+            {
+                m_frameCount = Time.frameCount;
+            }
+
+            if (m_currentFrame != m_frameCount)
             {
                 PopAllSampleWhenLateUpdate();
-                m_currentFrame = Time.frameCount;
+                m_currentFrame = m_frameCount;
             }
 
 #if DEBUG
             long memoryCount = LuaLib.GetLuaMemory(luaState);
-            Sample sample = Sample.Create(Time.realtimeSinceStartup, memoryCount, name);
+            Sample sample = Sample.Create(getcurrentTime, memoryCount, name);
 
             beginSampleMemoryStack.Add(sample);
 #endif
@@ -82,6 +133,7 @@ namespace MikuLuaProfiler
             }
             beginSampleMemoryStack.Clear();
         }
+
         public static void EndSample(IntPtr luaState)
         {
 #if DEBUG
@@ -94,9 +146,11 @@ namespace MikuLuaProfiler
             beginSampleMemoryStack.RemoveAt(count - 1);
             long nowMemoryCount = LuaLib.GetLuaMemory(luaState);
 
-            sample.costTime = Time.realtimeSinceStartup - sample.currentTime;
-            var gc = nowMemoryCount - sample.currentLuaMemory;
-            sample.costGC = gc > 0 ? gc : 0;
+            sample.costTime = getcurrentTime - sample.currentTime;
+            var monoGC = GC.GetTotalMemory(false) - sample.currentMonoMemory;
+            var luaGC = nowMemoryCount - sample.currentLuaMemory;
+            sample.costLuaGC = luaGC > 0 ? luaGC : 0;
+            sample.costMonoGC = monoGC > 0? monoGC: 0;
 
             sample.fahter = count > 1 ? beginSampleMemoryStack[count - 2] : null;
 
@@ -105,11 +159,11 @@ namespace MikuLuaProfiler
                 if (LuaDeepProfilerSetting.Instance.isRecord && LuaDeepProfilerSetting.Instance.isNeedRecord)
                 {
                     //迟钝了
-                    if (sample.costTime >= 1 / 30.0f)
+                    if (sample.costTime >= (1 / 30.0f)* 10000000)
                     {
                         sample.captureUrl = Sample.Capture();
                     }
-                    else if (sample.costGC > LuaDeepProfilerSetting.Instance.captureGC)
+                    else if (sample.costLuaGC > LuaDeepProfilerSetting.Instance.captureGC)
                     {
                         sample.captureUrl = Sample.Capture();
                     }

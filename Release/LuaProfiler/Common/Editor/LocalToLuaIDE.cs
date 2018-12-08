@@ -49,28 +49,31 @@ public class LocalToLuaIDE : Editor
             SetExternalProjectRootPath();
             projectRootPath = EditorUserSettings.GetConfigValue(LUA_PROJECT_ROOT_FOLDER_PATH_KEY);
         }
-        filePath = Path.Combine(projectRootPath.Trim(), filePath.Trim());//+ ".lua";
+        if (!File.Exists(filePath))
+        {
+            filePath = Path.Combine(projectRootPath.Trim(), filePath.Trim());//+ ".lua"; 
+            if (File.Exists(filePath + ".lua"))
+            {
+                filePath = filePath + ".lua";
+            }
+            else if (File.Exists(filePath + ".txt"))
+            {
+                filePath = filePath + ".txt";
+            }
+            else if (File.Exists(filePath + ".bytes"))
+            {
+                filePath = filePath + ".bytes";
+            }
+            //到处找Resources目录,找不到就在 unity 工程目录全部找一遍
+            else if (!GetResourcesPath(file, out filePath)
+                && !GetLuaPathInCurrentFile(file, out filePath)
+                )
+            {
+                Debug.LogError("this is chunk file");
+                return;
+            }
+        }
 
-        if (File.Exists(filePath + ".lua"))
-        {
-            filePath = filePath + ".lua";
-        }
-        else if (File.Exists(filePath + ".txt"))
-        {
-            filePath = filePath + ".txt";
-        }
-        else if (File.Exists(filePath + ".bytes"))
-        {
-            filePath = filePath + ".bytes";
-        }
-        //到处找Resources目录,找不到就在 unity 工程目录全部找一遍
-        else if(!GetResourcesPath(file, out filePath) 
-            && !GetLuaPathInCurrentFile(file, out filePath)
-            )
-        {
-            Debug.LogError("this is chunk file");
-            return;
-        }
 
         OpenFileAtLineExternal(filePath, line);
     }

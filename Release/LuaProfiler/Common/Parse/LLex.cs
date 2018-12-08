@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Text;
 using NumberStyles = System.Globalization.NumberStyles;
 
-namespace UniLua
+namespace MikuLuaProfiler
 {
     public class LLexException : Exception
     {

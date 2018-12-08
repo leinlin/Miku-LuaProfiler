@@ -1,5 +1,5 @@
 ﻿#if UNITY_EDITOR
-namespace UniLua
+namespace MikuLuaProfiler
 {
 	public static class LuaConf
 	{

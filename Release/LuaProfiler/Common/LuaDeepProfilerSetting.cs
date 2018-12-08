@@ -9,7 +9,6 @@
 #if UNITY_EDITOR
 namespace MikuLuaProfiler
 {
-    using System.Collections.Generic;
     using System.IO;
     using UnityEditor;
     using UnityEngine;
@@ -73,7 +72,23 @@ namespace MikuLuaProfiler
         }
 
         [SerializeField]
-        private bool m_isRecord = true;
+        private bool m_profilerMono = true;
+        public bool profilerMono
+        {
+            get
+            {
+                return m_profilerMono;
+            }
+            set
+            {
+                if (m_profilerMono == value) return;
+                m_profilerMono = value;
+                //EditorUtility.SetDirty(this);
+            }
+        }
+
+        [SerializeField]
+        private bool m_isRecord = false;
         public bool isRecord
         {
             get
@@ -123,7 +138,7 @@ namespace MikuLuaProfiler
                 EditorUtility.DisplayProgressBar("profiler lua", item.FullName, (float)process / count);
                 string allCode = File.ReadAllText(item.FullName);
                 watch.Start();
-                allCode = MikuLuaProfiler.Parse.InsertSample(allCode, "Template");
+                allCode = Parse.InsertSample(allCode, "Template");
                 watch.Stop();
                 string profilerPath = item.FullName.Replace(path, rootProfilerDirPath);
                 string profilerDirPath = profilerPath.Replace(item.Name, "");

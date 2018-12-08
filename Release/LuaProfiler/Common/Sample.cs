@@ -13,20 +13,23 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using UnityEngine;
+using UnityEngine.Profiling;
 
 namespace MikuLuaProfiler
 {
     public class Sample
     {
         public long currentLuaMemory;
+        public long currentMonoMemory;
         private string _fullName = null;
-        public float currentTime;
+        public long currentTime;
 
         public int calls;
         public int frameCount;
-        public long costGC;
+        public long costLuaGC;
+        public long costMonoGC;
         public string name;
-        public float costTime;
+        public long costTime;
         public Sample _father;
         public List<Sample> childs = new List<Sample>(256);
         public string captureUrl = null;
@@ -106,15 +109,17 @@ namespace MikuLuaProfiler
         private static string capturePath = "";
         private static Dictionary<string, Dictionary<string, string>> m_fullNamePool = new Dictionary<string, Dictionary<string, string>>();
         private static ObjectPool<Sample> samplePool = new ObjectPool<Sample>(250);
-        public static Sample Create(float time, long memory, string name)
+        public static Sample Create(long time, long memory, string name)
         {
             Sample s = samplePool.GetObject();
 
             s.calls = 1;
             s.currentTime = time;
             s.currentLuaMemory = memory;
-            s.frameCount = UnityEngine.Time.frameCount;
-            s.costGC = 0;
+            s.currentMonoMemory = GC.GetTotalMemory(false);
+            s.frameCount = LuaProfiler.m_frameCount;
+            s.costLuaGC = 0;
+            s.costMonoGC = 0;
             s.name = name;
             s.costTime = 0;
             s._fullName = null;
@@ -140,7 +145,8 @@ namespace MikuLuaProfiler
         public void AddSample(Sample s)
         {
             calls += s.calls;
-            costGC += s.costGC;
+            costLuaGC += s.costLuaGC;
+            costMonoGC += s.costMonoGC;
             costTime += s.costTime;
             for (int i =s.childs.Count -1;i>=0;i--)
             {
@@ -159,7 +165,7 @@ namespace MikuLuaProfiler
             Directory.CreateDirectory(capturePath);
 
             string result = capturePath + "/" + UnityEngine.Time.frameCount.ToString() + ".png";
-            Application.CaptureScreenshot(result, 0);
+            ScreenCapture.CaptureScreenshot(result, 0);
 
             return result;
         }
@@ -170,7 +176,7 @@ namespace MikuLuaProfiler
 
             s.calls = calls;
             s.frameCount = frameCount;
-            s.costGC = costGC;
+            s.costLuaGC = costLuaGC;
             s.name = name;
             s.costTime = costTime;
 
@@ -239,7 +245,8 @@ namespace MikuLuaProfiler
 
             b.Write(calls);
             b.Write(frameCount);
-            b.Write(costGC);
+            b.Write(costLuaGC);
+            b.Write(costMonoGC);
 
             byte[] datas = Encoding.UTF8.GetBytes(name);
             b.Write(datas.Length);
@@ -287,13 +294,14 @@ namespace MikuLuaProfiler
 
             s.calls = b.ReadInt32();
             s.frameCount = b.ReadInt32();
-            s.costGC = b.ReadInt64();
+            s.costLuaGC = b.ReadInt64();
+            s.costMonoGC = b.ReadInt64();
 
             int len = b.ReadInt32();
             byte[] datas = b.ReadBytes(len);
             s.name = Encoding.UTF8.GetString(datas);
 
-            s.costTime = b.ReadSingle();
+            s.costTime = b.ReadInt64();
 
             int childCount = b.ReadInt32();
             for (int i = 0; i < childCount; i++)

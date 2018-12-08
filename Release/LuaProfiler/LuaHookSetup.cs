@@ -1,4 +1,4 @@
-#define TOLUA
+#define XLUA
 /*
 * ==============================================================================
 * Filename: LuaHookSetup
@@ -64,6 +64,10 @@ namespace MikuLuaProfiler
                 hookNewLuaEnv = new MethodHooker(newstateFun, clickReplace, clickProxy);
                 hookNewLuaEnv.Install();
             }
+            if (LuaDeepProfilerSetting.Instance.isDeepProfiler && LuaDeepProfilerSetting.Instance.profilerMono)
+            {
+                InjectMethods.InjectAllMethods();
+            }
         }
 
         public static class LuaEnvReplace
@@ -85,11 +89,11 @@ namespace MikuLuaProfiler
             public static IntPtr luaL_newstate()
             {
                 IntPtr l = ProxyNewstate();
+                LuaProfiler.mainL = l;
                 if (LuaDeepProfilerSetting.Instance.isDeepProfiler)
                 {
                     MikuLuaProfilerLuaProfilerWrap.__Register(l);
                     Install();
-                    LuaProfiler.mainL = l;
                     if (LuaDeepProfilerSetting.Instance.isRecord)
                     {
                         GameViewUtility.ChangeGameViewSize(480, 270);
@@ -273,8 +277,11 @@ namespace MikuLuaProfiler
         {
             long result = 0;
 
-            result = LuaDLL.lua_gc(luaState, LuaGCOptions.LUA_GCCOUNT, 0);
-            result = result * 1024 + LuaDLL.lua_gc(luaState, LuaGCOptions.LUA_GCCOUNTB, 0);
+            if (luaState != IntPtr.Zero)
+            {
+                result = LuaDLL.lua_gc(luaState, LuaGCOptions.LUA_GCCOUNT, 0);
+                result = result * 1024 + LuaDLL.lua_gc(luaState, LuaGCOptions.LUA_GCCOUNTB, 0);
+            }
 
             return result;
         }
