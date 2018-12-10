@@ -42,6 +42,8 @@ namespace MikuLuaProfiler
         }
 
         public int frameCalls { private set; get; }
+
+        private long _showLuaGC = 0;
         public long showLuaGC
         {
             get
@@ -54,11 +56,12 @@ namespace MikuLuaProfiler
 
                 if (Mathf.Abs(Time.frameCount - _frameCount) <= 30)
                 {
-                    return totalLuaMemory / totalCallTime;
+                    return _showLuaGC;
                 }
                 else { return 0; }
             }
         }
+        private long _showMonoGC = 0;
         public long showMonoGC
         {
             get
@@ -71,8 +74,7 @@ namespace MikuLuaProfiler
 
                 if (Mathf.Abs(Time.frameCount - _frameCount) <= 30)
                 {
-                    long gc = totalMonoMemory / totalCallTime;
-                    return gc > 10 ? gc : 0;
+                    return _showMonoGC;
                 }
                 else { return 0; }
             }
@@ -112,6 +114,8 @@ namespace MikuLuaProfiler
                 int.TryParse(Regex.Match(sample.name, @"(?<=(line:))\d*(?=(&))").Value, out tmpLine);
                 line = tmpLine;
 
+                _showMonoGC = sample.costMonoGC;
+                _showLuaGC = sample.costLuaGC;
                 totalMonoMemory = sample.costMonoGC;
                 totalLuaMemory = sample.costLuaGC;
                 totalTime = sample.costTime;
@@ -133,6 +137,8 @@ namespace MikuLuaProfiler
             }
             else
             {
+                _showMonoGC = 0;
+                _showLuaGC = 0;
                 totalMonoMemory = 0;
                 totalLuaMemory = 0;
                 totalTime = 0;
@@ -163,8 +169,11 @@ namespace MikuLuaProfiler
                     }
                     else
                     {
-                        var item = Create(sample.childs[i], depth + 1, this);
-                        childs.Add(item);
+                        if (LuaProfilerTreeView.CheckSampleValid(sample))
+                        {
+                            var item = Create(sample.childs[i], depth + 1, this);
+                            childs.Add(item);
+                        }
                     }
                 }
             }
@@ -188,12 +197,17 @@ namespace MikuLuaProfiler
             {
                 frameCalls += sample.calls;
                 currentTime += sample.costTime;
+                _showMonoGC += sample.costMonoGC;
+                _showLuaGC += sample.costLuaGC;
             }
             else
             {
                 frameCalls = sample.calls;
                 currentTime = sample.costTime;
+                _showMonoGC = sample.costMonoGC;
+                _showLuaGC = sample.costLuaGC;
             }
+
             totalLuaMemory += sample.costLuaGC;
             totalMonoMemory += sample.costMonoGC;
 
@@ -210,8 +224,11 @@ namespace MikuLuaProfiler
                 }
                 else
                 {
-                    var treeItem = Create(sampleChild, depth + 1, this);
-                    childs.Add(treeItem);
+                    if (LuaProfilerTreeView.CheckSampleValid(sample))
+                    {
+                        var treeItem = Create(sampleChild, depth + 1, this);
+                        childs.Add(treeItem);
+                    }
                 }
             }
             _frameCount = Time.frameCount;
@@ -292,9 +309,9 @@ namespace MikuLuaProfiler
                     headerTextAlignment = TextAlignment.Left,
                     sortedAscending = false,
                     sortingArrowAlignment = TextAlignment.Right,
-                    width = 500,
+                    width = 300,
                     minWidth = 200,
-                    maxWidth = 2000,
+                    maxWidth = 1000,
                     autoResize = true,
                     canSort = false,
                     allowToggleVisibility = true
@@ -548,7 +565,13 @@ namespace MikuLuaProfiler
         {
             lock (this)
             {
+                if (!CheckSampleValid(sample))
+                {
+                    sample.Restore();
+                    return;
+                }
                 Sample item = null;
+
                 if (m_runingSampleDict.TryGetValue(sample.name, out item))
                 {
                     item.AddSample(sample); 
@@ -572,7 +595,7 @@ namespace MikuLuaProfiler
                 {
                     break;
                 }
-                else if (s.costTime >= 1 / 30.0f)
+                else if (s.costTime >= 1 / 30.0f * 10000000)
                 {
                     break;
                 }
@@ -593,13 +616,43 @@ namespace MikuLuaProfiler
                 {
                     break;
                 }
-                else if (s.costTime >= 1 / 30.0f)
+                else if (s.costTime >= 1 / 30.0f * 10000000)
                 {
                     break;
                 }
             }
 
             return Mathf.Max(Mathf.Min(ret, history.Count - 1), 0);
+        }
+
+        public static bool CheckSampleValid(Sample sample)
+        {
+            bool result = false;
+
+            do
+            {
+                if (sample.costLuaGC > 0)
+                {
+                    result = true;
+                    break;
+                }
+
+                if (sample.costMonoGC > 0)
+                {
+                    result = true;
+                    break;
+                }
+
+                if (sample.costTime > 100000)
+                {
+                    result = true;
+                    break;
+                }
+
+            } while (false);
+
+
+            return result;
         }
 
         private void LoadRootSample(Sample sample, bool needRecord)
@@ -610,17 +663,25 @@ namespace MikuLuaProfiler
             if (m_nodeDict.TryGetValue(f, out item))
             {
                 item.AddSample(sample);
+                if (needRecord)
+                {
+                    history.Add(sample.Clone());
+                }
             }
             else
             {
-                item = LuaProfilerTreeViewItem.Create(sample, 0, null);
-                roots.Add(item);
-                needRebuild = true;
+                if (CheckSampleValid(sample))
+                {
+                    item = LuaProfilerTreeViewItem.Create(sample, 0, null);
+                    roots.Add(item);
+                    needRebuild = true;
+                    if (needRecord)
+                    {
+                        history.Add(sample.Clone());
+                    }
+                }
             }
-            if (needRecord)
-            {
-                history.Add(sample.Clone());
-            }
+
         }
 
         private void ReLoadTreeItems()
@@ -631,7 +692,7 @@ namespace MikuLuaProfiler
             int sign = 0;
             if (sortIndex > 0)
             {
-                sign = multiColumnHeader.IsSortedAscending(sortIndex) ? -1 : 1;
+                sign = multiColumnHeader.IsSortedAscending(sortIndex) ? 1 : -1;
             }
             switch (sortIndex)
             {
@@ -647,31 +708,35 @@ namespace MikuLuaProfiler
             }
             foreach (var item in rootList)
             {
+                SortChildren(sortIndex, item);
+            }
+            foreach (var item in rootList)
+            {
                 AddOneNode(item);
-                SortChildren(sortIndex, sign, item);
             }
         }
 
-        private void SortChildren(int sortIndex, int sign, LuaProfilerTreeViewItem item)
+        private void SortChildren(int sortIndex, LuaProfilerTreeViewItem item)
         {
+            int sign = -1;
             if (item.childs != null && item.childs.Count > 0)
             {
-                List<LuaProfilerTreeViewItem> rootList = item.childs;
+                List<LuaProfilerTreeViewItem> childList = item.childs;
                 switch (sortIndex)
                 {
-                    case 1: rootList.Sort((a, b) => { return sign * Math.Sign(a.totalLuaMemory - b.totalLuaMemory); }); break;
-                    case 2: rootList.Sort((a, b) => { return sign * Math.Sign(a.totalMonoMemory - b.totalMonoMemory); }); break;
-                    case 3: rootList.Sort((a, b) => { return sign * Math.Sign(a.currentTime - b.currentTime); }); break;
-                    case 4: rootList.Sort((a, b) => { return sign * Math.Sign(a.averageTime - b.averageTime); }); break;
-                    case 5: rootList.Sort((a, b) => { return sign * Math.Sign(a.totalTime - b.totalTime); }); break;
-                    case 6: rootList.Sort((a, b) => { return sign * Math.Sign(a.showLuaGC - b.showLuaGC); }); break;
-                    case 7: rootList.Sort((a, b) => { return sign * Math.Sign(a.showMonoGC - b.showMonoGC); }); break;
-                    case 8: rootList.Sort((a, b) => { return sign * Math.Sign(a.totalCallTime - b.totalCallTime); }); break;
-                    case 9: rootList.Sort((a, b) => { return sign * Math.Sign(a.frameCalls - b.frameCalls); }); break;
+                    case 1: childList.Sort((a, b) => { return sign * Math.Sign(a.totalLuaMemory - b.totalLuaMemory); }); break;
+                    case 2: childList.Sort((a, b) => { return sign * Math.Sign(a.totalMonoMemory - b.totalMonoMemory); }); break;
+                    case 3: childList.Sort((a, b) => { return sign * Math.Sign(a.currentTime - b.currentTime); }); break;
+                    case 4: childList.Sort((a, b) => { return sign * Math.Sign(a.averageTime - b.averageTime); }); break;
+                    case 5: childList.Sort((a, b) => { return sign * Math.Sign(a.totalTime - b.totalTime); }); break;
+                    case 6: childList.Sort((a, b) => { return sign * Math.Sign(a.showLuaGC - b.showLuaGC); }); break;
+                    case 7: childList.Sort((a, b) => { return sign * Math.Sign(a.showMonoGC - b.showMonoGC); }); break;
+                    case 8: childList.Sort((a, b) => { return sign * Math.Sign(a.totalCallTime - b.totalCallTime); }); break;
+                    case 9: childList.Sort((a, b) => { return sign * Math.Sign(a.frameCalls - b.frameCalls); }); break;
                 }
-                foreach (var t in rootList)
+                foreach (var t in childList)
                 {
-                    SortChildren(sortIndex, sign, t);
+                    SortChildren(sortIndex, t);
                 }
             }
         }
@@ -720,13 +785,6 @@ namespace MikuLuaProfiler
                     }
                     delNum++;
                 }
-                if (m_historySamplesQueue.Count == 0)
-                {
-                    foreach (var t in roots)
-                    {
-                        ExpandNodeRecursive(t);
-                    }
-                }
             }
 
             if (!needRebuild)
@@ -739,15 +797,6 @@ namespace MikuLuaProfiler
             needRebuild = false;
             // Return root of the tree
             return m_root;
-        }
-
-        private void ExpandNodeRecursive(LuaProfilerTreeViewItem t)
-        {
-            SetExpanded(t.id, true);
-            foreach (var child in t.childs)
-            {
-                ExpandNodeRecursive(child);
-            }
         }
 
         protected override void RowGUI(RowGUIArgs args)

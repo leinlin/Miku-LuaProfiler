@@ -17,7 +17,6 @@ namespace MikuLuaProfiler
 
     public class LuaDeepProfilerSetting
     {
-        public static string path = "";
         public const string SettingsAssetName = "LuaDeepProfilerSettings.config";
         private static LuaDeepProfilerSetting instance;
         public static LuaDeepProfilerSetting Instance
@@ -189,13 +188,7 @@ namespace MikuLuaProfiler
 
         public void Save()
         {
-            if (string.IsNullOrEmpty(path))
-            {
-                System.Diagnostics.StackTrace st = new System.Diagnostics.StackTrace(true);
-                System.Diagnostics.StackFrame sf = st.GetFrame(0);
-                path = sf.GetFileName().Replace("LuaDeepProfilerSetting.cs", SettingsAssetName);
-            }
-            FileStream fs = new FileStream(path, FileMode.Create);
+            FileStream fs = new FileStream(SettingsAssetName, FileMode.Create);
             BinaryWriter b = new BinaryWriter(fs);
 
             b.Write(m_isDeepProfiler);
@@ -224,18 +217,11 @@ namespace MikuLuaProfiler
 
         public static LuaDeepProfilerSetting Load()
         {
-            LuaDeepProfilerSetting result = new LuaDeepProfilerSetting();
+            LuaDeepProfilerSetting result = new LuaDeepProfilerSetting(); 
 
-            if (string.IsNullOrEmpty(path))
+            if (File.Exists(SettingsAssetName))
             {
-                System.Diagnostics.StackTrace st = new System.Diagnostics.StackTrace(true);
-                System.Diagnostics.StackFrame sf = st.GetFrame(0);
-                path = sf.GetFileName().Replace("LuaDeepProfilerSetting.cs", SettingsAssetName);
-            }
-
-            if (File.Exists(path))
-            {
-                FileStream fs = new FileStream(path, FileMode.OpenOrCreate);
+                FileStream fs = new FileStream(SettingsAssetName, FileMode.OpenOrCreate);
                 try
                 {
                     BinaryReader b = new BinaryReader(fs);
@@ -262,7 +248,7 @@ namespace MikuLuaProfiler
                 catch
                 {
                     fs.Dispose();
-                    File.Delete(path);
+                    File.Delete(SettingsAssetName);
                     return Load();
                 }
             }

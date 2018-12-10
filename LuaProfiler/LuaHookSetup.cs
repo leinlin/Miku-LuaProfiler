@@ -48,7 +48,7 @@ namespace MikuLuaProfiler
         static HookLuaUtil()
         {
 #if XLUA || TOLUA || SLUA
-            if (hookNewLuaEnv == null)
+            if (hookNewLuaEnv == null) 
             {
                 Type envReplace = typeof(LuaEnvReplace);
 
