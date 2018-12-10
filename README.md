@@ -5,7 +5,6 @@
 目前支持XLua、SLua、ToLua,Unity的版本在5.6（包括5.6）以上
 
 - 打开Release目录，或者下载Release的zip
-- Window用户直接点击运行相应Lua插件的exe即可,mac运行对应的shell文件进行配置
 - 把`Release\LuaProfiler`文件夹Copy到Assets 非Plugin、Editor目录下。
 - 如果配置炸了，就手动改注释
 ``` 

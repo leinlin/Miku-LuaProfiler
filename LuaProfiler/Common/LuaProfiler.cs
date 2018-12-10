@@ -74,15 +74,13 @@ namespace MikuLuaProfiler
                     {
                         fileName = fileName.Replace(Environment.CurrentDirectory, "").Replace("\\", "/");
                         fileName = fileName.Substring(1, fileName.Length - 1);
-                        methodName = string.Format("{0},line:{1} {2}::{3}",
+                        methodName = string.Format("{0},line:{1}&{2}::{3}",
                             fileName, sf.GetFileLineNumber(), m.ReflectedType.FullName, m.Name);
                     }
-
                 }
-                
                 if(string.IsNullOrEmpty(methodName))
                 {
-                    methodName = methodName = string.Format("{0}::{1}", m.ReflectedType.FullName, m.Name);
+                    methodName = string.Format("{0}::{1}", m.ReflectedType.FullName, m.Name);
                 }
                 m_methodNameDict.Add(m, methodName);
             }

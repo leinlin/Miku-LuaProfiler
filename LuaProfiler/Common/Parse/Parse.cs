@@ -22,7 +22,7 @@ namespace MikuLuaProfiler
         {
             LLex l = new LLex(new StringLoadInfo(value), name);
 
-            l.InsertString(0, LOCAL_PROFILER + "BeginMikuSample(\"" + name + ", line:1 require file\") ");
+            l.InsertString(0, LOCAL_PROFILER + "BeginMikuSample(\"" + name + ",line:1&LuaFunName:require file\") ");
             int lastPos = 0;
             int nextPos = l.pos;
             l.Next();
@@ -135,8 +135,12 @@ namespace MikuLuaProfiler
 
                             if (tokenType == (int)')')
                             {
+                                if (string.IsNullOrEmpty(funName))
+                                {
+                                    funName = l.Source + ",line " + l.LineNumber;
+                                }
                                 l.InsertString(nextPos - 1, " BeginMikuSample(\"" + l.Source 
-                                    + ",line:" + l.LineNumber + " funName:" + funName + "\") ");
+                                    + ",line:" + l.LineNumber + "&LuaFunName:" + funName + "\") ");
                                 nextPos = l.pos;
                                 break;
                             }

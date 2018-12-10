@@ -11,6 +11,7 @@
 using Mono.Cecil;
 using Mono.Cecil.Cil;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -18,6 +19,7 @@ using System.Reflection;
 using System.Runtime;
 using System.Security.Cryptography;
 using UnityEditor;
+using UnityEngine;
 
 namespace MikuLuaProfiler
 {
@@ -91,6 +93,14 @@ namespace MikuLuaProfiler
                 foreach (var item in type.Methods)
                 {
                     if (item.IsConstructor) continue;
+                    //丢弃协同
+                    var returnType = item.ReturnType;
+                    Type monoType = returnType.GetMonoType();
+                    Type corType = typeof(IEnumerator);
+                    if (corType.IsAssignableFrom(monoType))
+                    {
+                        continue;
+                    }
                     InjectTryFinally(item, module);
                 }
             }
@@ -110,6 +120,21 @@ namespace MikuLuaProfiler
             LuaDeepProfilerSetting.Instance.assMd5 = GetMD5HashFromFile(assemblyPath);
 
             GCSettings.LatencyMode = GCLatencyMode.LowLatency;
+        }
+
+        public static Type GetMonoType(this TypeReference type)
+        {
+            return Type.GetType(type.GetReflectionName());
+        }
+
+        private static string GetReflectionName(this TypeReference type)
+        {
+            if (type.IsGenericInstance)
+            {
+                var genericInstance = (GenericInstanceType)type;
+                return string.Format("{0}.{1}[{2}]", genericInstance.Namespace, type.Name, String.Join(",", genericInstance.GenericArguments.Select(p => p.GetReflectionName()).ToArray()));
+            }
+            return type.FullName;
         }
 
         public static void Recompile()

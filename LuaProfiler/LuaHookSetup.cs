@@ -1,4 +1,4 @@
-#define XLUA
+#define SLUA
 /*
 * ==============================================================================
 * Filename: LuaHookSetup
@@ -48,6 +48,7 @@ namespace MikuLuaProfiler
         public static bool isPlaying { private set; get; }
         static HookLuaUtil()
         {
+#if XLUA || TOLUA || SLUA
             if (hookNewLuaEnv == null)
             {
                 Type envReplace = typeof(LuaEnvReplace);
@@ -75,7 +76,51 @@ namespace MikuLuaProfiler
                     frameCount = Time.frameCount;
                 };
             }
+            if (LuaDeepProfilerSetting.Instance.isInited) return;
+#endif
+            string[] paths = Directory.GetFiles(Application.dataPath, "*.dll", SearchOption.AllDirectories);
+            foreach (var item in paths)
+            {
+                string fileName = Path.GetFileName(item);
+                if (fileName == "slua.dll")
+                {
+                    AppendMacro("#define SLUA");
+                }
 
+                if (fileName == "xlua.dll")
+                {
+                    AppendMacro("#define XLUA");
+                    break;
+                }
+
+                if (fileName == "tolua.dll")
+                {
+                    AppendMacro("#define TOLUA");
+                    break;
+                }
+            }
+            LuaDeepProfilerSetting.Instance.isInited = true;
+        }
+
+        private static void AppendMacro(string macro)
+        {
+            System.Diagnostics.StackTrace st = new System.Diagnostics.StackTrace(true);
+            System.Diagnostics.StackFrame sf = st.GetFrame(0);
+            string path = sf.GetFileName();
+
+            string text = File.ReadAllText(path);
+            string text2 = new StringReader(text).ReadLine();
+            if (text2.Contains("#define"))
+            {
+                text = text.Substring(text2.Length, text.Length - text2.Length);
+            }
+            else
+            {
+                macro += "\r\n";
+            }
+            text = text.Insert(0, macro);
+            File.WriteAllText(path, text);
+            InjectMethods.Recompile();
         }
 
         public static class LuaEnvReplace
@@ -97,6 +142,7 @@ namespace MikuLuaProfiler
 
             public static IntPtr luaL_newstate()
             {
+#if XLUA || TOLUA || SLUA
                 IntPtr l = ProxyNewstate();
                 LuaProfiler.mainL = l;
                 if (LuaDeepProfilerSetting.Instance.isDeepProfiler)
@@ -110,6 +156,9 @@ namespace MikuLuaProfiler
                     }
                 }
                 return l;
+#else
+                return IntPtr.Zero;
+#endif
             }
             public static IntPtr ProxyNewstate()
             {
@@ -124,6 +173,7 @@ namespace MikuLuaProfiler
         private static bool m_hooked = false;
         private static void Install()
         {
+#if XLUA || TOLUA || SLUA
             if (m_hooked) return;
             if (tostringHook == null)
             {
@@ -147,6 +197,7 @@ namespace MikuLuaProfiler
             }
 
             m_hooked = true;
+#endif
         }
 
         public static void UnInstall()
@@ -177,12 +228,14 @@ namespace MikuLuaProfiler
             }
             public static void RefString(IntPtr strPoint, int index, string s, IntPtr L)
             {
+#if XLUA || TOLUA || SLUA
                 int oldTop = LuaDLL.lua_gettop(L);
                 LuaDLL.lua_pushvalue(L, index);
                 //把字符串ref了之后就不GC了
                 LuaDLL.luaL_ref(L, LuaIndexes.LUA_REGISTRYINDEX);
                 LuaDLL.lua_settop(L, oldTop);
                 stringDict[(long)strPoint] = s;
+#endif
             }
             #endregion
 
@@ -205,7 +258,7 @@ namespace MikuLuaProfiler
                         {
                             value = Encoding.UTF8.GetString(buff);
                         }
-                        
+
                         hookedValue = Parse.InsertSample(value, fileName);
 
                         //System.IO.File.WriteAllText(fileName, value);
@@ -230,6 +283,7 @@ namespace MikuLuaProfiler
 
             public static string lua_tostring(IntPtr L, int index)
             {
+#if XLUA || TOLUA || SLUA
                 StrLen strlen;
 
 #if SLUA
@@ -244,6 +298,9 @@ namespace MikuLuaProfiler
                     RefString(str, index, ret, L);
                 }
                 return ret;
+#else
+                return "";
+#endif
             }
 
             public static string PoxyToString(IntPtr L, int index)
@@ -253,50 +310,57 @@ namespace MikuLuaProfiler
             }
             #endregion
         }
-    #endregion
+        #endregion
     }
 
     public class LuaLib
     {
-#region memory
+        #region memory
         public static void RunGC()
         {
+#if XLUA || TOLUA || SLUA
             var env = LuaProfiler.mainL;
             if (env != IntPtr.Zero)
             {
                 LuaDLL.lua_gc(env, LuaGCOptions.LUA_GCCOLLECT, 0);
             }
+#endif
         }
         public static void StopGC()
         {
+#if XLUA || TOLUA || SLUA
             var env = LuaProfiler.mainL;
             if (env != IntPtr.Zero)
             {
                 LuaDLL.lua_gc(env, LuaGCOptions.LUA_GCSTOP, 0);
             }
+#endif
         }
         public static void ResumeGC()
         {
+#if XLUA || TOLUA || SLUA
             var env = LuaProfiler.mainL;
             if (env != IntPtr.Zero)
             {
                 LuaDLL.lua_gc(env, LuaGCOptions.LUA_GCRESTART, 0);
             }
+#endif
         }
         public static long GetLuaMemory(IntPtr luaState)
         {
             long result = 0;
-
+#if XLUA || TOLUA || SLUA
             if (luaState != IntPtr.Zero)
             {
                 result = LuaDLL.lua_gc(luaState, LuaGCOptions.LUA_GCCOUNT, 0);
                 result = result * 1024 + LuaDLL.lua_gc(luaState, LuaGCOptions.LUA_GCCOUNTB, 0);
             }
-
+#endif
             return result;
         }
-#endregion
+        #endregion
 
+#if XLUA || TOLUA || SLUA
         public static void lua_pushstdcallcfunction(IntPtr L, LuaCSFunction fun)
         {
 #if XLUA
@@ -329,8 +393,10 @@ namespace MikuLuaProfiler
             LuaDLL.lua_getglobal(L, name);
 #endif
         }
+#endif
     }
 
+#if XLUA || TOLUA || SLUA
     #region bind
 
     public class MikuLuaProfilerLuaProfilerWrap
@@ -439,6 +505,7 @@ end
         }
     }
     #endregion
+#endif
 }
 
 #endif

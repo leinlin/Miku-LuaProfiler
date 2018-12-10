@@ -13,6 +13,7 @@ namespace MikuLuaProfiler
     using UnityEditor;
     using UnityEngine;
     using System.Text;
+    using System;
 
     public class LuaDeepProfilerSetting
     {
@@ -138,6 +139,23 @@ namespace MikuLuaProfiler
                 Save();
             }
         }
+
+        private bool m_isInited = false;
+        public bool isInited
+        {
+            get
+            {
+                return m_isInited;
+            }
+
+            set
+            {
+                if (m_isInited == value) return;
+                m_isInited = value;
+                Save();
+            }
+        }
+
         public void Save()
         {
             FileStream fs = new FileStream(SettingsAssetName, FileMode.Create);
@@ -153,6 +171,7 @@ namespace MikuLuaProfiler
             byte[] datas = Encoding.UTF8.GetBytes(m_assMd5);
             b.Write(datas.Length);
             b.Write(datas);
+            b.Write(m_isInited);
 
             b.Close();
         }
@@ -164,19 +183,29 @@ namespace MikuLuaProfiler
             if (File.Exists(SettingsAssetName))
             {
                 FileStream fs = new FileStream(SettingsAssetName, FileMode.OpenOrCreate);
-                BinaryReader b = new BinaryReader(fs);
+                try
+                {
+                    BinaryReader b = new BinaryReader(fs);
 
-                result.m_isDeepProfiler = b.ReadBoolean();
-                result.m_captureGC = b.ReadInt32();
-                result.m_profilerMono = b.ReadBoolean();
-                result.m_includeCSLua = b.ReadBoolean();
-                result.m_isRecord = b.ReadBoolean();
-                result.m_isNeedRecord = b.ReadBoolean();
+                    result.m_isDeepProfiler = b.ReadBoolean();
+                    result.m_captureGC = b.ReadInt32();
+                    result.m_profilerMono = b.ReadBoolean();
+                    result.m_includeCSLua = b.ReadBoolean();
+                    result.m_isRecord = b.ReadBoolean();
+                    result.m_isNeedRecord = b.ReadBoolean();
 
-                int len = b.ReadInt32();
-                result.m_assMd5 = Encoding.UTF8.GetString(b.ReadBytes(len));
+                    int len = b.ReadInt32();
+                    result.m_assMd5 = Encoding.UTF8.GetString(b.ReadBytes(len));
+                    result.m_isInited = b.ReadBoolean();
 
-                b.Close();
+                    b.Close();
+                }
+                catch
+                {
+                    fs.Dispose();
+                    File.Delete(SettingsAssetName);
+                    return Load();
+                }
             }
             else
             {

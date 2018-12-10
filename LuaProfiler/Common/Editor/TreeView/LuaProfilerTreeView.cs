@@ -83,6 +83,11 @@ namespace MikuLuaProfiler
         public long averageTime { private set; get; }
         public long currentTime { private set; get; }
         public int totalCallTime { private set; get; }
+
+        public int line { private set; get; }
+        public string filePath { private set; get; }
+        private string m_originName;
+
         public string fullName
         {
             get;
@@ -100,10 +105,25 @@ namespace MikuLuaProfiler
         {
             if (sample != null)
             {
+                filePath = sample.name.Split(new char[] { ',' }, 2)[0].Trim();
+                int tmpLine = 0;
+                int.TryParse(Regex.Match(sample.name, @"(?<=(line:))\d*(?=(&))").Value, out tmpLine);
+                line = tmpLine;
+
                 totalMonoMemory = sample.costMonoGC;
                 totalLuaMemory = sample.costLuaGC;
                 totalTime = sample.costTime;
-                displayName = sample.name;
+                string[] tmp = sample.name.Split(new char[] { '&' }, 2);
+                if (tmp.Length >= 2)
+                {
+                    displayName = tmp[1].Trim();
+                }
+                else
+                {
+                    displayName = sample.name;
+                }
+                m_originName = sample.name;
+
                 fullName = sample.fullName;
                 frameCalls = sample.calls;
                 currentTime = sample.costTime;
@@ -203,7 +223,7 @@ namespace MikuLuaProfiler
             s.frameCount = LuaProfiler.m_frameCount;
             s.costLuaGC = totalLuaMemory;
             s.costMonoGC = totalMonoMemory;
-            s.name = displayName;
+            s.name = m_originName;
             s.costTime = totalTime;
 
             int childCount = childs.Count;
@@ -428,11 +448,11 @@ namespace MikuLuaProfiler
         {
             base.DoubleClickedItem(id);
             var selectItem = FindItem(id, BuildRoot());
-            string fileName = selectItem.displayName.Split(new char[] { ',' }, 2)[0].Trim();
+            var item = (LuaProfilerTreeViewItem)selectItem;
+            string fileName = item.filePath;
             try
             {
-                int line = 0;
-                int.TryParse(Regex.Match(selectItem.displayName, @"(?<=(line:))\d*(?=( ))").Value, out line);
+                int line = item.line;
                 if (!File.Exists(fileName))
                 {
                     Debug.Log(fileName);

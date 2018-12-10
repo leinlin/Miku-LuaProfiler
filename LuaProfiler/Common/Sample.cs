@@ -165,8 +165,11 @@ namespace MikuLuaProfiler
             Directory.CreateDirectory(capturePath);
 
             string result = capturePath + "/" + UnityEngine.Time.frameCount.ToString() + ".png";
+#if UNITY_2017_1_OR_NEWER
             ScreenCapture.CaptureScreenshot(result, 0);
-
+#else
+            Application.CaptureScreenshot(result, 0);
+#endif
             return result;
         }
 
@@ -191,9 +194,9 @@ namespace MikuLuaProfiler
 
             return s;
         }
-        #endregion
+#endregion
 
-        #region 序列化
+#region 序列化
         public static void SerializeList(List<Sample> samples, string path)
         {
             FileStream fs = new FileStream(path, FileMode.CreateNew, FileAccess.Write);
@@ -365,7 +368,7 @@ namespace MikuLuaProfiler
             }
             Directory.Delete(str, true);
         }
-        #endregion
+#endregion
 
     }
 
