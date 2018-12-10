@@ -88,26 +88,31 @@ namespace MikuLuaProfiler
             return methodName;
         }
 
-        private static object m_lock = 1;
+
+        static int mainThreadId = System.Threading.Thread.CurrentThread.ManagedThreadId;
+
+ 
+        // If called in the non main thread, will return false;
+        public static bool IsMainThread
+        {
+            get
+            {
+                return System.Threading.Thread.CurrentThread.ManagedThreadId == mainThreadId;
+            }
+        }
         public static void BeginSampleCSharp(string name)
         {
 #if UNITY_EDITOR
             if (!HookLuaUtil.isPlaying) return;
 #endif
-            lock (m_lock)
-            {
-                BeginSample(_mainL, name);
-            }
+            BeginSample(_mainL, name);
         }
         public static void EndSampleCSharp()
         {
 #if UNITY_EDITOR
             if (!HookLuaUtil.isPlaying) return;
 #endif
-            lock (m_lock)
-            {
-                EndSample(_mainL);
-            }
+            EndSample(_mainL);
         }
         public static int m_frameCount = 0;
         public static long getcurrentTime
@@ -119,6 +124,8 @@ namespace MikuLuaProfiler
         }
         public static void BeginSample(IntPtr luaState, string name)
         {
+#if DEBUG
+            if (!IsMainThread) return;
             m_frameCount = HookLuaUtil.frameCount;
 
             if (m_currentFrame != m_frameCount)
@@ -126,8 +133,6 @@ namespace MikuLuaProfiler
                 PopAllSampleWhenLateUpdate();
                 m_currentFrame = m_frameCount;
             }
-
-#if DEBUG
             long memoryCount = LuaLib.GetLuaMemory(luaState);
             Sample sample = Sample.Create(getcurrentTime, memoryCount, name);
             beginSampleMemoryStack.Add(sample);
@@ -149,13 +154,13 @@ namespace MikuLuaProfiler
         public static void EndSample(IntPtr luaState)
         {
 #if DEBUG
+            if (!IsMainThread) return;
             if (beginSampleMemoryStack.Count <= 0)
             {
                 return;
             }
-            int count = beginSampleMemoryStack.Count;
             Sample sample = beginSampleMemoryStack[beginSampleMemoryStack.Count - 1];
-            beginSampleMemoryStack.RemoveAt(count - 1);
+            beginSampleMemoryStack.RemoveAt(beginSampleMemoryStack.Count - 1);
             long nowMemoryCount = LuaLib.GetLuaMemory(luaState);
 
             sample.costTime = getcurrentTime - sample.currentTime;
@@ -164,7 +169,7 @@ namespace MikuLuaProfiler
             sample.costLuaGC = luaGC > 0 ? luaGC : 0;
             sample.costMonoGC = monoGC > 0 ? monoGC : 0;
 
-            sample.fahter = count > 1 ? beginSampleMemoryStack[count - 2] : null;
+            sample.fahter = beginSampleMemoryStack.Count > 1 ? beginSampleMemoryStack[beginSampleMemoryStack.Count - 2] : null;
 
             if (m_SampleEndAction != null && beginSampleMemoryStack.Count == 0)
             {

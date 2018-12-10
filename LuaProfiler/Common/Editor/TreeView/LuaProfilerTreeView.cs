@@ -101,11 +101,13 @@ namespace MikuLuaProfiler
         {
         }
 
+        private static readonly char[] splitDot = new char[] { ',' };
+        private static readonly char[] splitFun = new char[] { '&' };
         public void ResetBySample(Sample sample, int depth, LuaProfilerTreeViewItem father)
         {
             if (sample != null)
             {
-                filePath = sample.name.Split(new char[] { ',' }, 2)[0].Trim();
+                filePath = sample.name.Split(splitDot, 2)[0].Trim();
                 int tmpLine = 0;
                 int.TryParse(Regex.Match(sample.name, @"(?<=(line:))\d*(?=(&))").Value, out tmpLine);
                 line = tmpLine;
@@ -113,7 +115,7 @@ namespace MikuLuaProfiler
                 totalMonoMemory = sample.costMonoGC;
                 totalLuaMemory = sample.costLuaGC;
                 totalTime = sample.costTime;
-                string[] tmp = sample.name.Split(new char[] { '&' }, 2);
+                string[] tmp = sample.name.Split(splitFun, 2);
                 if (tmp.Length >= 2)
                 {
                     displayName = tmp[1].Trim();

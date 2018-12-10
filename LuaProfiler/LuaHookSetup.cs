@@ -73,6 +73,7 @@ namespace MikuLuaProfiler
 
                 EditorApplication.update += () =>
                 {
+                    isPlaying = Application.isPlaying;
                     frameCount = Time.frameCount;
                 };
             }
@@ -127,7 +128,7 @@ namespace MikuLuaProfiler
         {
             public static void lua_close(IntPtr luaState)
             {
-                isPlaying = false;
+                
                 if (LuaProfiler.mainL == luaState)
                 {
                     LuaProfiler.mainL = IntPtr.Zero;
@@ -147,7 +148,6 @@ namespace MikuLuaProfiler
                 LuaProfiler.mainL = l;
                 if (LuaDeepProfilerSetting.Instance.isDeepProfiler)
                 {
-                    isPlaying = true;
                     MikuLuaProfilerLuaProfilerWrap.__Register(l);
                     Install();
                     if (LuaDeepProfilerSetting.Instance.isRecord)

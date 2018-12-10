@@ -17,6 +17,7 @@ namespace MikuLuaProfiler
 
     public class LuaDeepProfilerSetting
     {
+        public static string path = "";
         public const string SettingsAssetName = "LuaDeepProfilerSettings.config";
         private static LuaDeepProfilerSetting instance;
         public static LuaDeepProfilerSetting Instance
@@ -156,9 +157,45 @@ namespace MikuLuaProfiler
             }
         }
 
+        private string m_luaDir = "";
+        public string luaDir
+        {
+            get
+            {
+                return m_luaDir;
+            }
+            set
+            {
+                if (m_luaDir == value) return;
+                m_luaDir = value;
+                Save();
+            }
+        }
+
+        private string m_luaIDE = "";
+        public string luaIDE
+        {
+            get
+            {
+                return m_luaIDE;
+            }
+            set
+            {
+                if (m_luaIDE == value) return;
+                m_luaIDE = value;
+                Save();
+            }
+        }
+
         public void Save()
         {
-            FileStream fs = new FileStream(SettingsAssetName, FileMode.Create);
+            if (string.IsNullOrEmpty(path))
+            {
+                System.Diagnostics.StackTrace st = new System.Diagnostics.StackTrace(true);
+                System.Diagnostics.StackFrame sf = st.GetFrame(0);
+                path = sf.GetFileName().Replace("LuaDeepProfilerSetting.cs", SettingsAssetName);
+            }
+            FileStream fs = new FileStream(path, FileMode.Create);
             BinaryWriter b = new BinaryWriter(fs);
 
             b.Write(m_isDeepProfiler);
@@ -171,7 +208,16 @@ namespace MikuLuaProfiler
             byte[] datas = Encoding.UTF8.GetBytes(m_assMd5);
             b.Write(datas.Length);
             b.Write(datas);
+
             b.Write(m_isInited);
+
+            datas = Encoding.UTF8.GetBytes(m_luaDir);
+            b.Write(datas.Length);
+            b.Write(datas);
+
+            datas = Encoding.UTF8.GetBytes(m_luaIDE);
+            b.Write(datas.Length);
+            b.Write(datas);
 
             b.Close();
         }
@@ -180,9 +226,16 @@ namespace MikuLuaProfiler
         {
             LuaDeepProfilerSetting result = new LuaDeepProfilerSetting();
 
-            if (File.Exists(SettingsAssetName))
+            if (string.IsNullOrEmpty(path))
             {
-                FileStream fs = new FileStream(SettingsAssetName, FileMode.OpenOrCreate);
+                System.Diagnostics.StackTrace st = new System.Diagnostics.StackTrace(true);
+                System.Diagnostics.StackFrame sf = st.GetFrame(0);
+                path = sf.GetFileName().Replace("LuaDeepProfilerSetting.cs", SettingsAssetName);
+            }
+
+            if (File.Exists(path))
+            {
+                FileStream fs = new FileStream(path, FileMode.OpenOrCreate);
                 try
                 {
                     BinaryReader b = new BinaryReader(fs);
@@ -198,12 +251,18 @@ namespace MikuLuaProfiler
                     result.m_assMd5 = Encoding.UTF8.GetString(b.ReadBytes(len));
                     result.m_isInited = b.ReadBoolean();
 
+                    len = b.ReadInt32();
+                    result.m_luaDir = Encoding.UTF8.GetString(b.ReadBytes(len));
+
+                    len = b.ReadInt32();
+                    result.m_luaIDE = Encoding.UTF8.GetString(b.ReadBytes(len));
+
                     b.Close();
                 }
                 catch
                 {
                     fs.Dispose();
-                    File.Delete(SettingsAssetName);
+                    File.Delete(path);
                     return Load();
                 }
             }
