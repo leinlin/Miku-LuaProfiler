@@ -21,9 +21,9 @@
 ### 使用教程
 
 #### 新功能
-可profiler Assembly C# 代码，让你知道每一个问题函数的来龙去脉，不放过任何一个细节。
-原理：利用mono.ceil在method代码首尾插入 try finally.
-开启 IncludeMono的代码即可，如果进入游戏无法profiler代码请关闭游戏后点击Inject,如果想关闭C#Profiler请点击recompile
+可profiler Assembly C# 代码，让你知道每一个问题函数的来龙去脉，不放过任何一个细节。 <br/>
+原理：利用mono.ceil在method代码首尾插入 try finally. <br/>
+开启 IncludeMono的代码即可，如果进入游戏无法profiler代码请关闭游戏后点击Inject,如果想关闭C#Profiler请点击recompile <br/>
 
 
 #### 开启
