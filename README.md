@@ -20,6 +20,12 @@
 
 ### 使用教程
 
+#### 新功能
+可profiler Assembly C# 代码，让你知道每一个问题函数的来龙去脉，不放过任何一个细节。
+原理：利用mono.ceil在method代码首尾插入 try finally.
+开启 IncludeMono的代码即可，如果进入游戏无法profiler代码请关闭游戏后点击Inject,如果想关闭C#Profiler请点击recompile
+
+
 #### 开启
 
 点击 "Window->Lua Profiler Window"在弹出窗口上打开 Deep Profiler,正常进入游戏即可看到profiler数据
@@ -28,6 +34,7 @@
 ![](doc/profiler.png)
 
 ## 
+
 
 #### Record模式
 &nbsp;&nbsp;&nbsp;&nbsp;也是默认模式，如果关闭点击Profiler窗口下的Record按钮即可开启。在这个模式下将保存每次Profiler采样的历史记录，并且会将出现帧率下降、或者超大GC申请的Sample进行截屏保存,需要截屏的GC的阈值你可以在 __capture gc__ 后面的输入框中进行配置,并且为了避免大分辨率下截屏，会自动把屏幕分辨率设置为480*270。如果不想截屏，可以点击**NeedRecord**开关进行关闭<br/>

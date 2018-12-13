@@ -50,7 +50,6 @@ namespace MikuLuaProfiler
             oldEndUrl = null;
             Destory(oldStartT);
             Destory(oldEndT);
-
             m_SearchField = new SearchField();
             m_SearchField.downOrUpArrowKeyPressed += m_TreeView.SetFocusAndEnsureSelectedItem;
         }
@@ -111,16 +110,6 @@ namespace MikuLuaProfiler
                 InjectMethods.Recompile();
             }
             GUILayout.Space(5);
-
-            flag = GUILayout.Toggle(LuaDeepProfilerSetting.Instance.includeCSLua,
-                "Contain C# Lua", EditorStyles.toolbarButton, GUILayout.Height(30));
-            if (flag != LuaDeepProfilerSetting.Instance.includeCSLua)
-            {
-                LuaDeepProfilerSetting.Instance.includeCSLua = flag;
-                EditorApplication.isPlaying = false;
-                InjectMethods.Recompile();
-            }
-            GUILayout.Space(5);
             #endregion
 
             #region stop
@@ -149,11 +138,23 @@ namespace MikuLuaProfiler
                 LuaLib.RunGC();
             }
             GUILayout.Space(5);
+
+            if (GUILayout.Button("Inject", EditorStyles.toolbarButton, GUILayout.Height(30)))
+            {
+                InjectMethods.InjectAllMethods();
+                Debug.Log("Inject Success");
+            }
+
+            if (GUILayout.Button("ReCompile", EditorStyles.toolbarButton, GUILayout.Height(30)))
+            {
+                InjectMethods.Recompile();
+            }
+
+            GUILayout.Space(5);
             #endregion
 
             #region history
-            flag = GUILayout.Toggle(LuaDeepProfilerSetting.Instance.isRecord,
-                "Record", EditorStyles.toolbarButton, GUILayout.Height(30));
+            flag = GUILayout.Toggle(LuaDeepProfilerSetting.Instance.isRecord, "Record", EditorStyles.toolbarButton, GUILayout.Height(30));
             if (flag != LuaDeepProfilerSetting.Instance.isRecord)
             {
                 LuaDeepProfilerSetting.Instance.isRecord = flag;
@@ -163,6 +164,9 @@ namespace MikuLuaProfiler
                 }
                 EditorApplication.isPlaying = false;
             }
+
+
+
             GUILayout.Space(25);
             #endregion
 
@@ -194,6 +198,10 @@ namespace MikuLuaProfiler
             GUILayout.Space(5);
             GUILayout.FlexibleSpace();
             GUILayout.Label(string.Format("Lua Total:{0}", m_TreeView.GetLuaMemory()), EditorStyles.toolbarButton, GUILayout.Height(30));
+
+            GUILayout.Space(5);
+            GUILayout.FlexibleSpace();
+            GUILayout.Label(string.Format("Mono Total:{0}", m_TreeView.GetMonoMemory()), EditorStyles.toolbarButton, GUILayout.Height(30));
             #endregion
 
             GUILayout.Space(100);
@@ -272,10 +280,20 @@ namespace MikuLuaProfiler
             }
 
             GUILayout.Space(25);
-            GUILayout.Label("capture gc", EditorStyles.toolbarButton, GUILayout.Height(30), GUILayout.Width(80));
-            LuaDeepProfilerSetting.Instance.captureGC
-                = EditorGUILayout.IntField(LuaDeepProfilerSetting.Instance.captureGC, GUILayout.Height(16), GUILayout.Width(50));
-            LuaDeepProfilerSetting.Instance.captureGC = Mathf.Max(0, LuaDeepProfilerSetting.Instance.captureGC);
+            GUILayout.Label("capture lua gc", EditorStyles.toolbarButton, GUILayout.Height(30), GUILayout.Width(80));
+            LuaDeepProfilerSetting.Instance.captureLuaGC
+                = EditorGUILayout.IntField(LuaDeepProfilerSetting.Instance.captureLuaGC, GUILayout.Height(16), GUILayout.Width(50));
+            LuaDeepProfilerSetting.Instance.captureLuaGC = Mathf.Max(0, LuaDeepProfilerSetting.Instance.captureLuaGC);
+
+            GUILayout.Label("capture mono gc", EditorStyles.toolbarButton, GUILayout.Height(30), GUILayout.Width(100));
+            LuaDeepProfilerSetting.Instance.captureMonoGC
+                = EditorGUILayout.IntField(LuaDeepProfilerSetting.Instance.captureMonoGC, GUILayout.Height(16), GUILayout.Width(50));
+            LuaDeepProfilerSetting.Instance.captureMonoGC = Mathf.Max(0, LuaDeepProfilerSetting.Instance.captureMonoGC);
+
+            GUILayout.Label("capture frame rate", EditorStyles.toolbarButton, GUILayout.Height(30), GUILayout.Width(100));
+            LuaDeepProfilerSetting.Instance.captureFrameRate
+                = EditorGUILayout.IntField(LuaDeepProfilerSetting.Instance.captureFrameRate, GUILayout.Height(16), GUILayout.Width(40));
+            LuaDeepProfilerSetting.Instance.captureFrameRate = Mathf.Max(0, LuaDeepProfilerSetting.Instance.captureFrameRate);
 
             m_lastCount = count;
 

@@ -1,3 +1,4 @@
+#define XLUA
 /*
 * ==============================================================================
 * Filename: LuaHookSetup
@@ -44,7 +45,6 @@ namespace MikuLuaProfiler
     {
         private static MethodHooker hookNewLuaEnv;
         public static int frameCount { private set; get; }
-        public static bool isPlaying { private set; get; }
         static HookLuaUtil()
         {
 #if XLUA || TOLUA || SLUA
@@ -72,7 +72,6 @@ namespace MikuLuaProfiler
 
                 EditorApplication.update += () =>
                 {
-                    isPlaying = Application.isPlaying;
                     frameCount = Time.frameCount;
                 };
             }
@@ -101,7 +100,6 @@ namespace MikuLuaProfiler
             }
             LuaDeepProfilerSetting.Instance.isInited = true;
         }
-
         private static void AppendMacro(string macro)
         {
             System.Diagnostics.StackTrace st = new System.Diagnostics.StackTrace(true);
@@ -127,7 +125,6 @@ namespace MikuLuaProfiler
         {
             public static void lua_close(IntPtr luaState)
             {
-                
                 if (LuaProfiler.mainL == luaState)
                 {
                     LuaProfiler.mainL = IntPtr.Zero;
@@ -222,7 +219,6 @@ namespace MikuLuaProfiler
             public static readonly Dictionary<long, string> stringDict = new Dictionary<long, string>();
             public static bool TryGetLuaString(IntPtr p, out string result)
             {
-
                 return stringDict.TryGetValue((long)p, out result);
             }
             public static void RefString(IntPtr strPoint, int index, string s, IntPtr L)

@@ -169,11 +169,8 @@ namespace MikuLuaProfiler
                     }
                     else
                     {
-                        if (LuaProfilerTreeView.CheckSampleValid(sample))
-                        {
-                            var item = Create(sample.childs[i], depth + 1, this);
-                            childs.Add(item);
-                        }
+                        var item = Create(sample.childs[i], depth + 1, this);
+                        childs.Add(item);
                     }
                 }
             }
@@ -189,7 +186,7 @@ namespace MikuLuaProfiler
                 rootFather = rootFather.father;
             }
 
-            _frameCount = Time.frameCount;
+            _frameCount = LuaProfiler.m_frameCount;
         }
         public void AddSample(Sample sample)
         {
@@ -213,6 +210,7 @@ namespace MikuLuaProfiler
 
             totalTime += sample.costTime;
             totalCallTime += sample.calls;
+
             averageTime = totalTime / totalCallTime;
             for (int i = 0, imax = sample.childs.Count; i < imax; i++)
             {
@@ -224,14 +222,11 @@ namespace MikuLuaProfiler
                 }
                 else
                 {
-                    if (LuaProfilerTreeView.CheckSampleValid(sample))
-                    {
-                        var treeItem = Create(sampleChild, depth + 1, this);
-                        childs.Add(treeItem);
-                    }
+                    var treeItem = Create(sampleChild, depth + 1, this);
+                    childs.Add(treeItem);
                 }
             }
-            _frameCount = Time.frameCount;
+            _frameCount = LuaProfiler.m_frameCount;
         }
 
         public Sample CopyToSample()
@@ -253,7 +248,7 @@ namespace MikuLuaProfiler
             }
             s.captureUrl = "";
             s.currentLuaMemory = 0;
-
+            s.currentMonoMemory = 0;
             return s;
         }
     }
@@ -280,6 +275,7 @@ namespace MikuLuaProfiler
         private Queue<Sample> m_runningSamplesQueue = new Queue<Sample>(256);
         private Dictionary<string, Sample> m_runingSampleDict = new Dictionary<string, Sample>(256);
         private long m_luaMemory = 0;
+        private long m_monoMemory = 0;
 
         public bool needRebuild = true;
         public readonly List<Sample> history = new List<Sample>(216000);
@@ -295,7 +291,39 @@ namespace MikuLuaProfiler
             needRebuild = true;
             multiColumnHeader.sortingChanged += (header) => { needRebuild = true; };
             history.Clear();
+            EditorApplication.update += DequeueSample;
             Reload();
+        }
+
+        private void DequeueSample()
+        {
+            if (m_runningSamplesQueue.Count > 0)
+            {
+                while (m_runningSamplesQueue.Count > 0)
+                {
+                    Sample s = null;
+                    lock (this)
+                    {
+                        s = m_runningSamplesQueue.Dequeue();
+                        LoadRootSample(s, LuaDeepProfilerSetting.Instance.isRecord);
+                        s.Restore();
+                    }
+                }
+                m_runingSampleDict.Clear();
+            }
+            else if (m_historySamplesQueue.Count > 0)
+            {
+                int delNum = 0;
+                while (m_historySamplesQueue.Count > 0 && delNum < MAX_DEAL_COUNT)
+                {
+                    lock (this)
+                    {
+                        Sample s = m_historySamplesQueue.Dequeue();
+                        LoadRootSample(s, false);
+                    }
+                    delNum++;
+                }
+            }
         }
 
         private static MultiColumnHeader CreateDefaultMultiColumnHeaderState(float treeViewWidth)
@@ -463,6 +491,16 @@ namespace MikuLuaProfiler
             needRebuild = true;
         }
 
+        protected override void ContextClickedItem(int id)
+        {
+            base.ContextClickedItem(id);
+
+            List<int> ids = new List<int>();
+            ids.Add(id);
+
+            SetSelection(ids);
+        }
+
         protected override void DoubleClickedItem(int id)
         {
             base.DoubleClickedItem(id);
@@ -552,7 +590,17 @@ namespace MikuLuaProfiler
                 return LuaProfiler.GetMemoryString(m_luaMemory);
             }
         }
-
+        public string GetMonoMemory()
+        {
+            if (Application.isPlaying)
+            {
+                return LuaProfiler.GetMemoryString(GC.GetTotalMemory(false));
+            }
+            else
+            {
+                return LuaProfiler.GetMemoryString(m_monoMemory);
+            }
+        }
         private void LoadHistoryRootSample(Sample sample)
         {
             lock (this)
@@ -565,11 +613,6 @@ namespace MikuLuaProfiler
         {
             lock (this)
             {
-                if (!CheckSampleValid(sample))
-                {
-                    sample.Restore();
-                    return;
-                }
                 Sample item = null;
 
                 if (m_runingSampleDict.TryGetValue(sample.name, out item))
@@ -587,15 +630,20 @@ namespace MikuLuaProfiler
         {
             int ret = start + 1;
 
+            var setting = LuaDeepProfilerSetting.Instance;
             for (int i = start + 1, imax = history.Count; i < imax; i++)
             {
                 ret = i;
                 var s = history[i];
-                if (s.costLuaGC > LuaDeepProfilerSetting.Instance.captureGC)
+                if (s.costLuaGC > setting.captureLuaGC)
                 {
                     break;
                 }
-                else if (s.costTime >= 1 / 30.0f * 10000000)
+                else if (s.costMonoGC > setting.captureMonoGC)
+                {
+                    break;
+                }
+                else if (s.costTime >= (1 / ((float)setting.captureFrameRate)) * 10000000)
                 {
                     break;
                 }
@@ -608,15 +656,20 @@ namespace MikuLuaProfiler
         {
             int ret = start - 1;
 
+            var setting = LuaDeepProfilerSetting.Instance;
             for (int i = start - 1; i >= 0; i--)
             {
                 ret = i;
                 var s = history[i];
-                if (s.costLuaGC > LuaDeepProfilerSetting.Instance.captureGC)
+                if (s.costLuaGC > setting.captureLuaGC)
                 {
                     break;
                 }
-                else if (s.costTime >= 1 / 30.0f * 10000000)
+                else if (s.costMonoGC > setting.captureMonoGC)
+                {
+                    break;
+                }
+                else if (s.costTime >= (1 / ((float)setting.captureFrameRate)) * 10000000)
                 {
                     break;
                 }
@@ -625,41 +678,13 @@ namespace MikuLuaProfiler
             return Mathf.Max(Mathf.Min(ret, history.Count - 1), 0);
         }
 
-        public static bool CheckSampleValid(Sample sample)
-        {
-            bool result = false;
-
-            do
-            {
-                if (sample.costLuaGC > 0)
-                {
-                    result = true;
-                    break;
-                }
-
-                if (sample.costMonoGC > 0)
-                {
-                    result = true;
-                    break;
-                }
-
-                if (sample.costTime > 100000)
-                {
-                    result = true;
-                    break;
-                }
-
-            } while (false);
-
-
-            return result;
-        }
-
         private void LoadRootSample(Sample sample, bool needRecord)
         {
             LuaProfilerTreeViewItem item;
             string f = sample.fullName;
             m_luaMemory = sample.currentLuaMemory;
+            m_monoMemory = sample.currentMonoMemory;
+
             if (m_nodeDict.TryGetValue(f, out item))
             {
                 item.AddSample(sample);
@@ -670,15 +695,12 @@ namespace MikuLuaProfiler
             }
             else
             {
-                if (CheckSampleValid(sample))
+                item = LuaProfilerTreeViewItem.Create(sample, 0, null);
+                roots.Add(item);
+                needRebuild = true;
+                if (needRecord)
                 {
-                    item = LuaProfilerTreeViewItem.Create(sample, 0, null);
-                    roots.Add(item);
-                    needRebuild = true;
-                    if (needRecord)
-                    {
-                        history.Add(sample.Clone());
-                    }
+                    history.Add(sample.Clone());
                 }
             }
 
@@ -759,34 +781,6 @@ namespace MikuLuaProfiler
         const int MAX_DEAL_COUNT = 1024;
         protected override TreeViewItem BuildRoot()
         {
-            if (m_runningSamplesQueue.Count > 0)
-            {
-                while (m_runningSamplesQueue.Count > 0)
-                {
-                    Sample s = null;
-                    lock (this)
-                    {
-                        s = m_runningSamplesQueue.Dequeue();
-                        LoadRootSample(s, LuaDeepProfilerSetting.Instance.isRecord);
-                        s.Restore();
-                    }
-                }
-                m_runingSampleDict.Clear();
-            }
-            else if (m_historySamplesQueue.Count > 0)
-            {
-                int delNum = 0;
-                while (m_historySamplesQueue.Count > 0 && delNum < MAX_DEAL_COUNT)
-                {
-                    lock (this)
-                    {
-                        Sample s = m_historySamplesQueue.Dequeue();
-                        LoadRootSample(s, false);
-                    }
-                    delNum++;
-                }
-            }
-
             if (!needRebuild)
             {
                 return m_root;

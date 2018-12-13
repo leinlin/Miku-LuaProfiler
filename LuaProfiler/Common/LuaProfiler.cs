@@ -74,7 +74,7 @@ namespace MikuLuaProfiler
                     {
                         fileName = fileName.Replace(Environment.CurrentDirectory, "").Replace("\\", "/");
                         fileName = fileName.Substring(1, fileName.Length - 1);
-                        methodName = string.Format("{0},line:{1}&{2}::{3}",
+                        methodName = string.Format("{0},line:{1}&[c#]:{2}::{3}",
                             fileName, sf.GetFileLineNumber(), m.ReflectedType.FullName, m.Name);
                     }
                 }
@@ -102,16 +102,16 @@ namespace MikuLuaProfiler
         }
         public static void BeginSampleCSharp(string name)
         {
-#if UNITY_EDITOR
-            if (!HookLuaUtil.isPlaying) return;
-#endif
+//#if UNITY_EDITOR
+//            if (!HookLuaUtil.isPlaying) return;
+//#endif
             BeginSample(_mainL, name);
         }
         public static void EndSampleCSharp()
         {
-#if UNITY_EDITOR
-            if (!HookLuaUtil.isPlaying) return;
-#endif
+//#if UNITY_EDITOR
+//            if (!HookLuaUtil.isPlaying) return;
+//#endif
             EndSample(_mainL);
         }
         public static int m_frameCount = 0;
@@ -169,7 +169,12 @@ namespace MikuLuaProfiler
             sample.costLuaGC = luaGC > 0 ? luaGC : 0;
             sample.costMonoGC = monoGC > 0 ? monoGC : 0;
 
-            sample.fahter = beginSampleMemoryStack.Count > 1 ? beginSampleMemoryStack[beginSampleMemoryStack.Count - 2] : null;
+            if (!sample.CheckSampleValid())
+            {
+                sample.Restore();
+                return;
+            }
+            sample.fahter = beginSampleMemoryStack.Count > 0 ? beginSampleMemoryStack[beginSampleMemoryStack.Count - 1] : null;
 
             if (m_SampleEndAction != null && beginSampleMemoryStack.Count == 0)
             {
@@ -180,7 +185,7 @@ namespace MikuLuaProfiler
                     {
                         sample.captureUrl = Sample.Capture();
                     }
-                    else if (sample.costLuaGC > LuaDeepProfilerSetting.Instance.captureGC)
+                    else if (sample.costLuaGC > LuaDeepProfilerSetting.Instance.captureLuaGC)
                     {
                         sample.captureUrl = Sample.Capture();
                     }

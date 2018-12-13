@@ -130,6 +130,36 @@ namespace MikuLuaProfiler
             return s;
         }
 
+        public bool CheckSampleValid()
+        {
+            bool result = false;
+
+            do
+            {
+                if (costLuaGC > 0)
+                {
+                    result = true;
+                    break;
+                }
+
+                if (costMonoGC > 0)
+                {
+                    result = true;
+                    break;
+                }
+
+                if (costTime > 100000)
+                {
+                    result = true;
+                    break;
+                }
+
+            } while (false);
+
+
+            return result;
+        }
+
         public void Restore()
         {
             for (int i = 0, imax = childs.Count; i < imax; i++)
@@ -196,7 +226,7 @@ namespace MikuLuaProfiler
         }
 #endregion
 
-#region 序列化
+        #region 序列化
         public static void SerializeList(List<Sample> samples, string path)
         {
             FileStream fs = new FileStream(path, FileMode.CreateNew, FileAccess.Write);
@@ -282,6 +312,7 @@ namespace MikuLuaProfiler
                 b.Write(datas);
             }
             b.Write(currentLuaMemory);
+            b.Write(currentMonoMemory);
 
             result = ms.ToArray();
             b.Close();
@@ -338,6 +369,7 @@ namespace MikuLuaProfiler
 
             }
             s.currentLuaMemory = b.ReadInt64();
+            s.currentMonoMemory = b.ReadInt64();
 
             b.Close();
 
@@ -368,7 +400,7 @@ namespace MikuLuaProfiler
             }
             Directory.Delete(str, true);
         }
-#endregion
+        #endregion
 
     }
 

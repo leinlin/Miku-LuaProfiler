@@ -50,17 +50,17 @@ namespace MikuLuaProfiler
             }
         }
 
-        private int m_captureGC = 50 * 1024;
-        public int captureGC
+        private int m_captureLuaGC = 50 * 1024;
+        public int captureLuaGC
         {
             get
             {
-                return m_captureGC;
+                return m_captureLuaGC;
             }
             set
             {
-                if (m_captureGC == value) return;
-                m_captureGC = value;
+                if (m_captureLuaGC == value) return;
+                m_captureLuaGC = value;
                 Save();
             }
         }
@@ -76,21 +76,6 @@ namespace MikuLuaProfiler
             {
                 if (m_profilerMono == value) return;
                 m_profilerMono = value;
-                Save();
-            }
-        }
-
-        private bool m_includeCSLua = false;
-        public bool includeCSLua
-        {
-            get
-            {
-                return m_includeCSLua;
-            }
-            set
-            {
-                if (m_includeCSLua == value) return;
-                m_includeCSLua = value;
                 Save();
             }
         }
@@ -186,15 +171,45 @@ namespace MikuLuaProfiler
             }
         }
 
+        private int m_captureMonoGC = 50 * 1024;
+        public int captureMonoGC
+        {
+            get
+            {
+                return m_captureMonoGC;
+            }
+            set
+            {
+                if (m_captureMonoGC == value) return;
+                m_captureMonoGC = value;
+                Save();
+            }
+        }
+
+        private int m_captureFrameRate = 30;
+        public int captureFrameRate
+        {
+            get
+            {
+                return m_captureFrameRate;
+            }
+            set
+            {
+                if (m_captureFrameRate == value) return;
+                m_captureFrameRate = value;
+                Save();
+            }
+        }
+
         public void Save()
         {
             FileStream fs = new FileStream(SettingsAssetName, FileMode.Create);
             BinaryWriter b = new BinaryWriter(fs);
 
             b.Write(m_isDeepProfiler);
-            b.Write(m_captureGC);
+            b.Write(m_captureLuaGC);
             b.Write(m_profilerMono);
-            b.Write(m_includeCSLua);
+            b.Write(false);
             b.Write(m_isRecord);
             b.Write(m_isNeedRecord);
 
@@ -212,6 +227,9 @@ namespace MikuLuaProfiler
             b.Write(datas.Length);
             b.Write(datas);
 
+            b.Write(m_captureMonoGC);
+            b.Write(m_captureFrameRate);
+
             b.Close();
         }
 
@@ -227,9 +245,9 @@ namespace MikuLuaProfiler
                     BinaryReader b = new BinaryReader(fs);
 
                     result.m_isDeepProfiler = b.ReadBoolean();
-                    result.m_captureGC = b.ReadInt32();
+                    result.m_captureLuaGC = b.ReadInt32();
                     result.m_profilerMono = b.ReadBoolean();
-                    result.m_includeCSLua = b.ReadBoolean();
+                    b.ReadBoolean();
                     result.m_isRecord = b.ReadBoolean();
                     result.m_isNeedRecord = b.ReadBoolean();
 
@@ -242,6 +260,9 @@ namespace MikuLuaProfiler
 
                     len = b.ReadInt32();
                     result.m_luaIDE = Encoding.UTF8.GetString(b.ReadBytes(len));
+
+                    result.m_captureMonoGC = b.ReadInt32();
+                    result.m_captureFrameRate = b.ReadInt32();
 
                     b.Close();
                 }

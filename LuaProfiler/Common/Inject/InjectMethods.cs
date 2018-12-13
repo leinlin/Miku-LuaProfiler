@@ -25,10 +25,10 @@ namespace MikuLuaProfiler
 {
     public static class InjectMethods
     {
-        private static MethodBase m_getCurrentMethod;
+        //private static MethodBase m_getCurrentMethod;
         private static MethodDefinition m_beginSampleMethod;
         private static MethodDefinition m_endSampleMethod;
-        private static MethodDefinition m_getMethodString;
+        //private static MethodDefinition m_getMethodString;
         public static void InjectAllMethods()
         {
             string assemblyPath = "./Library/ScriptAssemblies/Assembly-CSharp.dll";
@@ -52,7 +52,7 @@ namespace MikuLuaProfiler
             }
             AddResolver(assembly);
 
-            m_getCurrentMethod = typeof(MethodBase).GetMethod("GetCurrentMethod");
+            //m_getCurrentMethod = typeof(MethodBase).GetMethod("GetCurrentMethod");
 
             var profilerType = assembly.MainModule.GetType("MikuLuaProfiler.LuaProfiler");
             foreach (var m in profilerType.Methods)
@@ -65,43 +65,36 @@ namespace MikuLuaProfiler
                 {
                     m_endSampleMethod = m;
                 }
-                if (m.Name == "GetMethodLineString")
-                {
-                    m_getMethodString = m; 
-                }
+                //if (m.Name == "GetMethodLineString")
+                //{
+                //    m_getMethodString = m; 
+                //}
             }
 
             var module = assembly.MainModule;
-            bool includeCSLua = LuaDeepProfilerSetting.Instance.includeCSLua;
             foreach (var type in assembly.MainModule.Types)
             {
                 if (type.FullName.Contains("MikuLuaProfiler"))
                 {
                     continue;
                 }
-                if (!includeCSLua)
-                {
-                    if (type.FullName.Contains("XLua")
-                        || type.FullName.Contains("SLua")
-                        || type.FullName.Contains("LuaInterface"))
-                    {
-                        if (!type.FullName.EndsWith("Wrap"))
-                            continue;
-                    }
-                }
 
                 foreach (var item in type.Methods)
                 {
-                    if (item.IsConstructor) continue;
-                    //丢弃协同
-                    var returnType = item.ReturnType;
-                    Type monoType = returnType.GetMonoType();
-                    Type corType = typeof(IEnumerator);
-                    if (corType.IsAssignableFrom(monoType))
+                    //if (item.IsConstructor) continue;
+                    //丢弃协同 
+
+                    if (item.IsConstructor)
                     {
-                        continue;
+                        var declaringType = item.DeclaringType;
+                        Type monoType = declaringType.GetMonoType();
+                        Type corType = typeof(MonoBehaviour);
+                        if (corType.IsAssignableFrom(monoType))
+                        {
+                            continue;
+                        }
                     }
-                    InjectTryFinally(item, module);
+                    InjectTryFinally(item, module); 
                 }
             }
 
@@ -265,9 +258,9 @@ namespace MikuLuaProfiler
             var body = Method.Body;
             if (Method.IsConstructor && !Method.IsStatic)
             {
-                return body.Instructions[2];
+                return body.Instructions[1];
             }
-            return body.Instructions[1];
+            return body.Instructions[0];
         }
 
         private static void InjectTryFinally(MethodDefinition method, ModuleDefinition module)
@@ -276,14 +269,11 @@ namespace MikuLuaProfiler
             var il = method.Body.GetILProcessor();
             var firstInstruction = FirstInstructionSkipCtor(method);
 
-            var getMethod = il.Create(OpCodes.Call, module.ImportReference(m_getCurrentMethod));
-            var getMethodStr = il.Create(OpCodes.Call, module.ImportReference(m_getMethodString));
             var beginSample = il.Create(
                 OpCodes.Call,
-                module.ImportReference(m_beginSampleMethod));
+                module.ImportReference(m_beginSampleMethod)); 
             il.InsertAfter(il.Body.Instructions[0], beginSample);
-            il.InsertAfter(il.Body.Instructions[0], getMethodStr);
-            il.InsertAfter(il.Body.Instructions[0], getMethod);
+            il.InsertAfter(il.Body.Instructions[0], il.Create(OpCodes.Ldstr, "[C#]:" + method.DeclaringType.Name + "::" + method.Name));
 
             var returnInstruction = FixReturns(method);
             var beforeReturn = Instruction.Create(OpCodes.Nop);

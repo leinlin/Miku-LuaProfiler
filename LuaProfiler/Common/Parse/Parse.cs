@@ -22,7 +22,7 @@ namespace MikuLuaProfiler
         {
             LLex l = new LLex(new StringLoadInfo(value), name);
 
-            l.InsertString(0, LOCAL_PROFILER + "BeginMikuSample(\"" + name + ",line:1&LuaFunName:require file\") ");
+            l.InsertString(0, LOCAL_PROFILER + "BeginMikuSample(\"" + name + ",line:1&[lua]:require " + name +"\") ");
             int lastPos = 0;
             int nextPos = l.pos;
             l.Next();
@@ -120,7 +120,7 @@ namespace MikuLuaProfiler
                                 }
                                 else if ((l.Token.TokenType == (int)':'))
                                 {
-                                    funName += ':';
+                                    funName += ':'; 
                                 }
                                 else if ((l.Token.TokenType == (int)'.'))
                                 {
@@ -140,7 +140,7 @@ namespace MikuLuaProfiler
                                     funName = l.Source + ",line " + l.LineNumber;
                                 }
                                 l.InsertString(nextPos - 1, " BeginMikuSample(\"" + l.Source 
-                                    + ",line:" + l.LineNumber + "&LuaFunName:" + funName + "\") ");
+                                    + ",line:" + l.LineNumber + "&[lua]:" + funName + "\") ");
                                 nextPos = l.pos;
                                 break;
                             }
