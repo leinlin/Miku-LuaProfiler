@@ -34,6 +34,35 @@ namespace MikuLuaProfiler
         public List<Sample> childs = new List<Sample>(256);
         public string captureUrl = null;
 
+        public long selfLuaGC
+        {
+            get
+            {
+                long result = costLuaGC;
+
+                foreach (var item in childs)
+                {
+                    result -= item.costLuaGC;
+                }
+
+                return result;
+            }
+        }
+
+        public long selfMonoGC
+        {
+            get
+            {
+                long result = costMonoGC;
+
+                foreach (var item in childs)
+                {
+                    result -= item.costMonoGC;
+                }
+
+                return result;
+            }
+        }
         #region property
         public string fullName
         {

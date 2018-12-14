@@ -159,12 +159,13 @@ namespace MikuLuaProfiler
             {
                 return;
             }
+            long nowMemoryCount = LuaLib.GetLuaMemory(luaState);
+            long nowMonoCount = GC.GetTotalMemory(false);
             Sample sample = beginSampleMemoryStack[beginSampleMemoryStack.Count - 1];
             beginSampleMemoryStack.RemoveAt(beginSampleMemoryStack.Count - 1);
-            long nowMemoryCount = LuaLib.GetLuaMemory(luaState);
 
             sample.costTime = getcurrentTime - sample.currentTime;
-            var monoGC = GC.GetTotalMemory(false) - sample.currentMonoMemory;
+            var monoGC = nowMonoCount - sample.currentMonoMemory;
             var luaGC = nowMemoryCount - sample.currentLuaMemory;
             sample.costLuaGC = luaGC > 0 ? luaGC : 0;
             sample.costMonoGC = monoGC > 0 ? monoGC : 0;

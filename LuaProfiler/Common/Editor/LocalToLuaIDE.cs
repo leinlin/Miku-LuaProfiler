@@ -54,6 +54,10 @@ namespace MikuLuaProfiler {
                 {
                     filePath = filePath + ".lua";
                 }
+                else if (File.Exists(filePath + ".lua.txt"))
+                {
+                    filePath = filePath + ".lua.txt";
+                }
                 else if (File.Exists(filePath + ".txt"))
                 {
                     filePath = filePath + ".txt";
@@ -102,7 +106,7 @@ namespace MikuLuaProfiler {
 
             foreach (var item in pathArray)
             {
-                if (Path.GetFileNameWithoutExtension(item) == fileName)
+                if (Path.GetFileNameWithoutExtension(item).Replace(".lua", "") == fileName)
                 {
                     path = item;
                     return true;
