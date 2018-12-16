@@ -39,3 +39,7 @@ manifest.json
 /XLua/Assets/LuaProfiler
 /XLua/Assets/LuaProfiler.meta
 /LuaProfiler/Common/LuaDeepProfilerSettings.config.meta
+/Server/Assets/LuaProfilerServer
+/Server/Assets/LuaProfilerServer.meta
+/Client/Assets/LuaProfilerClient
+/Client/Assets/LuaProfilerClient.meta
