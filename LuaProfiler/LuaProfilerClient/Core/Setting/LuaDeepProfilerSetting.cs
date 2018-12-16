@@ -95,17 +95,17 @@ namespace MikuLuaProfiler
             }
         }
 
-        private bool m_isNeedRecord = true;
-        public bool isNeedRecord
+        private bool m_isNeedCapture = false;
+        public bool isNeedCapture
         {
             get
             {
-                return m_isNeedRecord;
+                return m_isNeedCapture;
             }
             set
             {
-                if (m_isNeedRecord == value) return;
-                m_isNeedRecord = value;
+                if (m_isNeedCapture == value) return;
+                m_isNeedCapture = value;
                 Save();
             }
         }
@@ -211,7 +211,7 @@ namespace MikuLuaProfiler
             b.Write(m_profilerMono);
             b.Write(false);
             b.Write(m_isRecord);
-            b.Write(m_isNeedRecord);
+            b.Write(m_isNeedCapture);
 
             byte[] datas = Encoding.UTF8.GetBytes(m_assMd5);
             b.Write(datas.Length);
@@ -249,7 +249,7 @@ namespace MikuLuaProfiler
                     result.m_profilerMono = b.ReadBoolean();
                     b.ReadBoolean();
                     result.m_isRecord = b.ReadBoolean();
-                    result.m_isNeedRecord = b.ReadBoolean();
+                    result.m_isNeedCapture = b.ReadBoolean();
 
                     int len = b.ReadInt32();
                     result.m_assMd5 = Encoding.UTF8.GetString(b.ReadBytes(len));

@@ -53,11 +53,6 @@ namespace MikuLuaProfiler
         //开始采样时候的lua内存情况，因为中间有可能会有二次采样，所以要丢到一个盏中
         public static readonly List<Sample> beginSampleMemoryStack = new List<Sample>();
 
-        private static Action<Sample> m_SampleEndAction;
-        public static void SetSampleEnd(Action<Sample> action)
-        {
-            m_SampleEndAction = action;
-        }
         private static int m_currentFrame = 0;
         private static Dictionary<MethodBase, string> m_methodNameDict = new Dictionary<MethodBase, string>(4096);
         public static string GetMethodLineString(MethodBase m)
@@ -168,16 +163,20 @@ namespace MikuLuaProfiler
             }
             sample.fahter = beginSampleMemoryStack.Count > 0 ? beginSampleMemoryStack[beginSampleMemoryStack.Count - 1] : null;
 
-            if (m_SampleEndAction != null && beginSampleMemoryStack.Count == 0)
+            if (beginSampleMemoryStack.Count == 0)
             {
-                if (LuaDeepProfilerSetting.Instance.isRecord && LuaDeepProfilerSetting.Instance.isNeedRecord)
+                if (LuaDeepProfilerSetting.Instance.isNeedCapture)
                 {
                     //迟钝了
-                    if (sample.costTime >= (1 / 30.0f) * 10000000)
+                    if (sample.costTime >= (1 / (float)(LuaDeepProfilerSetting.Instance.captureFrameRate)) * 10000000)
                     {
                         sample.captureUrl = Sample.Capture();
                     }
                     else if (sample.costLuaGC > LuaDeepProfilerSetting.Instance.captureLuaGC)
+                    {
+                        sample.captureUrl = Sample.Capture();
+                    }
+                    else if (sample.costMonoGC > LuaDeepProfilerSetting.Instance.captureMonoGC)
                     {
                         sample.captureUrl = Sample.Capture();
                     }
@@ -186,7 +185,7 @@ namespace MikuLuaProfiler
                         sample.captureUrl = null;
                     }
                 }
-                m_SampleEndAction(sample);
+                NetWorkClient.SendMessage(sample);
             }
 
             //释放掉被累加的Sample

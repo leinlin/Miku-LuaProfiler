@@ -138,10 +138,6 @@ namespace MikuLuaProfiler
         private static string capturePath = "";
         private static Dictionary<string, Dictionary<string, string>> m_fullNamePool = new Dictionary<string, Dictionary<string, string>>();
         private static ObjectPool<Sample> samplePool = new ObjectPool<Sample>(250);
-        public static Sample Create()
-        {
-            return Create(0, 0, "");
-        }
         public static Sample Create(long time, long memory, string name)
         {
             Sample s = samplePool.GetObject();
@@ -195,12 +191,15 @@ namespace MikuLuaProfiler
 
         public void Restore()
         {
-            for (int i = 0, imax = childs.Count; i < imax; i++)
+            lock (this)
             {
-                childs[i].Restore();
+                for (int i = 0, imax = childs.Count; i < imax; i++)
+                {
+                    childs[i].Restore();
+                }
+                childs.Clear();
+                samplePool.Store(this);
             }
-            childs.Clear();
-            samplePool.Store(this);
         }
         #endregion
 

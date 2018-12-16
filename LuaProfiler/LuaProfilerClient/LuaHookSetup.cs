@@ -75,7 +75,6 @@ namespace MikuLuaProfiler
                 {
                     if (isPlaying == true && Application.isPlaying == false)
                     {
-                        NetWorkServer.Close();
                         NetWorkClient.Close();
                     }
 

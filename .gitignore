@@ -20,25 +20,12 @@ UnityVS
 *.o
 /build/*/*.a
 
-ToLua/Assets/Source/Generate/*Wrap*
-ToLua/Assets/Source/Generate/*Wrap*
 LuaDeepProfilerSettings.config
 obj
 Packages
 manifest.json
-/SLua/Assets/Slua/LuaObject.meta
-/SLua/Assets/Slua/LuaObject
-/XLua/Assets/XLua/Gen.meta
-/XLua/Assets/XLua/Gen
-/XLua/XLua.userprefs
 
-/SLua/Assets/LuaProfiler
-/SLua/Assets/LuaProfiler.meta
-/ToLua/Assets/LuaProfiler
-/ToLua/Assets/LuaProfiler.meta
-/XLua/Assets/LuaProfiler
-/XLua/Assets/LuaProfiler.meta
-/LuaProfiler/Common/LuaDeepProfilerSettings.config.meta
+
 /Server/Assets/LuaProfilerServer
 /Server/Assets/LuaProfilerServer.meta
 /Client/Assets/LuaProfilerClient

@@ -88,7 +88,7 @@ namespace MikuLuaProfiler
                             f = f.fahter;
                         }
                         _fullName = value;
-                        childDict[name] = _fullName;
+                        childDict[name] = string.Intern(_fullName);
                     }
 
                     return _fullName;
@@ -105,26 +105,9 @@ namespace MikuLuaProfiler
             {
                 if (value != null)
                 {
-                    bool needAdd = true;
-                    foreach (var item in value.childs)
-                    {
-                        if (item.name == name)
-                        {
-                            needAdd = false;
-                            item.AddSample(this);
-                            break;
-                        }
-                    }
-                    if (needAdd)
-                    {
-                        value.childs.Add(this);
-                        _father = value;
-                    }
+                    value.childs.Add(this);
                 }
-                else
-                {
-                    _father = null;
-                }
+                _father = value;
             }
             get
             {

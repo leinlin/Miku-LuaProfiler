@@ -15,7 +15,7 @@ namespace MikuLuaProfiler
     public class ByteBuf
     {
         //字节缓存区
-        private byte[] m_buf;
+        public byte[] m_buf;
         //读取索引
         private int m_readIndex = 0;
         //写入索引
@@ -520,21 +520,17 @@ namespace MikuLuaProfiler
         public unsafe string ReadString()
         {
             int len = ReadInt();
-            byte[] c = ReadBytes(len);
-            string ret = new string(' ', len / 2);
+            byte[] bytes = ReadBytes(len);
+            string ret = Encoding.UTF8.GetString(bytes);
 
-            fixed (char* cptr = ret)
-            {
-                fixed (byte* ptr = c)
-                {
-                    StringCopy(ptr, (byte*)cptr, len);
-                }
-            }
-
-            //fixed (byte* ptr = c)
+            //fixed (char* cptr = ret)
             //{
-            //    ret = new string((sbyte*)ptr);
+            //    fixed (byte* ptr = m_buf)
+            //    {
+            //        StringCopy(ptr + m_readIndex, (byte*)cptr, len);
+            //    }
             //}
+            //m_readIndex += len;
             return ret;
         }
 

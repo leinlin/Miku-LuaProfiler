@@ -287,24 +287,24 @@ namespace MikuLuaProfiler
 
             lock (this)
             {
-                int length = v.Length * 2;
-                Write(length);
+                //int length = v.Length * 2;
+                //Write(length);
 
-                int total = length + m_writeIndex;
-                int len = m_buf.Length;
-                FixSizeAndReset(len, total);
+                //int total = length + m_writeIndex;
+                //int len = m_buf.Length;
+                //FixSizeAndReset(len, total);
 
-                fixed (char* cptr = v)
-                {
-                    fixed (byte* ptr = m_buf)
-                    {
-                        StringCopy((byte*)cptr, ptr + m_writeIndex, len);
-                    }
-                }
-                m_writeIndex = total;
-                //byte[] bytes = Encoding.UTF8.GetBytes(v);
-                //Write(bytes.Length);
-                //Write(bytes);
+                //fixed (char* cptr = v)
+                //{
+                //    fixed (byte* ptr = m_buf)
+                //    {
+                //        StringCopy((byte*)cptr, ptr + m_writeIndex, len);
+                //    }
+                //}
+                //m_writeIndex = total;
+                byte[] bytes = Encoding.UTF8.GetBytes(v);
+                Write(bytes.Length);
+                Write(bytes);
             }
 
 

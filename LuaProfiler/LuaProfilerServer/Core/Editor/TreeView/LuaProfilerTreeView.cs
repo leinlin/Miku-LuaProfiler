@@ -41,23 +41,12 @@ namespace MikuLuaProfiler
         }
 
         public int frameCalls { private set; get; }
-
         private long _showLuaGC = 0;
         public long showLuaGC
         {
             get
             {
-                //return _showGC;
-                if (!EditorApplication.isPlaying)
-                {
-                    return totalLuaMemory / totalCallTime;
-                }
-
-                if (Mathf.Abs(Time.frameCount - _frameCount) <= 30)
-                {
-                    return _showLuaGC;
-                }
-                else { return 0; }
+                return totalLuaMemory / totalCallTime;
             }
         }
         private long _showMonoGC = 0;
@@ -65,17 +54,8 @@ namespace MikuLuaProfiler
         {
             get
             {
-                //return _showGC;
-                if (!EditorApplication.isPlaying)
-                {
-                    return totalMonoMemory / totalCallTime;
-                }
-
-                if (Mathf.Abs(Time.frameCount - _frameCount) <= 30)
-                {
-                    return _showMonoGC;
-                }
-                else { return 0; }
+                long v = totalMonoMemory / totalCallTime;
+                return v >= 10 ? v : 0;
             }
         }
         public long totalMonoMemory { private set; get; }
@@ -136,7 +116,6 @@ namespace MikuLuaProfiler
                 totalLuaMemory = sample.costLuaGC;
                 selfLuaMemory = sample.selfLuaGC;
                 selfMonoMemory = sample.selfMonoGC;
-
                 totalTime = sample.costTime;
                 string[] tmp = sample.name.Split(splitFun, 2);
                 if (tmp.Length >= 2)
@@ -223,7 +202,6 @@ namespace MikuLuaProfiler
 
             totalTime += sample.costTime;
             totalCallTime += sample.calls;
-
             averageTime = totalTime / totalCallTime;
             for (int i = 0, imax = sample.childs.Count; i < imax; i++)
             {
@@ -313,32 +291,36 @@ namespace MikuLuaProfiler
 
         private void DequeueSample()
         {
-            if (m_runningSamplesQueue.Count > 0)
+            lock (this)
             {
-                while (m_runningSamplesQueue.Count > 0)
+                if (m_runningSamplesQueue.Count > 0)
                 {
-                    Sample s = null;
-                    lock (this)
+                    while (m_runningSamplesQueue.Count > 0)
                     {
-                        s = m_runningSamplesQueue.Dequeue();
-                        LoadRootSample(s, LuaDeepProfilerSetting.Instance.isRecord);
-                        s.Restore();
+                        Sample s = null;
+                        lock (this)
+                        {
+                            s = m_runningSamplesQueue.Dequeue();
+                            LoadRootSample(s, LuaDeepProfilerSetting.Instance.isRecord);
+                            //s.Restore();
+                        }
+                    }
+                }
+                else if (m_historySamplesQueue.Count > 0)
+                {
+                    int delNum = 0;
+                    while (m_historySamplesQueue.Count > 0 && delNum < MAX_DEAL_COUNT)
+                    {
+                        lock (this)
+                        {
+                            Sample s = m_historySamplesQueue.Dequeue();
+                            LoadRootSample(s, false);
+                        }
+                        delNum++;
                     }
                 }
             }
-            else if (m_historySamplesQueue.Count > 0)
-            {
-                int delNum = 0;
-                while (m_historySamplesQueue.Count > 0 && delNum < MAX_DEAL_COUNT)
-                {
-                    lock (this)
-                    {
-                        Sample s = m_historySamplesQueue.Dequeue();
-                        LoadRootSample(s, false);
-                    }
-                    delNum++;
-                }
-            }
+
         }
 
         private static MultiColumnHeader CreateDefaultMultiColumnHeaderState(float treeViewWidth)
