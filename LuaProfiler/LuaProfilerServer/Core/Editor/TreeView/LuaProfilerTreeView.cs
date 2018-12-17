@@ -225,7 +225,7 @@ namespace MikuLuaProfiler
 
             totalTime += sample.costTime;
             totalCallTime += sample.calls;
-            averageTime = totalTime / totalCallTime;
+            averageTime = totalTime / Mathf.Max(totalCallTime, 1);
             for (int i = 0, imax = sample.childs.Count; i < imax; i++)
             {
                 LuaProfilerTreeViewItem childItem = null;
@@ -292,7 +292,7 @@ namespace MikuLuaProfiler
         private long m_monoMemory = 0;
 
         public bool needRebuild = true;
-        public readonly List<Sample> history = new List<Sample>(216000);
+        public readonly List<Sample> history = new List<Sample>(2160);
         public string startUrl = null;
         public string endUrl = null;
         #endregion
@@ -326,7 +326,8 @@ namespace MikuLuaProfiler
                         {
                             s = m_runningSamplesQueue.Dequeue();
                             LoadRootSample(s, LuaDeepProfilerSetting.Instance.isRecord);
-                            //s.Restore();
+
+                            s.Restore();
                         }
                     }
                 }
@@ -538,6 +539,8 @@ namespace MikuLuaProfiler
                 endUrl = null;
             }
             needRebuild = true;
+            GC.Collect();
+            EditorUtility.UnloadUnusedAssetsImmediate();
         }
 
         protected override void DoubleClickedItem(int id)
@@ -667,7 +670,7 @@ namespace MikuLuaProfiler
             }
             if (sign < 0)
             {
-                result = "-" + sign;
+                result = "-" + result;
             }
             return result;
         }

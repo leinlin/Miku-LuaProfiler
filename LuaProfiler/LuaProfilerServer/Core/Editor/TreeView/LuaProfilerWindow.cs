@@ -26,6 +26,7 @@ namespace MikuLuaProfiler
         int sortColIndex = -1;
         bool isAscending = false;
         private int m_lastCount = 0;
+        int port = 23333;
 
         private string oldStartUrl = null;
         private string oldEndUrl = null;
@@ -100,12 +101,16 @@ namespace MikuLuaProfiler
             #endregion
 
             #region socket
+
             if (GUILayout.Button("OpenServie", EditorStyles.toolbarButton, GUILayout.Height(30)))
             {
                 NetWorkServer.Close();
                 NetWorkServer.RegisterOnReceive(m_TreeView.LoadRootSample);
-                NetWorkServer.BeginListen("127.0.0.1", 23333); 
+                NetWorkServer.BeginListen("127.0.0.1", port); 
             }
+            GUILayout.Label("port:", GUILayout.Height(30), GUILayout.Width(35));
+            port = EditorGUILayout.IntField(port, GUILayout.Height(16), GUILayout.Width(50));
+
             if (GUILayout.Button("CloseServie", EditorStyles.toolbarButton, GUILayout.Height(30)))
             {
                 NetWorkServer.Close();

@@ -18,7 +18,8 @@ namespace MikuLuaProfiler
     public class LuaProfilerWindow : EditorWindow
     {
         private bool m_isStop = false;
-
+        private string ip = "127.0.0.1";
+        private int port = 23333;
         void OnEnable()
         {
         }
@@ -108,14 +109,23 @@ namespace MikuLuaProfiler
             #endregion
 
             #region socket
+            EditorGUILayout.BeginHorizontal();
+            GUILayout.Label("ip:", GUILayout.Height(30), GUILayout.Width(35));
+            ip = EditorGUILayout.TextField(ip, GUILayout.Height(16), GUILayout.Width(100));
+
+            GUILayout.Label("port:", GUILayout.Height(30), GUILayout.Width(35));
+            port = EditorGUILayout.IntField(port, GUILayout.Height(16), GUILayout.Width(50));
+            EditorGUILayout.EndHorizontal();
+
             if (GUILayout.Button("Connent", GUILayout.Height(50)))
             {
-                NetWorkClient.ConnectServer("127.0.0.1", 23333);
+                NetWorkClient.ConnectServer(ip, port);
             }
             GUILayout.Space(5);
 
             if (GUILayout.Button("Disconnent", GUILayout.Height(50)))
             {
+                EditorUtility.UnloadUnusedAssetsImmediate();
                 NetWorkClient.Close();
             }
             GUILayout.Space(5);

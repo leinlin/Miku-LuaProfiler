@@ -16,9 +16,9 @@ namespace MikuLuaProfiler
         {
 
         }
-        public ObjectPool(int poolSize, CreateFunc createFunc = null, Action<T> resetAction = null)
+        public ObjectPool(int poolSize)
         {
-            Init(poolSize, createFunc, resetAction);
+            Init(poolSize);
         }
         public T GetObject()
         {
@@ -27,24 +27,18 @@ namespace MikuLuaProfiler
                 if (m_objStack.Count > 0)
                 {
                     T t = m_objStack.Pop();
-                    if (m_resetAction != null)
-                    {
-                        m_resetAction(t);
-                    }
                     return t;
                 }
             }
-            return (m_createFunc != null) ? m_createFunc() : new T();
+            return new T();
         }
 
         public void Init(int poolSize, CreateFunc createFunc = null, Action<T> resetAction = null)
         {
             m_objStack = new Stack<T>();
-            m_resetAction = resetAction;
-            m_createFunc = createFunc;
             for (int i = 0; i < poolSize; i++)
             {
-                T item = (m_createFunc != null) ? m_createFunc() : new T();
+                T item = new T();
                 m_objStack.Push(item);
             }
         }
@@ -55,8 +49,6 @@ namespace MikuLuaProfiler
                 return;
             lock (this)
             {
-                if (m_resetAction != null)
-                    m_resetAction(obj);
                 m_objStack.Push(obj);
             }
         }
@@ -86,8 +78,6 @@ namespace MikuLuaProfiler
         }
 
         private Stack<T> m_objStack = null;
-        private Action<T> m_resetAction = null;
-        private CreateFunc m_createFunc = null;
     }
 
     public class ListObjectPool<T> where T : class

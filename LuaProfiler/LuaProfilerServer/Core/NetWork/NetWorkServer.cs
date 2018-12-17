@@ -44,7 +44,11 @@ namespace MikuLuaProfiler
         private static IPEndPoint MyServer;                             //定义主机
         private static Thread thread;
         private static Socket socklin;                                  //临时套接字,接受客户端连接请求
-        private static byte[] bytes = new byte[0xFFFFFF];
+        private const int BUFF_LEN = 1024 * 1024 * 100;
+        private static byte[] bytes;
+        private static MemoryStream ms;
+        private static BinaryReader br;
+
         private const int PACK_HEAD = 0x23333333;
         private static Action<Sample> m_onReceive;
 
@@ -62,6 +66,8 @@ namespace MikuLuaProfiler
         public static void BeginListen(string ip, int port)
         {
             if (sock != null) return;
+            m_strCacheDict.Clear();
+
             try
             {
                 IPAddress myIP = IPAddress.Parse(ip);
@@ -109,7 +115,14 @@ namespace MikuLuaProfiler
                 UnityEngine.Debug.Log(e);
             }
             UnityEngine.Debug.Log("close server");
-
+            bytes = null;
+            if (ms != null)
+            {
+                ms.Dispose();
+            }
+            ms = null;
+            br = null;
+            GC.Collect();
             if (thread != null)
             {
                 var tmp = thread;
@@ -133,6 +146,7 @@ namespace MikuLuaProfiler
                     socklin = null;
                     return;
                 }
+                socklin.ReceiveBufferSize = BUFF_LEN;
                 socklin.ReceiveTimeout = 30000;
                 //连接
                 if (!socklin.Connected)
@@ -142,6 +156,10 @@ namespace MikuLuaProfiler
                 }
                 else
                 {
+                    bytes = new byte[BUFF_LEN];
+                    ms = new MemoryStream(bytes);
+                    br = new BinaryReader(ms);
+                    m_strCacheDict.Clear();
                     UnityEngine.Debug.Log("<color=#00ff00>connect success</color>");
                 }
             }
@@ -152,6 +170,11 @@ namespace MikuLuaProfiler
                 try
                 {
                     if (thread == null)
+                    {
+                        return;
+                    }
+
+                    if (socklin == null)
                     {
                         return;
                     }
@@ -177,8 +200,8 @@ namespace MikuLuaProfiler
 
                         continue;
                     }
-                    MemoryStream ms = new MemoryStream(bytes);
-                    BinaryReader br = new BinaryReader(ms);
+
+                    ms.Seek(0, SeekOrigin.Begin);
                     //处理粘包
                     while (br.ReadInt32() == PACK_HEAD)
                     {
@@ -188,30 +211,43 @@ namespace MikuLuaProfiler
                             m_onReceive(s);
                         }
                     }
-                    br.Close();
                     notAvailable = 0;
                 }
 #pragma warning disable 0168
                 catch (Exception e)
                 {
+                    UnityEngine.Debug.Log(e);
                     Close();
                 }
 #pragma warning restore 0168
                 Thread.Sleep(50);
             }
         }
-
+        private static Dictionary<int, string> m_strCacheDict = new Dictionary<int, string>(4096);
         public static Sample Deserialize(BinaryReader br)
         {
-            Sample s = new Sample();
+            Sample s = Sample.Create();
 
             s.calls = br.ReadInt32();
             s.frameCount = br.ReadInt32();
             s.costLuaGC = br.ReadInt64();
             s.costMonoGC = br.ReadInt64();
-            int len = br.ReadInt32();
-            byte[] datas = br.ReadBytes(len);
-            s.name = string.Intern(Encoding.UTF8.GetString(datas).Trim());
+
+            bool onlyKey = br.ReadByte() > 0;
+            int index = br.ReadInt32();
+
+            if (!onlyKey)
+            {
+                int len = br.ReadInt32();
+                byte[] datas = br.ReadBytes(len);
+                s.name = string.Intern(Encoding.UTF8.GetString(datas).Trim());
+                m_strCacheDict[index] = s.name;
+            }
+            else
+            {
+                s.name = m_strCacheDict[index];
+            }
+
             s.costTime = br.ReadInt64();
             s.currentLuaMemory = br.ReadInt64();
             s.currentMonoMemory = br.ReadInt64();

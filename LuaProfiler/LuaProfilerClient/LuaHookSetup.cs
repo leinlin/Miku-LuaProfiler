@@ -297,7 +297,11 @@ namespace MikuLuaProfiler
                 string ret;
                 if (!TryGetLuaString(str, out ret))
                 {
-                    ret = string.Intern(PoxyToString(L, index));
+                    ret = PoxyToString(L, index);
+                    if (!string.IsNullOrEmpty(ret))
+                    {
+                        ret = string.Intern(ret);
+                    }
                     RefString(str, index, ret, L);
                 }
                 return ret;

@@ -23,15 +23,18 @@ namespace MikuLuaProfiler
         private static Queue<Sample> m_sampleQueue = new Queue<Sample>(256);
         private const int PACK_HEAD = 0x23333333;
         private static SocketError errorCode;
-        private static MemoryStream ms = new MemoryStream(1024);
-        private static BinaryWriter bw = new BinaryWriter(ms);
+        private const int BUFF_LEN = 1024 * 1024 * 100;
+        private static MemoryStream ms;
+        private static BinaryWriter bw;
+
         #region public
         public static void ConnectServer(string host, int port)
         {
             if (m_client != null) return;
-
             m_client = new TcpClient();
-            m_client.NoDelay = true;
+
+            m_client.SendBufferSize = BUFF_LEN;
+            //m_client.NoDelay = true;
             try
             {
                 IAsyncResult result = m_client.BeginConnect(
@@ -75,6 +78,14 @@ namespace MikuLuaProfiler
             }
             finally
             {
+                if (ms != null)
+                {
+                    ms.Close();
+                    ms = null;
+                    bw = null;
+                    GC.Collect();
+                }
+                m_strDict.Clear();
                 UnityEngine.Debug.Log("<color=#00ff00>close client</color>");
             }
 
@@ -86,11 +97,22 @@ namespace MikuLuaProfiler
             }
         }
 
+        static Dictionary<string, Sample> m_dict = new Dictionary<string, Sample>(1024);
         public static void SendMessage(Sample sample)
         {
             lock (m_sampleQueue)
             {
-                m_sampleQueue.Enqueue(sample);
+                Sample s;
+                if (m_dict.TryGetValue(sample.name, out s))
+                {
+                    s.AddSample(sample);
+                    sample.Restore();
+                }
+                else
+                {
+                    m_sampleQueue.Enqueue(sample);
+                    m_dict.Add(sample.name, sample);
+                }
             }
         }
         #endregion
@@ -119,6 +141,7 @@ namespace MikuLuaProfiler
                                 m_client.Client.Send(datas, len, SocketFlags.None);
                                 s.Restore();
                             }
+                            m_dict.Clear();
                         }
                         else
                         {
@@ -146,18 +169,34 @@ namespace MikuLuaProfiler
             }
 
         }
-        private static Dictionary<string, byte[]> m_strDict = new Dictionary<string, byte[]>(4096);
-        private static byte[] GetBytes(string s)
-        {
-            byte[] result = null;
 
-            if (!m_strDict.TryGetValue(s, out result))
+        private static int m_key = 0;
+
+        public static int GetUniqueKey()
+        {
+            return m_key++;
+        }
+
+        private static Dictionary<string, KeyValuePair<int, byte[]>> m_strDict = new Dictionary<string, KeyValuePair<int, byte[]>>(4096);
+        private static bool GetBytes(string s, out byte[] result, out int index)
+        {
+            bool ret = true;
+            KeyValuePair<int, byte[]> kp;
+            if (!m_strDict.TryGetValue(s, out kp))
             {
                 result = Encoding.UTF8.GetBytes(s);
-                m_strDict.Add(s, result);
+                index = GetUniqueKey();
+                kp = new KeyValuePair<int, byte[]>(index, result);
+                m_strDict.Add(s, kp);
+                ret = false;
+            }
+            else
+            {
+                index = kp.Key;
+                result = kp.Value;
             }
 
-            return result;
+            return ret;
         }
         private static void Serialize(Sample s, BinaryWriter bw)
         {
@@ -165,9 +204,18 @@ namespace MikuLuaProfiler
             bw.Write(s.frameCount);
             bw.Write(s.costLuaGC);
             bw.Write(s.costMonoGC);
-            byte[] datas = GetBytes(s.name);
-            bw.Write(datas.Length);
-            bw.Write(datas);
+            byte[] datas;
+            int key;
+            bool onlyKey = GetBytes(s.name, out datas, out key);
+            byte r = (byte)(onlyKey ? 1 :0);
+            bw.Write(r);
+            bw.Write(key);
+            if (!onlyKey)
+            {
+                bw.Write(datas.Length);
+                bw.Write(datas);
+            }
+
             bw.Write(s.costTime);
             bw.Write(s.currentLuaMemory);
             bw.Write(s.currentMonoMemory);
@@ -183,6 +231,11 @@ namespace MikuLuaProfiler
         {
             UnityEngine.Debug.Log("<color=#00ff00>connect success</color>");
             m_client.Client.SendTimeout = 30000;
+            m_strDict.Clear();
+            m_key = 0;
+            ms = new MemoryStream(BUFF_LEN);
+            bw = new BinaryWriter(ms);
+
             m_sendThread = new Thread(new ThreadStart(DoSendMessage));
             m_sendThread.Start();
         }

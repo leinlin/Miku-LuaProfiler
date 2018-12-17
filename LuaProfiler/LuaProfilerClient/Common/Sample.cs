@@ -31,7 +31,7 @@ namespace MikuLuaProfiler
         public string name;
         public long costTime;
         public Sample _father;
-        public List<Sample> childs = new List<Sample>(256);
+        public List<Sample> childs = new List<Sample>(32);
         public string captureUrl = null;
 
         public long selfLuaGC

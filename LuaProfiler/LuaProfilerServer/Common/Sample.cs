@@ -30,7 +30,7 @@ namespace MikuLuaProfiler
         public string name;
         public long costTime;
         public Sample _father;
-        public List<Sample> childs = new List<Sample>(256);
+        public List<Sample> childs = new List<Sample>(32);
         public string captureUrl = null;
 
         public long selfLuaGC
@@ -119,10 +119,12 @@ namespace MikuLuaProfiler
         #region pool
         private static string capturePath = "";
         private static Dictionary<string, Dictionary<string, string>> m_fullNamePool = new Dictionary<string, Dictionary<string, string>>();
-        private static ObjectPool<Sample> samplePool = new ObjectPool<Sample>(64);
+        private static ObjectPool<Sample> samplePool = new ObjectPool<Sample>(256);
         public static Sample Create()
         {
-            return samplePool.GetObject();
+            Sample s = samplePool.GetObject();
+
+            return s;
         }
 
         public void Restore()
@@ -131,6 +133,9 @@ namespace MikuLuaProfiler
             {
                 childs[i].Restore();
             }
+            _fullName = null;
+            _father = null;
+            captureUrl = null;
             childs.Clear();
             samplePool.Store(this);
         }
