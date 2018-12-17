@@ -46,7 +46,18 @@ namespace MikuLuaProfiler
         {
             get
             {
-                return totalLuaMemory / totalCallTime;
+                if (!NetWorkServer.CheckIsReceiving())
+                {
+                    return totalLuaMemory / totalCallTime;
+                }
+                else if (s_frameCount - _frameCount <= 30)
+                {
+                    return _showLuaGC / frameCalls;
+                }
+                else
+                {
+                    return 0;
+                }
             }
         }
         private long _showMonoGC = 0;
@@ -54,10 +65,21 @@ namespace MikuLuaProfiler
         {
             get
             {
-                long v = totalMonoMemory / totalCallTime;
-                return v >= 10 ? v : 0;
+                if (!NetWorkServer.CheckIsReceiving())
+                {
+                    return totalMonoMemory / totalCallTime;
+                }
+                else if (s_frameCount - _frameCount <= 30)
+                {
+                    return _showMonoGC;
+                }
+                else
+                {
+                    return 0;
+                }
             }
         }
+        private static int s_frameCount = 0;
         public long totalMonoMemory { private set; get; }
         public long selfMonoMemory { private set; get; }
         public long totalLuaMemory { private set; get; }
@@ -149,7 +171,7 @@ namespace MikuLuaProfiler
                 currentTime = 0;
                 totalCallTime = 1;
             }
-            averageTime = totalTime / totalCallTime;
+            averageTime = totalTime / Mathf.Max(totalCallTime, 1);
 
             this.id = LuaProfilerTreeView.GetUniqueId();
             this.depth = depth;
@@ -175,6 +197,7 @@ namespace MikuLuaProfiler
                     }
                 }
                 _frameCount = sample.frameCount;
+                s_frameCount = sample.frameCount;
             }
             this.father = father;
         }
@@ -218,6 +241,7 @@ namespace MikuLuaProfiler
                 }
             }
             _frameCount = sample.frameCount;
+            s_frameCount = sample.frameCount;
         }
 
         public Sample CopyToSample()
@@ -622,6 +646,9 @@ namespace MikuLuaProfiler
         public static string GetMemoryString(long value, string unit = "B")
         {
             string result = null;
+            int sign = Math.Sign(value);
+
+            value = Math.Abs(value);
             if (value < MaxB)
             {
                 result = string.Format("{0}{1}", value, unit);
@@ -637,6 +664,10 @@ namespace MikuLuaProfiler
             else if (value < MaxG)
             {
                 result = string.Format("{0:N2}G{1}", (float)value / MaxM, unit);
+            }
+            if (sign < 0)
+            {
+                result = "-" + sign;
             }
             return result;
         }

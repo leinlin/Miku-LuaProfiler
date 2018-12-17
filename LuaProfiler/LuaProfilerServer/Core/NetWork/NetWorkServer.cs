@@ -74,7 +74,7 @@ namespace MikuLuaProfiler
                 //开始监听
                 sock.Listen(0);
 
-                UnityEngine.Debug.Log(string.Format("主机 {0} 端口 {1} 开始监听", ip, port));
+                UnityEngine.Debug.Log(string.Format("<color=#00ff00>listen to port: {1}</color>", ip, port));
 
                 //构造线程
                 thread = new Thread(new ThreadStart(DoReceive)); //targett自定义函数:接受客户端连接请求
@@ -103,20 +103,19 @@ namespace MikuLuaProfiler
                     sock = null;
                 }
 
-                if (thread != null)
-                {
-                    lock (thread)
-                    {
-                        thread.Abort();
-                        thread = null;
-                    }
-                }
             }
             catch (Exception e)
             {
                 UnityEngine.Debug.Log(e);
             }
             UnityEngine.Debug.Log("close server");
+
+            if (thread != null)
+            {
+                var tmp = thread;
+                thread = null;
+                tmp.Abort();
+            }
         }
 
         private static void DoReceive()
@@ -138,12 +137,12 @@ namespace MikuLuaProfiler
                 //连接
                 if (!socklin.Connected)
                 {
-                    UnityEngine.Debug.Log("fail");
+                    UnityEngine.Debug.Log("<color=#ff0000>fail</color>");
                     return;
                 }
                 else
                 {
-                    UnityEngine.Debug.Log("succ");
+                    UnityEngine.Debug.Log("<color=#00ff00>connect success</color>");
                 }
             }
 
@@ -192,11 +191,12 @@ namespace MikuLuaProfiler
                     br.Close();
                     notAvailable = 0;
                 }
+#pragma warning disable 0168
                 catch (Exception e)
                 {
                     Close();
                 }
-
+#pragma warning restore 0168
                 Thread.Sleep(50);
             }
         }

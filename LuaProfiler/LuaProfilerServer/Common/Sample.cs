@@ -119,7 +119,7 @@ namespace MikuLuaProfiler
         #region pool
         private static string capturePath = "";
         private static Dictionary<string, Dictionary<string, string>> m_fullNamePool = new Dictionary<string, Dictionary<string, string>>();
-        private static ObjectPool<Sample> samplePool = new ObjectPool<Sample>(250);
+        private static ObjectPool<Sample> samplePool = new ObjectPool<Sample>(64);
         public static Sample Create()
         {
             return samplePool.GetObject();

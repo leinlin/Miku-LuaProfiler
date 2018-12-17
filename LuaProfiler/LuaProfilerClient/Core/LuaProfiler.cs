@@ -111,19 +111,23 @@ namespace MikuLuaProfiler
                 return DateTime.UtcNow.Ticks;
             }
         }
+        private static object m_lock = (byte)1;
         public static void BeginSample(IntPtr luaState, string name)
         {
             if (!IsMainThread) return;
-            m_frameCount = HookLuaUtil.frameCount;
-
-            if (m_currentFrame != m_frameCount)
+            lock (m_lock)
             {
-                PopAllSampleWhenLateUpdate();
-                m_currentFrame = m_frameCount;
+                m_frameCount = HookLuaUtil.frameCount;
+
+                if (m_currentFrame != m_frameCount)
+                {
+                    PopAllSampleWhenLateUpdate();
+                    m_currentFrame = m_frameCount;
+                }
+                long memoryCount = LuaLib.GetLuaMemory(luaState);
+                Sample sample = Sample.Create(getcurrentTime, memoryCount, name);
+                beginSampleMemoryStack.Add(sample);
             }
-            long memoryCount = LuaLib.GetLuaMemory(luaState);
-            Sample sample = Sample.Create(getcurrentTime, memoryCount, name);
-            beginSampleMemoryStack.Add(sample);
         }
         public static void PopAllSampleWhenLateUpdate()
         {
@@ -141,57 +145,60 @@ namespace MikuLuaProfiler
         public static void EndSample(IntPtr luaState)
         {
             if (!IsMainThread) return;
-            if (beginSampleMemoryStack.Count <= 0)
+            lock (m_lock)
             {
-                return;
-            }
-            long nowMemoryCount = LuaLib.GetLuaMemory(luaState);
-            long nowMonoCount = GC.GetTotalMemory(false);
-            Sample sample = beginSampleMemoryStack[beginSampleMemoryStack.Count - 1];
-            beginSampleMemoryStack.RemoveAt(beginSampleMemoryStack.Count - 1);
-
-            sample.costTime = getcurrentTime - sample.currentTime;
-            var monoGC = nowMonoCount - sample.currentMonoMemory;
-            var luaGC = nowMemoryCount - sample.currentLuaMemory;
-            sample.costLuaGC = luaGC > 0 ? luaGC : 0;
-            sample.costMonoGC = monoGC > 0 ? monoGC : 0;
-
-            if (!sample.CheckSampleValid())
-            {
-                sample.Restore();
-                return;
-            }
-            sample.fahter = beginSampleMemoryStack.Count > 0 ? beginSampleMemoryStack[beginSampleMemoryStack.Count - 1] : null;
-
-            if (beginSampleMemoryStack.Count == 0)
-            {
-                if (LuaDeepProfilerSetting.Instance.isNeedCapture)
+                if (beginSampleMemoryStack.Count <= 0)
                 {
-                    //迟钝了
-                    if (sample.costTime >= (1 / (float)(LuaDeepProfilerSetting.Instance.captureFrameRate)) * 10000000)
-                    {
-                        sample.captureUrl = Sample.Capture();
-                    }
-                    else if (sample.costLuaGC > LuaDeepProfilerSetting.Instance.captureLuaGC)
-                    {
-                        sample.captureUrl = Sample.Capture();
-                    }
-                    else if (sample.costMonoGC > LuaDeepProfilerSetting.Instance.captureMonoGC)
-                    {
-                        sample.captureUrl = Sample.Capture();
-                    }
-                    else
-                    {
-                        sample.captureUrl = null;
-                    }
+                    return;
                 }
-                NetWorkClient.SendMessage(sample);
-            }
+                long nowMemoryCount = LuaLib.GetLuaMemory(luaState);
+                long nowMonoCount = GC.GetTotalMemory(false);
+                Sample sample = beginSampleMemoryStack[beginSampleMemoryStack.Count - 1];
+                beginSampleMemoryStack.RemoveAt(beginSampleMemoryStack.Count - 1);
 
-            //释放掉被累加的Sample
-            if (beginSampleMemoryStack.Count != 0 && sample.fahter == null)
-            {
-                sample.Restore();
+                sample.costTime = getcurrentTime - sample.currentTime;
+                var monoGC = nowMonoCount - sample.currentMonoMemory;
+                var luaGC = nowMemoryCount - sample.currentLuaMemory;
+                sample.costLuaGC = luaGC > 0 ? luaGC : 0;
+                sample.costMonoGC = monoGC > 0 ? monoGC : 0;
+
+                if (!sample.CheckSampleValid())
+                {
+                    sample.Restore();
+                    return;
+                }
+                sample.fahter = beginSampleMemoryStack.Count > 0 ? beginSampleMemoryStack[beginSampleMemoryStack.Count - 1] : null;
+
+                if (beginSampleMemoryStack.Count == 0)
+                {
+                    if (LuaDeepProfilerSetting.Instance.isNeedCapture)
+                    {
+                        //迟钝了
+                        if (sample.costTime >= (1 / (float)(LuaDeepProfilerSetting.Instance.captureFrameRate)) * 10000000)
+                        {
+                            sample.captureUrl = Sample.Capture();
+                        }
+                        else if (sample.costLuaGC > LuaDeepProfilerSetting.Instance.captureLuaGC)
+                        {
+                            sample.captureUrl = Sample.Capture();
+                        }
+                        else if (sample.costMonoGC > LuaDeepProfilerSetting.Instance.captureMonoGC)
+                        {
+                            sample.captureUrl = Sample.Capture();
+                        }
+                        else
+                        {
+                            sample.captureUrl = null;
+                        }
+                    }
+                    NetWorkClient.SendMessage(sample);
+                }
+
+                //释放掉被累加的Sample
+                if (beginSampleMemoryStack.Count != 0 && sample.fahter == null)
+                {
+                    sample.Restore();
+                }
             }
         }
 
