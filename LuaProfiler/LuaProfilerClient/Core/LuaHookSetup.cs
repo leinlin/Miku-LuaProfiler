@@ -7,18 +7,13 @@
 * Purpose:  
 * ==============================================================================
 */
-//#define XLUA
-//#define TOLUA
-//#define SLUA
 
-#if UNITY_EDITOR
+#if UNITY_EDITOR || USE_LUA_PROFILER
 using System;
 using System.Collections.Generic;
 using System.Reflection;
 using System.Text;
-using UnityEditor;
 using UnityEngine;
-using System.IO;
 
 #if XLUA
 using XLua;
@@ -40,16 +35,24 @@ using StrLen = System.Int32;
 namespace MikuLuaProfiler
 {
 
-    [InitializeOnLoad]
-    public static class HookLuaUtil
+    public class HookLuaSetup : MonoBehaviour
     {
+        #region field
         private static MethodHooker hookNewLuaEnv;
         public static int frameCount { private set; get; }
         public static bool isPlaying = false;
-        static HookLuaUtil()
+        private static MethodHooker tostringHook;
+        private static MethodHooker loaderHook;
+        private static bool m_hooked = false;
+        #endregion
+
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
+        private static void OnStartGame()
         {
+            var setting = LuaDeepProfilerSetting.Instance;
+
 #if XLUA || TOLUA || SLUA
-            if (hookNewLuaEnv == null) 
+            if (hookNewLuaEnv == null && setting.isDeepLuaProfiler)
             {
                 Type envReplace = typeof(LuaEnvReplace);
 
@@ -65,116 +68,36 @@ namespace MikuLuaProfiler
                 clickProxy = envReplace.GetMethod("ProxyClose", BindingFlags.Public | BindingFlags.Static);
                 hookNewLuaEnv = new MethodHooker(newstateFun, clickReplace, clickProxy);
                 hookNewLuaEnv.Install();
-
-                if (LuaDeepProfilerSetting.Instance.isDeepProfiler && LuaDeepProfilerSetting.Instance.profilerMono)
-                {
-                    InjectMethods.InjectAllMethods();
-                }
- 
-                EditorApplication.update += () =>
-                {
-                    if (isPlaying == true && Application.isPlaying == false)
-                    {
-                        NetWorkClient.Close();
-                    }
-
-                    isPlaying = Application.isPlaying;
-                    frameCount = Time.frameCount;
-                };
             }
-            if (LuaDeepProfilerSetting.Instance.isInited) return;
 #endif
-            string[] paths = Directory.GetFiles(Application.dataPath, "*.dll", SearchOption.AllDirectories);
-            foreach (var item in paths)
+            if (LuaDeepProfilerSetting.Instance.isNeedCapture)
             {
-                string fileName = Path.GetFileName(item);
-                if (fileName == "slua.dll")
-                {
-                    AppendMacro("#define SLUA");
-                }
-
-                if (fileName == "xlua.dll")
-                {
-                    AppendMacro("#define XLUA");
-                    break;
-                }
-
-                if (fileName == "tolua.dll")
-                {
-                    AppendMacro("#define TOLUA");
-                    break;
-                }
+                Screen.SetResolution(480, 270, true);
             }
 
-            LuaDeepProfilerSetting.Instance.isInited = true;
-        }
-        private static void AppendMacro(string macro)
-        {
-            System.Diagnostics.StackTrace st = new System.Diagnostics.StackTrace(true);
-            System.Diagnostics.StackFrame sf = st.GetFrame(0);
-            string path = sf.GetFileName();
+            if (setting.isDeepLuaProfiler || setting.isDeepMonoProfiler)
+            {
+                GameObject go = new GameObject();
+                go.name = "MikuLuaProfiler";
+                //go.hideFlags = HideFlags.HideAndDontSave;
+                go.AddComponent<HookLuaSetup>();
+                NetWorkClient.ConnectServer(setting.ip, setting.port);
+            }
 
-            string text = File.ReadAllText(path);
-            string text2 = new StringReader(text).ReadLine();
-            if (text2.Contains("#define"))
-            {
-                text = text.Substring(text2.Length, text.Length - text2.Length);
-            }
-            else
-            {
-                macro += "\r\n";
-            }
-            text = text.Insert(0, macro);
-            File.WriteAllText(path, text);
-            InjectMethods.Recompile();
         }
 
-        public static class LuaEnvReplace
+        private void Update()
         {
-            public static void lua_close(IntPtr luaState)
-            {
-                if (LuaProfiler.mainL == luaState)
-                {
-                    LuaProfiler.mainL = IntPtr.Zero;
-                    UnInstall();
-                }
-                ProxyClose(luaState);
-            }
+            isPlaying = Application.isPlaying;
+            frameCount = Time.frameCount;
+        }
 
-            public static void ProxyClose(IntPtr luaState)
-            {
-            }
-
-            public static IntPtr luaL_newstate()
-            {
-#if XLUA || TOLUA || SLUA
-                IntPtr l = ProxyNewstate();
-                LuaProfiler.mainL = l;
-                if (LuaDeepProfilerSetting.Instance.isDeepProfiler)
-                {
-                    MikuLuaProfilerLuaProfilerWrap.__Register(l);
-                    Install();
-                    if (LuaDeepProfilerSetting.Instance.isRecord)
-                    {
-                        GameViewUtility.ChangeGameViewSize(480, 270);
-                    }
-                }
-                return l;
-#else
-                return IntPtr.Zero;
-#endif
-            }
-            public static IntPtr ProxyNewstate()
-            {
-                return IntPtr.Zero;
-            }
+        private void OnApplicationQuit()
+        {
+            NetWorkClient.Close();
         }
 
         #region hook when run
-        private static MethodHooker tostringHook;
-        private static MethodHooker loaderHook;
-
-        private static bool m_hooked = false;
         private static void Install()
         {
 #if XLUA || TOLUA || SLUA
@@ -204,7 +127,7 @@ namespace MikuLuaProfiler
 #endif
         }
 
-        public static void UnInstall()
+        private static void UnInstall()
         {
             if (tostringHook != null)
             {
@@ -221,101 +144,133 @@ namespace MikuLuaProfiler
             m_hooked = false;
         }
 
-        public class LuaDLLReplace
+        public static class LuaEnvReplace
         {
-            #region luastring
-            public static readonly Dictionary<long, string> stringDict = new Dictionary<long, string>();
-            public static bool TryGetLuaString(IntPtr p, out string result)
+            public static void lua_close(IntPtr luaState)
             {
-                return stringDict.TryGetValue((long)p, out result);
+                if (LuaProfiler.mainL == luaState)
+                {
+                    LuaProfiler.mainL = IntPtr.Zero;
+                    UnInstall();
+                }
+                Debug.Log("hooked");
+                ProxyClose(luaState);
             }
-            public static void RefString(IntPtr strPoint, int index, string s, IntPtr L)
+
+            public static void ProxyClose(IntPtr luaState)
+            {
+            }
+
+            public static IntPtr luaL_newstate()
             {
 #if XLUA || TOLUA || SLUA
-                int oldTop = LuaDLL.lua_gettop(L);
-                LuaDLL.lua_pushvalue(L, index);
-                //把字符串ref了之后就不GC了
-                LuaDLL.luaL_ref(L, LuaIndexes.LUA_REGISTRYINDEX);
-                LuaDLL.lua_settop(L, oldTop);
-                stringDict[(long)strPoint] = s;
+                IntPtr l = ProxyNewstate();
+                LuaProfiler.mainL = l;
+                MikuLuaProfilerLuaProfilerWrap.__Register(l);
+                Install();
+                return l;
+#else
+                return IntPtr.Zero;
 #endif
             }
-            #endregion
-
-            #region hook fun
-            public static int luaL_loadbuffer(IntPtr L, byte[] buff, int size, string name)
+            public static IntPtr ProxyNewstate()
             {
-                if (LuaDeepProfilerSetting.Instance.isDeepProfiler)//&& name != "chunk"
+                return IntPtr.Zero;
+            }
+        }
+        #endregion
+    }
+
+    public class LuaDLLReplace
+    {
+        #region luastring
+        public static readonly Dictionary<long, string> stringDict = new Dictionary<long, string>();
+        public static bool TryGetLuaString(IntPtr p, out string result)
+        {
+            return stringDict.TryGetValue((long)p, out result);
+        }
+        public static void RefString(IntPtr strPoint, int index, string s, IntPtr L)
+        {
+#if XLUA || TOLUA || SLUA
+            int oldTop = LuaDLL.lua_gettop(L);
+            LuaDLL.lua_pushvalue(L, index);
+            //把字符串ref了之后就不GC了
+            LuaDLL.luaL_ref(L, LuaIndexes.LUA_REGISTRYINDEX);
+            LuaDLL.lua_settop(L, oldTop);
+            stringDict[(long)strPoint] = s;
+#endif
+        }
+        #endregion
+
+        #region hook fun
+        public static int luaL_loadbuffer(IntPtr L, byte[] buff, int size, string name)
+        {
+            string value = "";
+            string hookedValue = "";
+            try
+            {
+                string fileName = name.Replace(".lua", "");
+                fileName = fileName.Replace("@", "").Replace('.', '/');
+                if (buff[0] == 239 && buff[1] == 187 && buff[2] == 191)
+                {// utf-8
+                    value = Encoding.UTF8.GetString(buff, 3, buff.Length - 3);
+                }
+                else
                 {
-                    string value = "";
-                    string hookedValue = "";
-                    try
-                    {
-                        string fileName = name.Replace(".lua", "");
-                        fileName = fileName.Replace("@", "").Replace('.', '/');
-                        if (buff[0] == 239 && buff[1] == 187 && buff[2] == 191)
-                        {// utf-8
-                            value = Encoding.UTF8.GetString(buff, 3, buff.Length - 3);
-                        }
-                        else
-                        {
-                            value = Encoding.UTF8.GetString(buff);
-                        }
-
-                        hookedValue = Parse.InsertSample(value, fileName);
-
-                        //System.IO.File.WriteAllText(fileName, value);
-
-                        buff = Encoding.UTF8.GetBytes(hookedValue);
-                        size = buff.Length;
-                    }
-                    catch (Exception e)
-                    {
-                        Debug.LogError(name + "\n解析出错:\n" + value);
-                        throw e;
-                    }
+                    value = Encoding.UTF8.GetString(buff);
                 }
 
-                return ProxyLoadbuffer(L, buff, size, name);
+                hookedValue = Parse.InsertSample(value, fileName);
+
+                //System.IO.File.WriteAllText(fileName, value);
+
+                buff = Encoding.UTF8.GetBytes(hookedValue);
+                size = buff.Length;
+            }
+            catch (Exception e)
+            {
+                Debug.LogError(name + "\n解析出错:\n" + value);
+                throw e;
             }
 
-            public static int ProxyLoadbuffer(IntPtr L, byte[] buff, int size, string name)
-            {
-                return 0;
-            }
+            return ProxyLoadbuffer(L, buff, size, name);
+        }
 
-            public static string lua_tostring(IntPtr L, int index)
-            {
+        public static int ProxyLoadbuffer(IntPtr L, byte[] buff, int size, string name)
+        {
+            return 0;
+        }
+
+        public static string lua_tostring(IntPtr L, int index)
+        {
 #if XLUA || TOLUA || SLUA
-                StrLen strlen;
+            StrLen strlen;
 
 #if SLUA
                 IntPtr str = LuaDLL.luaS_tolstring32(L, index, out strlen);
 #else
-                IntPtr str = LuaDLL.lua_tolstring(L, index, out strlen);
+            IntPtr str = LuaDLL.lua_tolstring(L, index, out strlen);
 #endif
-                string ret;
-                if (!TryGetLuaString(str, out ret))
+            string ret;
+            if (!TryGetLuaString(str, out ret))
+            {
+                ret = PoxyToString(L, index);
+                if (!string.IsNullOrEmpty(ret))
                 {
-                    ret = PoxyToString(L, index);
-                    if (!string.IsNullOrEmpty(ret))
-                    {
-                        ret = string.Intern(ret);
-                    }
-                    RefString(str, index, ret, L);
+                    ret = string.Intern(ret);
                 }
-                return ret;
+                RefString(str, index, ret, L);
+            }
+            return ret;
 #else
                 return "";
 #endif
-            }
+        }
 
-            public static string PoxyToString(IntPtr L, int index)
-            {
-                Debug.Log("ffffffffff");
-                return null;
-            }
-            #endregion
+        public static string PoxyToString(IntPtr L, int index)
+        {
+            Debug.Log("ffffffffff");
+            return null;
         }
         #endregion
     }

@@ -1,4 +1,4 @@
-﻿#if UNITY_EDITOR
+﻿#if UNITY_EDITOR || USE_LUA_PROFILER
 namespace MikuLuaProfiler
 {
 	public static class LuaConf

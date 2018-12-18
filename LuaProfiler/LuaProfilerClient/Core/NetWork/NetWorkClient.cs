@@ -1,4 +1,5 @@
-﻿/*
+﻿#if UNITY_EDITOR || USE_LUA_PROFILER
+/*
 * ==============================================================================
 * Filename: NetWorkClient
 * Created:  2018/7/13 14:29:22
@@ -37,19 +38,17 @@ namespace MikuLuaProfiler
             //m_client.NoDelay = true;
             try
             {
-                IAsyncResult result = m_client.BeginConnect(
-                    host,
-                    port,
-                    new AsyncCallback(OnConnect),
-                    null
-                );
+                m_client.Connect(host, port);
 
-                bool success = result.AsyncWaitHandle.WaitOne(5000, true);
-                if (!success)
-                {
-                    //超时
-                    Close();
-                }
+                UnityEngine.Debug.Log("<color=#00ff00>connect success</color>");
+                m_client.Client.SendTimeout = 30000;
+                m_strDict.Clear();
+                m_key = 0;
+                ms = new MemoryStream(BUFF_LEN);
+                bw = new BinaryWriter(ms);
+
+                m_sendThread = new Thread(new ThreadStart(DoSendMessage));
+                m_sendThread.Start();
             }
             catch (Exception e)
             {
@@ -84,9 +83,9 @@ namespace MikuLuaProfiler
                     ms = null;
                     bw = null;
                     GC.Collect();
+                    UnityEngine.Debug.Log("<color=#00ff00>close client</color>");
                 }
                 m_strDict.Clear();
-                UnityEngine.Debug.Log("<color=#00ff00>close client</color>");
             }
 
             if (m_sendThread != null)
@@ -162,10 +161,6 @@ namespace MikuLuaProfiler
                     Close();
                 }
 #pragma warning restore 0168
-                if (!HookLuaUtil.isPlaying)
-                {
-                    throw new Exception();
-                }
             }
 
         }
@@ -226,21 +221,9 @@ namespace MikuLuaProfiler
             }
 
         }
-
-        private static void OnConnect(IAsyncResult asr)
-        {
-            UnityEngine.Debug.Log("<color=#00ff00>connect success</color>");
-            m_client.Client.SendTimeout = 30000;
-            m_strDict.Clear();
-            m_key = 0;
-            ms = new MemoryStream(BUFF_LEN);
-            bw = new BinaryWriter(ms);
-
-            m_sendThread = new Thread(new ThreadStart(DoSendMessage));
-            m_sendThread.Start();
-        }
         #endregion
 
     }
 }
 
+#endif

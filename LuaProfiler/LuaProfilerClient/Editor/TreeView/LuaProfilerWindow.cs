@@ -7,19 +7,13 @@
 * ==============================================================================
 */
 using UnityEngine;
-using UnityEditor.IMGUI.Controls;
 using UnityEditor;
-using System;
-using System.IO;
 
 namespace MikuLuaProfiler
 {
-#if UNITY_5_6_OR_NEWER
     public class LuaProfilerWindow : EditorWindow
     {
         private bool m_isStop = false;
-        private string ip = "127.0.0.1";
-        private int port = 23333;
         void OnEnable()
         {
         }
@@ -33,29 +27,79 @@ namespace MikuLuaProfiler
 
         void DoToolbar()
         {
+            var setting = LuaDeepProfilerSetting.Instance;
+            #region profiler settting
+            GUILayout.Label("profiler setting");
+            GUILayout.BeginVertical("Box");
 
-            #region deep
-            bool flag = GUILayout.Toggle(LuaDeepProfilerSetting.Instance.isDeepProfiler, "Deep Profiler Lua");
-            if (flag != LuaDeepProfilerSetting.Instance.isDeepProfiler)
+            EditorGUILayout.BeginHorizontal();
+            bool flag = GUILayout.Toggle(setting.isDeepLuaProfiler, "Deep Profiler Lua");
+            if (flag != setting.isDeepLuaProfiler)
             {
-                LuaDeepProfilerSetting.Instance.isDeepProfiler = flag;
+                setting.isDeepLuaProfiler = flag;
                 EditorApplication.isPlaying = false;
+            }
+
+            flag = GUILayout.Toggle(setting.isDeepMonoProfiler, "Deep Profiler Mono");
+            if (flag != setting.isDeepMonoProfiler)
+            {
+                setting.isDeepMonoProfiler = flag;
+                EditorApplication.isPlaying = false;
+                if (!flag)
+                {
+                    InjectMethods.Recompile();
+                }
+                else
+                {
+                    InjectMethods.InjectAllMethods();
+                }
+            }
+
+            EditorGUILayout.EndHorizontal();
+
+            GUILayout.Space(5);
+            if (GUILayout.Button("Inject Method", GUILayout.Height(50)))
+            {
+                InjectMethods.InjectAllMethods();
+            }
+            GUILayout.Space(5);
+            if (GUILayout.Button("ReCompile", GUILayout.Height(50)))
+            {
                 InjectMethods.Recompile();
             }
             GUILayout.Space(5);
-
-            flag = GUILayout.Toggle(LuaDeepProfilerSetting.Instance.profilerMono, "Include Mono");
-            if (flag != LuaDeepProfilerSetting.Instance.profilerMono)
-            {
-                LuaDeepProfilerSetting.Instance.profilerMono = flag;
-                EditorApplication.isPlaying = false;
-                InjectMethods.Recompile();
-            }
-            GUILayout.Space(5);
+            GUILayout.EndVertical();
             #endregion
 
-            #region stop
-            bool isStop = GUILayout.Toggle(m_isStop, "Stop GC");
+            #region socket
+            GUILayout.Space(10);
+            GUILayout.Label("connet");
+
+            GUILayout.BeginVertical("Box");
+            GUILayout.Space(5);
+            EditorGUILayout.BeginHorizontal();
+            GUILayout.Label("ip:", GUILayout.Height(30), GUILayout.Width(35));
+            setting.ip = EditorGUILayout.TextField(setting.ip, GUILayout.Height(16), GUILayout.Width(100));
+
+            GUILayout.Label("port:", GUILayout.Height(30), GUILayout.Width(35));
+            setting.port = EditorGUILayout.IntField(setting.port, GUILayout.Height(16), GUILayout.Width(50));
+            EditorGUILayout.EndHorizontal();
+
+            if (GUILayout.Button("Connent", GUILayout.Height(50)))
+            {
+                NetWorkClient.ConnectServer(setting.ip, setting.port);
+            }
+            GUILayout.Space(5);
+
+            GUILayout.EndVertical();
+            #endregion
+
+            #region gc control
+            GUILayout.Space(10);
+            GUILayout.Label("gc control");
+
+            GUILayout.BeginVertical("Box");
+            bool isStop = GUILayout.Toggle(m_isStop, "Stop Lua GC");
 
             if (m_isStop != isStop)
             {
@@ -71,9 +115,34 @@ namespace MikuLuaProfiler
                 }
             }
             GUILayout.Space(5);
+
+            if (GUILayout.Button("Run GC", GUILayout.Height(50)))
+            {
+                LuaLib.RunGC();
+                System.GC.Collect();
+            }
+            GUILayout.Space(5);
+            GUILayout.EndVertical();
             #endregion
 
-            #region history
+            #region capture
+            GUILayout.Space(10);
+
+            GUILayout.Label("capture setting");
+            GUILayout.BeginVertical("Box");
+
+            flag = GUILayout.Toggle(LuaDeepProfilerSetting.Instance.isNeedCapture, "NeedCapture");
+            if (flag != LuaDeepProfilerSetting.Instance.isNeedCapture)
+            {
+                LuaDeepProfilerSetting.Instance.isNeedCapture = flag;
+                if (flag)
+                {
+                    GameViewUtility.ChangeGameViewSize(480, 270);
+                }
+            }
+
+            GUILayout.Space(10);
+
             EditorGUILayout.BeginHorizontal();
             GUILayout.Label("lua gc", GUILayout.Height(30), GUILayout.Width(45));
             LuaDeepProfilerSetting.Instance.captureLuaGC
@@ -95,59 +164,8 @@ namespace MikuLuaProfiler
 
             EditorGUILayout.EndHorizontal();
 
-            flag = GUILayout.Toggle(LuaDeepProfilerSetting.Instance.isNeedCapture, "NeedCapture");
-            if (flag != LuaDeepProfilerSetting.Instance.isNeedCapture)
-            {
-                LuaDeepProfilerSetting.Instance.isNeedCapture = flag;
-                if (flag)
-                {
-                    GameViewUtility.ChangeGameViewSize(480, 270);
-                }
-            }
+            GUILayout.EndVertical();
 
-            GUILayout.Space(25);
-            #endregion
-
-            #region socket
-            EditorGUILayout.BeginHorizontal();
-            GUILayout.Label("ip:", GUILayout.Height(30), GUILayout.Width(35));
-            ip = EditorGUILayout.TextField(ip, GUILayout.Height(16), GUILayout.Width(100));
-
-            GUILayout.Label("port:", GUILayout.Height(30), GUILayout.Width(35));
-            port = EditorGUILayout.IntField(port, GUILayout.Height(16), GUILayout.Width(50));
-            EditorGUILayout.EndHorizontal();
-
-            if (GUILayout.Button("Connent", GUILayout.Height(50)))
-            {
-                NetWorkClient.ConnectServer(ip, port);
-            }
-            GUILayout.Space(5);
-
-            if (GUILayout.Button("Disconnent", GUILayout.Height(50)))
-            {
-                EditorUtility.UnloadUnusedAssetsImmediate();
-                NetWorkClient.Close();
-            }
-            GUILayout.Space(5);
-
-            if (GUILayout.Button("Run GC", GUILayout.Height(50)))
-            {
-                LuaLib.RunGC();
-            }
-            GUILayout.Space(5);
-
-            if (GUILayout.Button("Inject", GUILayout.Height(50)))
-            {
-                InjectMethods.InjectAllMethods();
-                Debug.Log("Inject Success");
-            }
-            GUILayout.Space(5);
-            if (GUILayout.Button("ReCompile", GUILayout.Height(50)))
-            {
-                InjectMethods.Recompile();
-            }
-
-            GUILayout.Space(5);
             #endregion
 
         }
@@ -162,5 +180,4 @@ namespace MikuLuaProfiler
             window.Show();
         }
     }
-#endif
 }

@@ -1,9 +1,8 @@
 ﻿/*
  * 对象池
  */
-#if UNITY_EDITOR
+#if UNITY_EDITOR || USE_LUA_PROFILER
 using System;
-using System.Collections;
 using System.Collections.Generic;
 
 namespace MikuLuaProfiler

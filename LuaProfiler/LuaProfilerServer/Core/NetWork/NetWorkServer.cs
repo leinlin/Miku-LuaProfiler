@@ -114,20 +114,28 @@ namespace MikuLuaProfiler
             {
                 UnityEngine.Debug.Log(e);
             }
-            UnityEngine.Debug.Log("close server");
+
             bytes = null;
             if (ms != null)
             {
                 ms.Dispose();
+                UnityEngine.Debug.Log("<color=#00ff00>close server</color>");
             }
             ms = null;
             br = null;
             GC.Collect();
             if (thread != null)
             {
-                var tmp = thread;
-                thread = null;
-                tmp.Abort();
+                if (thread.ThreadState != ThreadState.Running)
+                {
+                    var tmp = thread;
+                    thread = null;
+                    tmp.Abort();
+                }
+                else
+                {
+                    thread = null;
+                }
             }
         }
 
@@ -183,18 +191,8 @@ namespace MikuLuaProfiler
                     if (rlen == 0)
                     {
                         notAvailable++;
-                        try
+                        if (notAvailable >= 100)
                         {
-                            if (notAvailable >= 100)
-                            {
-                                socklin.Close();
-                                socklin = null;
-                            }
-
-                        }
-                        catch(Exception e)
-                        {
-                            UnityEngine.Debug.Log(e);
                             Close();
                         }
 

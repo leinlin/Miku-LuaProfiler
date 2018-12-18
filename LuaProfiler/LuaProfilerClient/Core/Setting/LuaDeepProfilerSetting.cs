@@ -1,323 +1,305 @@
 ﻿/*
 * ==============================================================================
-* Filename: LuaDeepProfilerSetting
+* Filename: LuaDeepProfilerSetting.cs
 * Created:  2018/7/13 14:29:22
 * Author:   エル・プサイ・コングリィ
 * Purpose:  
 * ==============================================================================
 */
-#if UNITY_EDITOR
+
+#if UNITY_EDITOR || USE_LUA_PROFILER
 namespace MikuLuaProfiler
 {
-    using System.IO;
-    using UnityEditor;
-    using UnityEngine;
-    using System.Text;
     using System;
+    using System.Diagnostics;
+    using System.IO;
+    using System.Text;
+    using UnityEngine;
 
     public class LuaDeepProfilerSetting
     {
-        public const string SettingsAssetName = "LuaDeepProfilerSettings.config";
-        private static LuaDeepProfilerSetting instance;
         public static LuaDeepProfilerSetting Instance
         {
             get
             {
-                if (instance == null)
+                if (LuaDeepProfilerSetting.instance == null)
                 {
-                    instance = Load(); 
+                    LuaDeepProfilerSetting.instance = LuaDeepProfilerSetting.Load();
                 }
-                return instance;
+                return LuaDeepProfilerSetting.instance;
             }
         }
 
-        private bool m_isDeepProfiler = false;
-        public bool isDeepProfiler
+        public bool isDeepMonoProfiler
         {
             get
             {
-                return m_isDeepProfiler;
+                return this.m_isDeepMonoProfiler;
             }
             set
             {
-                if (m_isDeepProfiler == value) return;
-                m_isDeepProfiler = value;
-                if (value && LuaDeepProfilerSetting.Instance.isRecord)
+                if (this.m_isDeepMonoProfiler != value)
                 {
-                    GameViewUtility.ChangeGameViewSize(480, 270);
+                    this.m_isDeepMonoProfiler = value;
+                    this.Save();
                 }
-                Save();
             }
         }
 
-        private int m_captureLuaGC = 50 * 1024;
+        public bool isDeepLuaProfiler
+        {
+            get
+            {
+                return this.m_isDeepLuaProfiler;
+            }
+            set
+            {
+                if (this.m_isDeepLuaProfiler != value)
+                {
+                    this.m_isDeepLuaProfiler = value;
+                    this.Save();
+                }
+            }
+        }
+
         public int captureLuaGC
         {
             get
             {
-                return m_captureLuaGC;
+                return this.m_captureLuaGC;
             }
             set
             {
-                if (m_captureLuaGC == value) return;
-                m_captureLuaGC = value;
-                Save();
+                if (this.m_captureLuaGC != value)
+                {
+                    this.m_captureLuaGC = value;
+                    this.Save();
+                }
             }
         }
 
-        private bool m_profilerMono = true;
-        public bool profilerMono
-        {
-            get
-            {
-                return m_profilerMono;
-            }
-            set
-            {
-                if (m_profilerMono == value) return;
-                m_profilerMono = value;
-                Save();
-            }
-        }
-
-        private bool m_isRecord = false;
-        public bool isRecord
-        {
-            get
-            {
-                return m_isRecord;
-            }
-            set
-            {
-                if (m_isRecord == value) return;
-                m_isRecord = value;
-                Save();
-            }
-        }
-
-        private bool m_isNeedCapture = false;
         public bool isNeedCapture
         {
             get
             {
-                return m_isNeedCapture;
+                return this.m_isNeedCapture;
             }
             set
             {
-                if (m_isNeedCapture == value) return;
-                m_isNeedCapture = value;
-                Save();
+                if (this.m_isNeedCapture != value)
+                {
+                    this.m_isNeedCapture = value;
+                    this.Save();
+                }
             }
         }
 
-        private string m_assMd5 = "";
         public string assMd5
         {
             get
             {
-                return m_assMd5;
+                return this.m_assMd5;
             }
             set
             {
-                if (m_assMd5 == value) return;
-                m_assMd5 = value;
-                Save();
+                if (!(this.m_assMd5 == value))
+                {
+                    this.m_assMd5 = value;
+                    this.Save();
+                }
             }
         }
 
-        private bool m_isInited = false;
         public bool isInited
         {
             get
             {
-                return m_isInited;
-            }
-
-            set
-            {
-                if (m_isInited == value) return;
-                m_isInited = value;
-                Save();
-            }
-        }
-
-        private string m_luaDir = "";
-        public string luaDir
-        {
-            get
-            {
-                return m_luaDir;
+                return this.m_isInited;
             }
             set
             {
-                if (m_luaDir == value) return;
-                m_luaDir = value;
-                Save();
+                if (this.m_isInited != value)
+                {
+                    this.m_isInited = value;
+                    this.Save();
+                }
             }
         }
 
-        private string m_luaIDE = "";
-        public string luaIDE
-        {
-            get
-            {
-                return m_luaIDE;
-            }
-            set
-            {
-                if (m_luaIDE == value) return;
-                m_luaIDE = value;
-                Save();
-            }
-        }
 
-        private int m_captureMonoGC = 50 * 1024;
         public int captureMonoGC
         {
             get
             {
-                return m_captureMonoGC;
+                return this.m_captureMonoGC;
             }
             set
             {
-                if (m_captureMonoGC == value) return;
-                m_captureMonoGC = value;
-                Save();
+                if (this.m_captureMonoGC != value)
+                {
+                    this.m_captureMonoGC = value;
+                    this.Save();
+                }
             }
         }
 
-        private int m_captureFrameRate = 30;
         public int captureFrameRate
         {
             get
             {
-                return m_captureFrameRate;
+                return this.m_captureFrameRate;
             }
             set
             {
-                if (m_captureFrameRate == value) return;
-                m_captureFrameRate = value;
-                Save();
+                if (this.m_captureFrameRate != value)
+                {
+                    this.m_captureFrameRate = value;
+                    this.Save();
+                }
+            }
+        }
+
+        public string ip
+        {
+            get
+            {
+                return this.m_ip;
+            }
+            set
+            {
+                if (!(this.m_ip == value))
+                {
+                    this.m_ip = value;
+                    this.Save();
+                }
+            }
+        }
+
+        public int port
+        {
+            get
+            {
+                return this.m_port;
+            }
+            set
+            {
+                if (this.m_port != value)
+                {
+                    this.m_port = value;
+                    this.Save();
+                }
             }
         }
 
         public void Save()
         {
-            FileStream fs = new FileStream(SettingsAssetName, FileMode.Create);
-            BinaryWriter b = new BinaryWriter(fs);
+            StackTrace stackTrace = new StackTrace(true);
+            StackFrame frame = stackTrace.GetFrame(0);
+            string text = frame.GetFileName();
+#if UNITY_EDITOR_WIN
+            text = text.Replace("Core\\Setting\\LuaDeepProfilerSetting.cs", "Resources\\LuaDeepProfilerSettings.bytes");
+#else
+            text = text.Replace("Core/Setting/LuaDeepProfilerSetting.cs", "Resources/LuaDeepProfilerSettings.bytes");
+#endif
+            if (!Directory.Exists(Path.GetDirectoryName(text)))
+            {
+                Directory.CreateDirectory(text);
+            }
 
-            b.Write(m_isDeepProfiler);
-            b.Write(m_captureLuaGC);
-            b.Write(m_profilerMono);
-            b.Write(false);
-            b.Write(m_isRecord);
-            b.Write(m_isNeedCapture);
+            FileStream output = new FileStream(text, FileMode.Create);
+            BinaryWriter binaryWriter = new BinaryWriter(output);
+            binaryWriter.Write(this.m_isDeepMonoProfiler);
+            binaryWriter.Write(this.m_isDeepLuaProfiler);
+            binaryWriter.Write(this.m_captureLuaGC);
+            binaryWriter.Write(this.m_isInited);
+            binaryWriter.Write(this.m_isNeedCapture);
+            binaryWriter.Write(this.m_captureMonoGC);
+            binaryWriter.Write(this.m_captureFrameRate);
+            byte[] bytes = Encoding.UTF8.GetBytes(this.m_assMd5);
+            binaryWriter.Write(bytes.Length);
+            binaryWriter.Write(bytes);
 
-            byte[] datas = Encoding.UTF8.GetBytes(m_assMd5);
-            b.Write(datas.Length);
-            b.Write(datas);
-
-            b.Write(m_isInited);
-
-            datas = Encoding.UTF8.GetBytes(m_luaDir);
-            b.Write(datas.Length);
-            b.Write(datas);
-
-            datas = Encoding.UTF8.GetBytes(m_luaIDE);
-            b.Write(datas.Length);
-            b.Write(datas);
-
-            b.Write(m_captureMonoGC);
-            b.Write(m_captureFrameRate);
-
-            b.Close();
+            bytes = Encoding.UTF8.GetBytes(this.m_ip);
+            binaryWriter.Write(bytes.Length);
+            binaryWriter.Write(bytes);
+            binaryWriter.Write(this.m_port);
+            binaryWriter.Close();
         }
 
+        // Token: 0x060000C9 RID: 201 RVA: 0x00006674 File Offset: 0x00004A74
         public static LuaDeepProfilerSetting Load()
         {
-            LuaDeepProfilerSetting result = new LuaDeepProfilerSetting(); 
-
-            if (File.Exists(SettingsAssetName))
+            LuaDeepProfilerSetting luaDeepProfilerSetting = new LuaDeepProfilerSetting();
+            TextAsset textAsset = Resources.Load<TextAsset>("LuaDeepProfilerSettings");
+            if (textAsset != null)
             {
-                FileStream fs = new FileStream(SettingsAssetName, FileMode.OpenOrCreate);
+                MemoryStream memoryStream = new MemoryStream(textAsset.bytes);
                 try
                 {
-                    BinaryReader b = new BinaryReader(fs);
-
-                    result.m_isDeepProfiler = b.ReadBoolean();
-                    result.m_captureLuaGC = b.ReadInt32();
-                    result.m_profilerMono = b.ReadBoolean();
-                    b.ReadBoolean();
-                    result.m_isRecord = b.ReadBoolean();
-                    result.m_isNeedCapture = b.ReadBoolean();
-
-                    int len = b.ReadInt32();
-                    result.m_assMd5 = Encoding.UTF8.GetString(b.ReadBytes(len));
-                    result.m_isInited = b.ReadBoolean();
-
-                    len = b.ReadInt32();
-                    result.m_luaDir = Encoding.UTF8.GetString(b.ReadBytes(len));
-
-                    len = b.ReadInt32();
-                    result.m_luaIDE = Encoding.UTF8.GetString(b.ReadBytes(len));
-
-                    result.m_captureMonoGC = b.ReadInt32();
-                    result.m_captureFrameRate = b.ReadInt32();
-
-                    b.Close();
+                    BinaryReader binaryReader = new BinaryReader(memoryStream);
+                    luaDeepProfilerSetting.m_isDeepMonoProfiler = binaryReader.ReadBoolean();
+                    luaDeepProfilerSetting.m_isDeepLuaProfiler = binaryReader.ReadBoolean();
+                    luaDeepProfilerSetting.m_captureLuaGC = binaryReader.ReadInt32();
+                    luaDeepProfilerSetting.m_isInited = binaryReader.ReadBoolean();
+                    luaDeepProfilerSetting.m_isNeedCapture = binaryReader.ReadBoolean();
+                    luaDeepProfilerSetting.m_captureMonoGC = binaryReader.ReadInt32();
+                    luaDeepProfilerSetting.m_captureFrameRate = binaryReader.ReadInt32();
+                    int count = binaryReader.ReadInt32();
+                    luaDeepProfilerSetting.m_assMd5 = Encoding.UTF8.GetString(binaryReader.ReadBytes(count));
+                    count = binaryReader.ReadInt32();
+                    luaDeepProfilerSetting.m_ip = Encoding.UTF8.GetString(binaryReader.ReadBytes(count));
+                    luaDeepProfilerSetting.m_port = binaryReader.ReadInt32();
+                    binaryReader.Close();
                 }
                 catch
                 {
-                    fs.Dispose();
-                    File.Delete(SettingsAssetName);
-                    return Load();
+                    memoryStream.Dispose();
+                    File.Delete("LuaDeepProfilerSettings");
+                    return LuaDeepProfilerSetting.Load();
                 }
             }
             else
             {
-                result.Save();
+                luaDeepProfilerSetting.Save();
             }
-
-            return result;
+            return luaDeepProfilerSetting;
         }
 
-        //[MenuItem("LuaProfiler/ExportFiles", priority = 10)]
-        public static void EditSettings()
-        {
-            string path = EditorUtility.OpenFolderPanel("请选择Lua脚本存放文件夹", "", "*");
-#if UNITY_EDITOR_WIN
-            path = path.Replace("/", "\\");
-#endif
-            string rootProfilerDirPath = path + "Profiler";
-            DirectoryInfo dir = new DirectoryInfo(path);
-            FileInfo[] files = dir.GetFiles("*.lua", SearchOption.AllDirectories);
-            int count = files.Length;
-            int process = 0;
+        // Token: 0x040000AF RID: 175
+        public const string SettingsAssetName = "LuaDeepProfilerSettings";
 
-            //实例化一个计时器
-            System.Diagnostics.Stopwatch watch = new System.Diagnostics.Stopwatch();
+        // Token: 0x040000B0 RID: 176
+        private static LuaDeepProfilerSetting instance;
 
-            foreach (FileInfo item in files)
-            {
-                process++;
+        // Token: 0x040000B1 RID: 177
+        private bool m_isDeepMonoProfiler = false;
 
-                EditorUtility.DisplayProgressBar("profiler lua", item.FullName, (float)process / count);
-                string allCode = File.ReadAllText(item.FullName);
-                watch.Start();
-                allCode = Parse.InsertSample(allCode, "Template");
-                watch.Stop();
-                string profilerPath = item.FullName.Replace(path, rootProfilerDirPath);
-                string profilerDirPath = profilerPath.Replace(item.Name, "");
-                if (!Directory.Exists(profilerDirPath))
-                {
-                    Directory.CreateDirectory(profilerDirPath);
-                }
-                File.WriteAllText(profilerPath, allCode);
-            }
-            Debug.LogFormat("cost time: {0} ms", watch.ElapsedMilliseconds);
+        // Token: 0x040000B2 RID: 178
+        private bool m_isDeepLuaProfiler = false;
 
-            EditorUtility.ClearProgressBar();
-        }
+        // Token: 0x040000B3 RID: 179
+        private int m_captureLuaGC = 51200;
+
+        // Token: 0x040000B4 RID: 180
+        private bool m_isNeedCapture = false;
+
+        // Token: 0x040000B5 RID: 181
+        private string m_assMd5 = "";
+
+        // Token: 0x040000B6 RID: 182
+        private bool m_isInited = false;
+
+        // Token: 0x040000B9 RID: 185
+        private int m_captureMonoGC = 51200;
+
+        // Token: 0x040000BA RID: 186
+        private int m_captureFrameRate = 30;
+
+        // Token: 0x040000BB RID: 187
+        private string m_ip = "127.0.0.1";
+
+        // Token: 0x040000BC RID: 188
+        private int m_port = 2333;
     }
 }
 #endif

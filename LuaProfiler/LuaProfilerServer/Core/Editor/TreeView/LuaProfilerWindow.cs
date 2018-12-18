@@ -26,7 +26,7 @@ namespace MikuLuaProfiler
         int sortColIndex = -1;
         bool isAscending = false;
         private int m_lastCount = 0;
-        int port = 23333;
+        int port = 2333;
 
         private string oldStartUrl = null;
         private string oldEndUrl = null;

@@ -11,14 +11,13 @@
 using Mono.Cecil;
 using Mono.Cecil.Cil;
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Reflection;
 using System.Runtime;
 using System.Security.Cryptography;
 using UnityEditor;
+using UnityEditor.Callbacks;
 using UnityEngine;
 
 namespace MikuLuaProfiler
@@ -31,7 +30,18 @@ namespace MikuLuaProfiler
         //private static MethodDefinition m_getMethodString;
         public static void InjectAllMethods()
         {
+            if (EditorApplication.isCompiling)
+            {
+                Debug.LogError("is compiling");
+                return;
+            }
+
             string assemblyPath = "./Library/ScriptAssemblies/Assembly-CSharp.dll";
+            InjectAllMethods(assemblyPath);
+        }
+
+        private static void InjectAllMethods(string assemblyPath)
+        {
             string md5 = GetMD5HashFromFile(assemblyPath);
             if (md5 == LuaDeepProfilerSetting.Instance.assMd5) return;
 
@@ -94,7 +104,7 @@ namespace MikuLuaProfiler
                             continue;
                         }
                     }
-                    InjectTryFinally(item, module); 
+                    InjectTryFinally(item, module);
                 }
             }
 
@@ -115,6 +125,29 @@ namespace MikuLuaProfiler
             GCSettings.LatencyMode = GCLatencyMode.LowLatency;
         }
 
+        static string assPath = "";
+        [PostProcessBuild(1000)]
+        private static void OnPostprocessBuildPlayer(BuildTarget buildTarget, string buildPath)
+        {
+            if (buildTarget == BuildTarget.Android)
+            {
+            }
+            else if (buildTarget == BuildTarget.iOS)
+            {
+            }
+            else
+            {
+                string buildDir = buildPath.Replace("/" + Path.GetFileName(buildPath), "");
+#if UNITY_EDITOR_WIN
+                assPath = buildDir + "/" + Path.GetFileName(buildDir) + "_Data" + "/Managed/Assembly-CSharp.dll";
+#else
+                assPath = buildPath + "/" + Path.GetFileNameWithoutExtension(buildPath) + "_Data" + "/Managed/Assembly-CSharp.dll";
+#endif
+                InjectAllMethods(assPath);
+            }
+
+        }
+
         public static Type GetMonoType(this TypeReference type)
         {
             return Type.GetType(type.GetReflectionName());
@@ -132,7 +165,18 @@ namespace MikuLuaProfiler
 
         public static void Recompile()
         {
-            string path = PlayerSettings.GetScriptingDefineSymbolsForGroup(BuildTargetGroup.Standalone);
+            BuildTargetGroup bg = BuildTargetGroup.Standalone;
+            switch (EditorUserBuildSettings.activeBuildTarget)
+            {
+                case BuildTarget.Android:
+                    bg = BuildTargetGroup.Android;
+                    break;
+                case BuildTarget.iOS:
+                    bg = BuildTargetGroup.iOS;
+                    break;
+            }
+            
+            string path = PlayerSettings.GetScriptingDefineSymbolsForGroup(bg);
             bool hasRecompile = false;
 
             string[] heads = path.Split(';');
@@ -296,6 +340,7 @@ namespace MikuLuaProfiler
             method.Body.ExceptionHandlers.Add(handler);
         }
     }
+
 }
 
 #endif

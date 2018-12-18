@@ -6,7 +6,7 @@
 * Purpose:  
 * ==============================================================================
 */
-#if UNITY_EDITOR
+#if UNITY_EDITOR || USE_LUA_PROFILER
 using System;
 using System.Collections.Generic;
 
