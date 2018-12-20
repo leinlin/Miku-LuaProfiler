@@ -30,3 +30,5 @@ manifest.json
 /Server/Assets/LuaProfilerServer.meta
 /Client/Assets/LuaProfilerClient
 /Client/Assets/LuaProfilerClient.meta
+/Server/Server.userprefs
+/LuaProfiler/LuaProfilerClient/Resources

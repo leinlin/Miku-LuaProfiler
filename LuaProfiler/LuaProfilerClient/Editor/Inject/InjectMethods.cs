@@ -15,7 +15,6 @@ using System.IO;
 using System.Linq;
 using System.Runtime;
 using System.Security.Cryptography;
-using System.Text.RegularExpressions;
 using UnityEditor;
 using UnityEditor.Callbacks;
 using UnityEngine;
@@ -48,14 +47,11 @@ namespace MikuLuaProfiler
             InjectAllMethods(assemblyPath);
         }
 
-        private static void InjectAllMethods(string assemblyPath, bool needMd5 = true)
+        private static void InjectAllMethods(string assemblyPath)
         {
             string md5 = null;
-            if (needMd5)
-            {
-                md5 = GetMD5HashFromFile(assemblyPath);
-                if (md5 == LuaDeepProfilerSetting.Instance.assMd5) return;
-            }
+            md5 = GetMD5HashFromFile(assemblyPath);
+            if (md5 == LuaDeepProfilerSetting.Instance.assMd5) return;
 
             bool flag = File.Exists(assemblyPath + ".mdb");
             AssemblyDefinition assembly;
@@ -96,12 +92,6 @@ namespace MikuLuaProfiler
             var module = assembly.MainModule;
             foreach (var type in assembly.MainModule.Types)
             {
-
-                if (type.FullName.Contains("`"))
-                {
-                    continue;
-                }
-
                 if (type.FullName.Contains("MikuLuaProfiler"))
                 {
                     continue;
@@ -140,18 +130,7 @@ namespace MikuLuaProfiler
                         continue;
                     }
 
-                    if (item.Name.Contains("Equals"))
-                    {
-                        continue;
-                    }
-                    if (item.Name.Contains("GetType"))
-                    {
-                        continue;
-                    }
-                    if (item.Name.Contains("GetHashCode"))
-                    {
-                        continue;
-                    }
+
                     InjectTryFinally(item, module);
                 }
             }
@@ -168,10 +147,7 @@ namespace MikuLuaProfiler
             {
                 assembly.Write(assemblyPath);
             }
-            if (needMd5)
-            {
-                LuaDeepProfilerSetting.Instance.assMd5 = GetMD5HashFromFile(assemblyPath);
-            }
+            LuaDeepProfilerSetting.Instance.assMd5 = GetMD5HashFromFile(assemblyPath);
             GCSettings.LatencyMode = GCLatencyMode.LowLatency;
         }
 
@@ -278,64 +254,100 @@ namespace MikuLuaProfiler
             }
         }
 
-        private static Instruction FixReturns(MethodDefinition Method)
+        internal static Instruction FixReturns(this ILProcessor ilProcessor)
         {
-            var body = Method.Body;
-            if (Method.ReturnType.FullName == "System.Void")
+            var methodDefinition = ilProcessor.Body.Method;
+
+            if (methodDefinition.ReturnType == methodDefinition.Module.TypeSystem.Void)
             {
-                var instructions = body.Instructions;
-                var lastRet = Instruction.Create(OpCodes.Ret);
-                instructions.Add(lastRet);
+                var instructions = ilProcessor.Body.Instructions.ToArray();
 
-                for (var index = 0; index < instructions.Count - 1; index++)
+                var newReturnInstruction = ilProcessor.Create(OpCodes.Ret);
+                ilProcessor.Append(newReturnInstruction);
+
+                foreach (var instruction in instructions)
                 {
-                    var instruction = instructions[index];
-
                     if (instruction.OpCode == OpCodes.Ret)
                     {
-                        instruction.OpCode = OpCodes.Leave;
-                        instruction.Operand = lastRet;
+                        var leaveInstruction = ilProcessor.Create(OpCodes.Leave, newReturnInstruction);
+                        ilProcessor.Replace(instruction, leaveInstruction);
+                        ilProcessor.ReplaceInstructionReferences(instruction, leaveInstruction);
                     }
                 }
-                return lastRet;
+
+                return newReturnInstruction;
             }
             else
             {
-                var instructions = body.Instructions;
-                VariableDefinition returnVariable = null;
-                returnVariable = new VariableDefinition("methodTimerReturn", Method.ReturnType);
-                body.Variables.Add(returnVariable);
-                //if (body.Variables.Count > 0 && body.Variables[0].VariableType == Method.ReturnType)
-                //{
-                //    foreach (var v in body.Variables)
-                //    {
-                //        if (v.VariableType == Method.ReturnType)
-                //        {
-                //            returnVariable = v;
-                //        }
-                //    }
-                //}
-                //if(returnVariable == null)
-                //{
-                //    returnVariable = new VariableDefinition("methodTimerReturn", Method.ReturnType);
-                //    body.Variables.Add(returnVariable);
-                //}
-                var lastLd = Instruction.Create(OpCodes.Ldloc, returnVariable);
-                instructions.Add(lastLd);
-                instructions.Add(Instruction.Create(OpCodes.Ret));
+                var instructions = ilProcessor.Body.Instructions.ToArray();
 
-                for (var index = 0; index < instructions.Count - 2; index++)
+                var returnVariable = new VariableDefinition(methodDefinition.ReturnType);
+                ilProcessor.Body.Variables.Add(returnVariable);
+
+                var loadResultInstruction = ilProcessor.Create(OpCodes.Ldloc, returnVariable);
+                ilProcessor.Append(loadResultInstruction);
+                var newReturnInstruction = ilProcessor.Create(OpCodes.Ret);
+                ilProcessor.Append(newReturnInstruction);
+
+                foreach (var instruction in instructions)
                 {
-                    var instruction = instructions[index];
                     if (instruction.OpCode == OpCodes.Ret)
                     {
-                        instruction.OpCode = OpCodes.Leave;
-                        instruction.Operand = lastLd;
-                        instructions.Insert(index, Instruction.Create(OpCodes.Stloc, returnVariable));
-                        index++;
+                        var leaveInstruction = ilProcessor.Create(OpCodes.Leave, loadResultInstruction);
+                        ilProcessor.Replace(instruction, leaveInstruction);
+                        ilProcessor.ReplaceInstructionReferences(instruction, leaveInstruction);
+                        var saveResultInstruction = ilProcessor.Create(OpCodes.Stloc, returnVariable);
+                        ilProcessor.InsertBefore(leaveInstruction, saveResultInstruction);
+                        ilProcessor.ReplaceInstructionReferences(leaveInstruction, saveResultInstruction);
                     }
                 }
-                return lastLd;
+
+                return loadResultInstruction;
+            }
+        }
+
+        internal static void ReplaceInstructionReferences(
+           this ILProcessor ilProcessor,
+           Instruction oldInstruction,
+           Instruction newInstruction)
+        {
+            foreach (var handler in ilProcessor.Body.ExceptionHandlers)
+            {
+                if (handler.FilterStart == oldInstruction)
+                    handler.FilterStart = newInstruction;
+
+                if (handler.TryStart == oldInstruction)
+                    handler.TryStart = newInstruction;
+
+                if (handler.TryEnd == oldInstruction)
+                    handler.TryEnd = newInstruction;
+
+                if (handler.HandlerStart == oldInstruction)
+                    handler.HandlerStart = newInstruction;
+
+                if (handler.HandlerEnd == oldInstruction)
+                    handler.HandlerEnd = newInstruction;
+            }
+
+            // Update instructions with a target instruction
+            foreach (var iteratedInstruction in ilProcessor.Body.Instructions)
+            {
+                var operand = iteratedInstruction.Operand;
+
+                if (operand == oldInstruction)
+                {
+                    iteratedInstruction.Operand = newInstruction;
+                    continue;
+                }
+                else if (operand is Instruction[])
+                {
+                    Instruction[] operands = (Instruction[])operand;
+                    for (var i = 0; i < operands.Length; ++i)
+                    {
+                        if (operands[i] == oldInstruction)
+                            operands[i] = newInstruction;
+                    }
+                }
             }
         }
 
@@ -362,7 +374,7 @@ namespace MikuLuaProfiler
             il.InsertBefore(il.Body.Instructions[0], il.Create(OpCodes.Ldstr, "[C#]:" + method.DeclaringType.Name + "::" + method.Name));
             il.InsertBefore(il.Body.Instructions[0], il.Create(OpCodes.Nop));
 
-            var returnInstruction = FixReturns(method);
+            var returnInstruction = il.FixReturns();
             var beforeReturn = Instruction.Create(OpCodes.Nop);
             il.InsertBefore(returnInstruction, beforeReturn);
 
@@ -401,6 +413,7 @@ namespace MikuLuaProfiler
             AddResolver(assembly);
 
             var profilerType = assembly.MainModule.GetType("XLua.LuaDLL.Lua");
+            if (profilerType == null) return;
             foreach (var m in profilerType.Methods)
             {
                 //已经注入了就不注入了
@@ -687,50 +700,6 @@ namespace MikuLuaProfiler
         }
         #endregion
 
-        public static void GetHotfixAssembly()
-        {
-            var projectPath = System.Reflection.Assembly.Load("Assembly-CSharp").ManifestModule.FullyQualifiedName;
-            Debug.Log(projectPath);
-        }
-
-        [PostProcessBuild(1000)]
-        private static void OnPostprocessBuildPlayer(BuildTarget buildTarget, string buildPath)
-        {
-            if (buildTarget != BuildTarget.Android && buildTarget != BuildTarget.iOS)
-            {
-                string buildDir = buildPath.Replace("/" + Path.GetFileName(buildPath), "");
-#if UNITY_EDITOR_WIN
-                string assPath = buildDir + "/" + Path.GetFileName(buildDir) + "_Data" + "/Managed/Assembly-CSharp.dll";
-#else
-                assPath = buildPath + "/" + Path.GetFileNameWithoutExtension(buildPath) + "_Data" + "/Managed/Assembly-CSharp.dll";
-#endif
-                if (LuaDeepProfilerSetting.Instance.isDeepLuaProfiler)
-                {
-                    DoHookLuaFun(assPath);
-                }
-                if (LuaDeepProfilerSetting.Instance.isDeepMonoProfiler)
-                {
-                    InjectAllMethods(assPath);
-                }
-            }
-            else
-            {
-                //string path = Environment.CurrentDirectory;
-                //string[] paths = Directory.GetFiles(path, "Assembly-CSharp.dll", SearchOption.AllDirectories);
-                //foreach (var assPath in paths)
-                //{
-                //    if (LuaDeepProfilerSetting.Instance.isDeepLuaProfiler)
-                //    {
-                //        DoHookLuaFun(assPath);
-                //    }
-                //    if (LuaDeepProfilerSetting.Instance.isDeepMonoProfiler)
-                //    {
-                //        InjectAllMethods(assPath);
-                //    }
-                //}
-            }
-        }
-
         [PostProcessScene]
         private static void OnPostprocessScene()
         {
@@ -741,7 +710,7 @@ namespace MikuLuaProfiler
             }
             if (LuaDeepProfilerSetting.Instance.isDeepMonoProfiler)
             {
-                InjectAllMethods(projectPath, false);
+                InjectAllMethods(projectPath);
             }
 
             //string path = Environment.CurrentDirectory;
