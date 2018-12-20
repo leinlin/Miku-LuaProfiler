@@ -106,7 +106,7 @@ namespace MikuLuaProfiler
             {
                 NetWorkServer.Close();
                 NetWorkServer.RegisterOnReceive(m_TreeView.LoadRootSample);
-                NetWorkServer.BeginListen("127.0.0.1", port); 
+                NetWorkServer.BeginListen("0.0.0.0", port); 
             }
             GUILayout.Label("port:", GUILayout.Height(30), GUILayout.Width(35));
             port = EditorGUILayout.IntField(port, GUILayout.Height(16), GUILayout.Width(50));

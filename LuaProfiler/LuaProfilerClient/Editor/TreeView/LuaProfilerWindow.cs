@@ -38,6 +38,7 @@ namespace MikuLuaProfiler
             {
                 setting.isDeepLuaProfiler = flag;
                 EditorApplication.isPlaying = false;
+                InjectMethods.Recompile();
             }
 
             flag = GUILayout.Toggle(setting.isDeepMonoProfiler, "Deep Profiler Mono");
@@ -45,14 +46,7 @@ namespace MikuLuaProfiler
             {
                 setting.isDeepMonoProfiler = flag;
                 EditorApplication.isPlaying = false;
-                if (!flag)
-                {
-                    InjectMethods.Recompile();
-                }
-                else
-                {
-                    InjectMethods.InjectAllMethods();
-                }
+                InjectMethods.Recompile();
             }
 
             EditorGUILayout.EndHorizontal();
@@ -174,7 +168,9 @@ namespace MikuLuaProfiler
         [MenuItem("Window/Lua Profiler Window")]
         static public void ShowWindow()
         {
+            //InjectMethods.ChangeAttribute();
             // Get existing open window or if none, make a new one:
+
             var window = GetWindow<LuaProfilerWindow>();
             window.titleContent = new GUIContent("Lua Profiler");
             window.Show();

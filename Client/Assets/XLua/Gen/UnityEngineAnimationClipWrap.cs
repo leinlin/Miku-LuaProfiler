@@ -21,7 +21,7 @@ namespace XLua.CSObjectWrap
         {
 			ObjectTranslator translator = ObjectTranslatorPool.Instance.Find(L);
 			System.Type type = typeof(UnityEngine.AnimationClip);
-			Utils.BeginObjectRegister(type, L, translator, 0, 5, 8, 5);
+			Utils.BeginObjectRegister(type, L, translator, 0, 5, 7, 5);
 			
 			Utils.RegisterFunc(L, Utils.METHOD_IDX, "SampleAnimation", _m_SampleAnimation);
 			Utils.RegisterFunc(L, Utils.METHOD_IDX, "SetCurve", _m_SetCurve);
@@ -36,7 +36,6 @@ namespace XLua.CSObjectWrap
             Utils.RegisterFunc(L, Utils.GETTER_IDX, "localBounds", _g_get_localBounds);
             Utils.RegisterFunc(L, Utils.GETTER_IDX, "legacy", _g_get_legacy);
             Utils.RegisterFunc(L, Utils.GETTER_IDX, "humanMotion", _g_get_humanMotion);
-            Utils.RegisterFunc(L, Utils.GETTER_IDX, "empty", _g_get_empty);
             Utils.RegisterFunc(L, Utils.GETTER_IDX, "events", _g_get_events);
             
 			Utils.RegisterFunc(L, Utils.SETTER_IDX, "frameRate", _s_set_frameRate);
@@ -312,20 +311,6 @@ namespace XLua.CSObjectWrap
 			
                 UnityEngine.AnimationClip gen_to_be_invoked = (UnityEngine.AnimationClip)translator.FastGetCSObj(L, 1);
                 LuaAPI.lua_pushboolean(L, gen_to_be_invoked.humanMotion);
-            } catch(System.Exception gen_e) {
-                return LuaAPI.luaL_error(L, "c# exception:" + gen_e);
-            }
-            return 1;
-        }
-        
-        [MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]
-        static int _g_get_empty(RealStatePtr L)
-        {
-		    try {
-                ObjectTranslator translator = ObjectTranslatorPool.Instance.Find(L);
-			
-                UnityEngine.AnimationClip gen_to_be_invoked = (UnityEngine.AnimationClip)translator.FastGetCSObj(L, 1);
-                LuaAPI.lua_pushboolean(L, gen_to_be_invoked.empty);
             } catch(System.Exception gen_e) {
                 return LuaAPI.luaL_error(L, "c# exception:" + gen_e);
             }

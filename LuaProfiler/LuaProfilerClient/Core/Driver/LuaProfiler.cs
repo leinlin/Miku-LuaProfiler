@@ -136,6 +136,9 @@ namespace MikuLuaProfiler
         public static void BeginSample(IntPtr luaState, string name)
         {
             if (!IsMainThread) return;
+            var setting = LuaDeepProfilerSetting.Instance;
+            if (setting == null) return;
+
             m_frameCount = HookLuaSetup.frameCount;
 
             if (m_currentFrame != m_frameCount)
@@ -162,6 +165,8 @@ namespace MikuLuaProfiler
         public static void EndSample(IntPtr luaState)
         {
             if (!IsMainThread) return;
+            var setting = LuaDeepProfilerSetting.Instance;
+            if (setting == null) return;
 
             if (beginSampleMemoryStack.Count <= 0)
             {
@@ -187,18 +192,18 @@ namespace MikuLuaProfiler
 
             if (beginSampleMemoryStack.Count == 0)
             {
-                if (LuaDeepProfilerSetting.Instance.isNeedCapture)
+                if (setting != null && setting.isNeedCapture)
                 {
                     //迟钝了
-                    if (sample.costTime >= (1 / (float)(LuaDeepProfilerSetting.Instance.captureFrameRate)) * 10000000)
+                    if (sample.costTime >= (1 / (float)(setting.captureFrameRate)) * 10000000)
                     {
                         sample.captureUrl = Sample.Capture();
                     }
-                    else if (sample.costLuaGC > LuaDeepProfilerSetting.Instance.captureLuaGC)
+                    else if (sample.costLuaGC > setting.captureLuaGC)
                     {
                         sample.captureUrl = Sample.Capture();
                     }
-                    else if (sample.costMonoGC > LuaDeepProfilerSetting.Instance.captureMonoGC)
+                    else if (sample.costMonoGC > setting.captureMonoGC)
                     {
                         sample.captureUrl = Sample.Capture();
                     }

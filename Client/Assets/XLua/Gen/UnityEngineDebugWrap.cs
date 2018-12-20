@@ -51,7 +51,7 @@ namespace XLua.CSObjectWrap
             
 			
             
-			Utils.RegisterFunc(L, Utils.CLS_GETTER_IDX, "unityLogger", _g_get_unityLogger);
+			Utils.RegisterFunc(L, Utils.CLS_GETTER_IDX, "logger", _g_get_logger);
             Utils.RegisterFunc(L, Utils.CLS_GETTER_IDX, "developerConsoleVisible", _g_get_developerConsoleVisible);
             Utils.RegisterFunc(L, Utils.CLS_GETTER_IDX, "isDebugBuild", _g_get_isDebugBuild);
             
@@ -813,11 +813,11 @@ namespace XLua.CSObjectWrap
         
         
         [MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]
-        static int _g_get_unityLogger(RealStatePtr L)
+        static int _g_get_logger(RealStatePtr L)
         {
 		    try {
                 ObjectTranslator translator = ObjectTranslatorPool.Instance.Find(L);
-			    translator.PushAny(L, UnityEngine.Debug.unityLogger);
+			    translator.PushAny(L, UnityEngine.Debug.logger);
             } catch(System.Exception gen_e) {
                 return LuaAPI.luaL_error(L, "c# exception:" + gen_e);
             }

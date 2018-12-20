@@ -21,6 +21,10 @@ namespace MikuLuaProfiler
     {
         static StartUp()
         {
+            if (LuaDeepProfilerSetting.Instance.isDeepLuaProfiler)
+            {
+                InjectMethods.HookLuaFun();
+            }
             if (LuaDeepProfilerSetting.Instance.isDeepMonoProfiler)
             {
                 InjectMethods.InjectAllMethods();

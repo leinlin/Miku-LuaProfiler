@@ -622,12 +622,12 @@ namespace XLua.CSObjectWrap
             
                 
                 {
-                    float _newX = (float)LuaAPI.lua_tonumber(L, 2);
-                    float _newY = (float)LuaAPI.lua_tonumber(L, 3);
-                    float _newZ = (float)LuaAPI.lua_tonumber(L, 4);
-                    float _newW = (float)LuaAPI.lua_tonumber(L, 5);
+                    float _new_x = (float)LuaAPI.lua_tonumber(L, 2);
+                    float _new_y = (float)LuaAPI.lua_tonumber(L, 3);
+                    float _new_z = (float)LuaAPI.lua_tonumber(L, 4);
+                    float _new_w = (float)LuaAPI.lua_tonumber(L, 5);
                     
-                    gen_to_be_invoked.Set( _newX, _newY, _newZ, _newW );
+                    gen_to_be_invoked.Set( _new_x, _new_y, _new_z, _new_w );
                     
                     
                         translator.UpdateUnityEngineQuaternion(L, 1, gen_to_be_invoked);

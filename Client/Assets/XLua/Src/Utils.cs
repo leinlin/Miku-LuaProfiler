@@ -416,10 +416,13 @@ namespace XLua
 				{
 					continue;
 				}
-				if (all_events.Any(e => e.Name == fieldName))
-				{
-					fieldName = "&" + fieldName;
-				}
+                foreach (var e in all_events)
+                {
+                    if (e.Name == fieldName)
+                    {
+                        fieldName = "&" + fieldName;
+                    }
+                }
 
 				if (field.IsStatic && (field.IsInitOnly || field.IsLiteral))
 				{

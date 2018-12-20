@@ -25,10 +25,9 @@ namespace MikuLuaProfiler
 
         static StartUp()
         {
-            EditorApplication.playModeStateChanged += (state) =>
+            EditorApplication.playmodeStateChanged += () =>
             {
-
-                if (isPlaying == true && EditorApplication.isPlaying == false)
+            if (isPlaying == true && EditorApplication.isPlaying == false)
                 {
                     NetWorkServer.Close();
                 }
@@ -36,6 +35,7 @@ namespace MikuLuaProfiler
                 isPlaying = EditorApplication.isPlaying;
             };
         }
+
     }
 
     public static class NetWorkServer
@@ -231,20 +231,9 @@ namespace MikuLuaProfiler
             s.costLuaGC = br.ReadInt64();
             s.costMonoGC = br.ReadInt64();
 
-            bool onlyKey = br.ReadByte() > 0;
-            int index = br.ReadInt32();
-
-            if (!onlyKey)
-            {
-                int len = br.ReadInt32();
-                byte[] datas = br.ReadBytes(len);
-                s.name = string.Intern(Encoding.UTF8.GetString(datas).Trim());
-                m_strCacheDict[index] = s.name;
-            }
-            else
-            {
-                s.name = m_strCacheDict[index];
-            }
+            int len = br.ReadInt32();
+            byte[] datas = br.ReadBytes(len);
+            s.name = string.Intern(Encoding.UTF8.GetString(datas));
 
             s.costTime = br.ReadInt64();
             s.currentLuaMemory = br.ReadInt64();

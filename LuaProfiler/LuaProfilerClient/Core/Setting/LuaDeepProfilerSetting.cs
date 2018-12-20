@@ -10,23 +10,28 @@
 #if UNITY_EDITOR || USE_LUA_PROFILER
 namespace MikuLuaProfiler
 {
-    using System;
     using System.Diagnostics;
     using System.IO;
     using System.Text;
     using UnityEngine;
-
     public class LuaDeepProfilerSetting
     {
+        public static LuaDeepProfilerSetting MakeInstance()
+        {
+            instance = LuaDeepProfilerSetting.Load();
+            return instance;
+        }
         public static LuaDeepProfilerSetting Instance
         {
             get
             {
-                if (LuaDeepProfilerSetting.instance == null)
+#if UNITY_EDITOR
+                if (instance == null)
                 {
-                    LuaDeepProfilerSetting.instance = LuaDeepProfilerSetting.Load();
+                    instance = MakeInstance();
                 }
-                return LuaDeepProfilerSetting.instance;
+#endif
+                return instance;
             }
         }
 
@@ -223,6 +228,8 @@ namespace MikuLuaProfiler
             binaryWriter.Write(bytes.Length);
             binaryWriter.Write(bytes);
             binaryWriter.Write(this.m_port);
+
+            output.Flush();
             binaryWriter.Close();
         }
 
@@ -230,10 +237,25 @@ namespace MikuLuaProfiler
         public static LuaDeepProfilerSetting Load()
         {
             LuaDeepProfilerSetting luaDeepProfilerSetting = new LuaDeepProfilerSetting();
+            byte[] datas = null;
+#if UNITY_EDITOR
+            StackTrace stackTrace = new StackTrace(true);
+            StackFrame frame = stackTrace.GetFrame(0);
+            string text = frame.GetFileName();
+#if UNITY_EDITOR_WIN
+            text = text.Replace("Core\\Setting\\LuaDeepProfilerSetting.cs", "Resources\\LuaDeepProfilerSettings.bytes");
+#else
+            text = text.Replace("Core/Setting/LuaDeepProfilerSetting.cs", "Resources/LuaDeepProfilerSettings.bytes");
+#endif
+            datas = File.ReadAllBytes(text);
+#else
             TextAsset textAsset = Resources.Load<TextAsset>("LuaDeepProfilerSettings");
-            if (textAsset != null)
+            datas = textAsset != null ? textAsset.bytes : null;
+#endif
+
+            if (datas != null)
             {
-                MemoryStream memoryStream = new MemoryStream(textAsset.bytes);
+                MemoryStream memoryStream = new MemoryStream(datas);
                 try
                 {
                     BinaryReader binaryReader = new BinaryReader(memoryStream);
@@ -262,43 +284,26 @@ namespace MikuLuaProfiler
             {
                 luaDeepProfilerSetting.Save();
             }
+#if !UNITY_EDITOR
+            if (textAsset != null)
+            {
+                Resources.UnloadAsset(textAsset);
+            }
+#endif
             return luaDeepProfilerSetting;
         }
 
-        // Token: 0x040000AF RID: 175
         public const string SettingsAssetName = "LuaDeepProfilerSettings";
-
-        // Token: 0x040000B0 RID: 176
         private static LuaDeepProfilerSetting instance;
-
-        // Token: 0x040000B1 RID: 177
         private bool m_isDeepMonoProfiler = false;
-
-        // Token: 0x040000B2 RID: 178
         private bool m_isDeepLuaProfiler = false;
-
-        // Token: 0x040000B3 RID: 179
         private int m_captureLuaGC = 51200;
-
-        // Token: 0x040000B4 RID: 180
         private bool m_isNeedCapture = false;
-
-        // Token: 0x040000B5 RID: 181
         private string m_assMd5 = "";
-
-        // Token: 0x040000B6 RID: 182
         private bool m_isInited = false;
-
-        // Token: 0x040000B9 RID: 185
         private int m_captureMonoGC = 51200;
-
-        // Token: 0x040000BA RID: 186
         private int m_captureFrameRate = 30;
-
-        // Token: 0x040000BB RID: 187
         private string m_ip = "127.0.0.1";
-
-        // Token: 0x040000BC RID: 188
         private int m_port = 2333;
     }
 }

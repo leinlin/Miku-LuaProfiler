@@ -35,7 +35,7 @@ namespace MikuLuaProfiler
             m_client = new TcpClient();
 
             m_client.SendBufferSize = BUFF_LEN;
-            //m_client.NoDelay = true;
+            m_client.NoDelay = true;
             try
             {
                 m_client.Connect(host, port);
@@ -158,6 +158,7 @@ namespace MikuLuaProfiler
 #pragma warning disable 0168
                 catch (Exception e)
                 {
+                    UnityEngine.Debug.Log(e);
                     Close();
                 }
 #pragma warning restore 0168
@@ -172,23 +173,15 @@ namespace MikuLuaProfiler
             return m_key++;
         }
 
-        private static Dictionary<string, KeyValuePair<int, byte[]>> m_strDict = new Dictionary<string, KeyValuePair<int, byte[]>>(4096);
-        private static bool GetBytes(string s, out byte[] result, out int index)
+        private static Dictionary<string, byte[]> m_strDict = new Dictionary<string, byte[]>(4096);
+        private static bool GetBytes(string s, out byte[] result)
         {
             bool ret = true;
-            KeyValuePair<int, byte[]> kp;
-            if (!m_strDict.TryGetValue(s, out kp))
+            if (!m_strDict.TryGetValue(s, out result))
             {
                 result = Encoding.UTF8.GetBytes(s);
-                index = GetUniqueKey();
-                kp = new KeyValuePair<int, byte[]>(index, result);
-                m_strDict.Add(s, kp);
+                m_strDict.Add(s, result);
                 ret = false;
-            }
-            else
-            {
-                index = kp.Key;
-                result = kp.Value;
             }
 
             return ret;
@@ -200,16 +193,9 @@ namespace MikuLuaProfiler
             bw.Write(s.costLuaGC);
             bw.Write(s.costMonoGC);
             byte[] datas;
-            int key;
-            bool onlyKey = GetBytes(s.name, out datas, out key);
-            byte r = (byte)(onlyKey ? 1 :0);
-            bw.Write(r);
-            bw.Write(key);
-            if (!onlyKey)
-            {
-                bw.Write(datas.Length);
-                bw.Write(datas);
-            }
+            GetBytes(s.name, out datas);
+            bw.Write(datas.Length);
+            bw.Write(datas);
 
             bw.Write(s.costTime);
             bw.Write(s.currentLuaMemory);
