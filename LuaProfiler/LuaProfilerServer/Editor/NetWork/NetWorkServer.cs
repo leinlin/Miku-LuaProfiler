@@ -40,14 +40,10 @@ namespace MikuLuaProfiler
 
     public static class NetWorkServer
     {
-        private static Socket sock;
-        private static IPEndPoint MyServer;                             //定义主机
-        private static Thread thread;
-        private static Socket socklin;                                  //临时套接字,接受客户端连接请求
-        private const int BUFF_LEN = 1024 * 1024 * 100;
-        private static byte[] bytes;
-        private static MemoryStream ms;
-        private static BinaryReader br;
+        private static TcpListener tcpLister;
+        private static TcpClient tcpClient = null;
+        private static Thread acceptThread;
+        private const int BUFF_LEN = 1024 * 1024;
 
         private const int PACK_HEAD = 0x23333333;
         private static Action<Sample> m_onReceive;
@@ -55,7 +51,7 @@ namespace MikuLuaProfiler
 
         public static bool CheckIsReceiving()
         {
-            return socklin != null;
+            return tcpClient != null;
         }
 
         public static void RegisterOnReceive(Action<Sample> onReceive)
@@ -65,151 +61,65 @@ namespace MikuLuaProfiler
 
         public static void BeginListen(string ip, int port)
         {
-            if (sock != null) return;
+            if (tcpLister != null) return;
             m_strCacheDict.Clear();
-
-            try
-            {
-                IPAddress myIP = IPAddress.Parse(ip);
-                //定义主机
-                MyServer = new IPEndPoint(myIP, port);
-                //构造套接字
-                sock = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-                //绑定端口
-                sock.Bind(MyServer);
-                //开始监听
-                sock.Listen(0);
-
-                UnityEngine.Debug.Log(string.Format("<color=#00ff00>listen to port: {1}</color>", ip, port));
-
-                //构造线程
-                thread = new Thread(new ThreadStart(DoReceive)); //targett自定义函数:接受客户端连接请求
-                                                                 //启动线程用于接受连接和接受数据
-                thread.Start();
-            }
-            catch (Exception e)
-            {
-                UnityEngine.Debug.Log(e);
-            }
+            IPAddress myIP = IPAddress.Parse(ip);
+            tcpLister = new TcpListener(myIP, port);
+            tcpLister.Start();
+            // 启动一个线程来接受请求
+            acceptThread = new Thread(acceptClientConnect);
+            acceptThread.Start();
         }
 
-        public static void Close()
+        // 接受请求
+        private static void acceptClientConnect()
         {
+            UnityEngine.Debug.Log("begin to listener");
             try
             {
-                if (socklin != null)
-                {
-                    socklin.Close();
-                    socklin = null;
-                }
-
-                if (sock != null)
-                {
-                    sock.Close();
-                    sock = null;
-                }
-
+                tcpClient = tcpLister.AcceptTcpClient();
+                tcpClient.ReceiveBufferSize = BUFF_LEN;
+                tcpClient.ReceiveTimeout = 1000000000;
             }
-            catch (Exception e)
+            catch
             {
-                UnityEngine.Debug.Log(e);
+                UnityEngine.Debug.Log("stop listener");
+                Thread.Sleep(1000);
             }
-
-            bytes = null;
-            if (ms != null)
-            {
-                ms.Dispose();
-                UnityEngine.Debug.Log("<color=#00ff00>close server</color>");
-            }
-            ms = null;
-            br = null;
-            GC.Collect();
-            if (thread != null)
-            {
-                if (thread.ThreadState != ThreadState.Running)
-                {
-                    var tmp = thread;
-                    thread = null;
-                    tmp.Abort();
-                }
-                else
-                {
-                    thread = null;
-                }
-            }
-        }
-
-        private static void DoReceive()
-        {
-            int notAvailable = 0;
-
-            if (socklin == null)
-            {
-                try
-                {
-                    socklin = sock.Accept();   //接受连接请求
-                }
-                catch
-                {
-                    socklin = null;
-                    return;
-                }
-                socklin.ReceiveBufferSize = BUFF_LEN;
-                socklin.ReceiveTimeout = 30000;
-                //连接
-                if (!socklin.Connected)
-                {
-                    UnityEngine.Debug.Log("<color=#ff0000>fail</color>");
-                    return;
-                }
-                else
-                {
-                    bytes = new byte[BUFF_LEN];
-                    ms = new MemoryStream(bytes);
-                    br = new BinaryReader(ms);
-                    m_strCacheDict.Clear();
-                    UnityEngine.Debug.Log("<color=#00ff00>connect success</color>");
-                }
-            }
-
+            NetworkStream ns = tcpClient.GetStream();
+            BinaryReader br = new BinaryReader(ns);
+            ns.ReadTimeout = 1000;
             //sign为true 循环接受数据
             while (true)
             {
                 try
                 {
-                    if (thread == null)
+                    if (tcpClient == null)
                     {
                         return;
                     }
 
-                    if (socklin == null)
+                    if (ns.CanRead && ns.DataAvailable)
                     {
-                        return;
-                    }
-
-                    int rlen = socklin.Receive(bytes, SocketFlags.None);   //接受数据
-                    if (rlen == 0)
-                    {
-                        notAvailable++;
-                        if (notAvailable >= 100)
+                        try
                         {
-                            Close();
+                            //处理粘包
+                            while (br.ReadInt32() == PACK_HEAD)
+                            {
+                                Sample s = Deserialize(br);
+                                if (m_onReceive != null)
+                                {
+                                    m_onReceive(s);
+                                }
+                            }
                         }
-
-                        continue;
-                    }
-
-                    ms.Seek(0, SeekOrigin.Begin);
-                    //处理粘包
-                    while (br.ReadInt32() == PACK_HEAD)
-                    {
-                        Sample s = Deserialize(br);
-                        if (m_onReceive != null)
+#pragma warning disable 0168
+                        catch (EndOfStreamException ex)
                         {
-                            m_onReceive(s);
+                            return;
                         }
+#pragma warning restore 0168
                     }
-                    notAvailable = 0;
                 }
 #pragma warning disable 0168
                 catch (Exception e)
@@ -221,6 +131,32 @@ namespace MikuLuaProfiler
                 Thread.Sleep(50);
             }
         }
+
+
+        public static void Close()
+        {
+            try
+            {
+                if(tcpLister != null)
+                {
+                    UnityEngine.Debug.Log("stop");
+                    tcpLister.Stop();
+                    tcpLister = null;
+                }
+            }
+            catch (Exception e)
+            {
+                UnityEngine.Debug.Log(e);
+            }
+
+            GC.Collect();
+            if (acceptThread != null)
+            {
+                acceptThread.Abort();
+                acceptThread = null;
+            }
+        }
+
         private static Dictionary<int, string> m_strCacheDict = new Dictionary<int, string>(4096);
         public static Sample Deserialize(BinaryReader br)
         {
@@ -231,9 +167,19 @@ namespace MikuLuaProfiler
             s.costLuaGC = br.ReadInt64();
             s.costMonoGC = br.ReadInt64();
 
-            int len = br.ReadInt32();
-            byte[] datas = br.ReadBytes(len);
-            s.name = string.Intern(Encoding.UTF8.GetString(datas));
+            bool isRef = br.ReadBoolean();
+            int index = br.ReadInt32();
+            if (!isRef)
+            {
+                int len = br.ReadInt32();
+                byte[] datas = br.ReadBytes(len);
+                s.name = string.Intern(Encoding.UTF8.GetString(datas));
+                m_strCacheDict[index] = s.name;
+            }
+            else
+            {
+                s.name = m_strCacheDict[index];
+            }
 
             s.costTime = br.ReadInt64();
             s.currentLuaMemory = br.ReadInt64();

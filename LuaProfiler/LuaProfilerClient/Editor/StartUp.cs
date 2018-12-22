@@ -14,7 +14,6 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Runtime;
 using System.Security.Cryptography;
 using UnityEditor;
 using UnityEditor.Callbacks;
@@ -34,6 +33,7 @@ namespace MikuLuaProfiler
     [InitializeOnLoad]
     public static class StartUp
     {
+        private static int tickNum = 0;
         static StartUp()
         {
             if (LuaDeepProfilerSetting.Instance.isDeepLuaProfiler)
@@ -44,6 +44,7 @@ namespace MikuLuaProfiler
             {
                 InjectMethods.InjectAllMethods();
             }
+
 #if XLUA || TOLUA || SLUA
             if (LuaDeepProfilerSetting.Instance.isInited) return;
 #endif
@@ -72,7 +73,18 @@ namespace MikuLuaProfiler
             LuaDeepProfilerSetting.Instance.isInited = true;
         }
 
-        private static void AppendMacro(string macro)
+        //private static void Update()
+        //{
+        //    tickNum++;
+        //    if (tickNum < 60)
+        //    {
+        //        return;
+        //    }
+        //    Debug.Log("success inject profiler code");
+        //    EditorApplication.update -= callback;
+        //}
+
+         private static void AppendMacro(string macro)
         {
             System.Diagnostics.StackTrace st = new System.Diagnostics.StackTrace(true);
             System.Diagnostics.StackFrame sf = st.GetFrame(0);
@@ -143,36 +155,29 @@ namespace MikuLuaProfiler
                 return;
             }
 
-            string assemblyPath = "./Library/ScriptAssemblies/Assembly-CSharp.dll";
-            InjectAllMethods(assemblyPath);
+            var projectPath = System.Reflection.Assembly.Load("Assembly-CSharp").ManifestModule.FullyQualifiedName;
+            var profilerPath = (typeof(LuaProfiler).Assembly).ManifestModule.FullyQualifiedName;
+
+            InjectAllMethods(projectPath, profilerPath, true);
         }
 
-        private static void InjectAllMethods(string assemblyPath)
+        private static void InjectAllMethods(string injectPath, string profilerPath, bool needMdb)
         {
             string md5 = null;
-            md5 = GetMD5HashFromFile(assemblyPath);
+            md5 = GetMD5HashFromFile(injectPath);
             if (md5 == LuaDeepProfilerSetting.Instance.assMd5) return;
 
-            bool flag = File.Exists(assemblyPath + ".mdb");
-            AssemblyDefinition assembly;
-
-            if (flag)
+            AssemblyDefinition injectAss = LoadAssembly(injectPath, needMdb);
+            AssemblyDefinition profilerAss = null;
+            if (injectPath == profilerPath)
             {
-                ReaderParameters readerParameters = new ReaderParameters
-                {
-                    ReadSymbols = true
-                };
-                assembly = AssemblyDefinition.ReadAssembly(assemblyPath, readerParameters);
+                profilerAss = injectAss;
             }
             else
             {
-                assembly = AssemblyDefinition.ReadAssembly(assemblyPath);
+                profilerAss = LoadAssembly(profilerPath, needMdb);
             }
-            AddResolver(assembly);
-
-            //m_getCurrentMethod = typeof(MethodBase).GetMethod("GetCurrentMethod");
-
-            var profilerType = assembly.MainModule.GetType("MikuLuaProfiler.LuaProfiler");
+            var profilerType = profilerAss.MainModule.GetType("MikuLuaProfiler.LuaProfiler");
             foreach (var m in profilerType.Methods)
             {
                 if (m.Name == "BeginSampleCSharp")
@@ -183,14 +188,10 @@ namespace MikuLuaProfiler
                 {
                     m_endSampleMethod = m;
                 }
-                //if (m.Name == "GetMethodLineString")
-                //{
-                //    m_getMethodString = m; 
-                //}
             }
 
-            var module = assembly.MainModule;
-            foreach (var type in assembly.MainModule.Types)
+            var module = injectAss.MainModule;
+            foreach (var type in injectAss.MainModule.Types)
             {
                 if (type.FullName.Contains("MikuLuaProfiler"))
                 {
@@ -199,21 +200,13 @@ namespace MikuLuaProfiler
 
                 foreach (var item in type.Methods)
                 {
-                    //if (item.IsConstructor) continue;
                     //丢弃协同 
-
-                    if (item.IsConstructor)
+                    if (item.ReturnType.Name.Contains("IEnumerator"))
                     {
                         continue;
-                        //var declaringType = item.DeclaringType;
-                        //Type monoType = declaringType.GetMonoType();
-                        //Type corType = typeof(MonoBehaviour);
-                        //if (corType.IsAssignableFrom(monoType))
-                        //{
-                        //    continue;
-                        //}
                     }
-                    if (item.Name == ".cctor")
+
+                    if (item.Name == ".ctor")
                     {
                         continue;
                     }
@@ -230,128 +223,27 @@ namespace MikuLuaProfiler
                         continue;
                     }
 
-
                     InjectTryFinally(item, module);
                 }
             }
 
-            if (flag)
-            {
-                WriterParameters writerParameters = new WriterParameters
-                {
-                    WriteSymbols = true
-                };
-                assembly.Write(assemblyPath, writerParameters);
-            }
-            else
-            {
-                assembly.Write(assemblyPath);
-            }
-            LuaDeepProfilerSetting.Instance.assMd5 = GetMD5HashFromFile(assemblyPath);
-            GCSettings.LatencyMode = GCLatencyMode.LowLatency;
+            WriteAssembly(injectPath, injectAss);
+            LuaDeepProfilerSetting.Instance.assMd5 = GetMD5HashFromFile(injectPath);
         }
 
-        //public static Type GetMonoType(this TypeReference type)
-        //{
-        //    return Type.GetType(type.GetReflectionName());
-        //}
-
-        //private static string GetReflectionName(this TypeReference type)
-        //{
-        //    if (type.IsGenericInstance)
-        //    {
-        //        var genericInstance = (GenericInstanceType)type;
-        //        return string.Format("{0}.{1}[{2}]", genericInstance.Namespace, type.Name, String.Join(",", genericInstance.GenericArguments.Select(p => p.GetReflectionName()).ToArray()));
-        //    }
-        //    return type.FullName;
-        //}
-
-        public static void Recompile()
+        public static Type GetMonoType(this TypeReference type)
         {
-            BuildTargetGroup bg = BuildTargetGroup.Standalone;
-            switch (EditorUserBuildSettings.activeBuildTarget)
-            {
-                case BuildTarget.Android:
-                    bg = BuildTargetGroup.Android;
-                    break;
-                case BuildTarget.iOS:
-                    bg = BuildTargetGroup.iOS;
-                    break;
-            }
-            string path = PlayerSettings.GetScriptingDefineSymbolsForGroup(bg);
-            bool hasRecompile = false;
-
-            string[] heads = path.Split(';');
-            path = "";
-            foreach (var item in heads)
-            {
-                if (item == "MIKU_RECOMPILE")
-                {
-                    hasRecompile = true;
-                    continue;
-                }
-                path += item + ";";
-            }
-
-            if (!hasRecompile)
-            {
-                path += "MIKU_RECOMPILE;";
-            }
-
-            PlayerSettings.SetScriptingDefineSymbolsForGroup(bg, path);
+            return Type.GetType(type.GetReflectionName());
         }
 
-        private static string GetMD5HashFromFile(string path)
+        private static string GetReflectionName(this TypeReference type)
         {
-            if (!File.Exists(path))
-                throw new ArgumentException(string.Format("<{0}>, 不存在", path));
-            int bufferSize = 1024 * 1024;//自定义缓冲区大小16K 
-            byte[] buffer = new byte[bufferSize];
-            Stream inputStream = File.Open(path, FileMode.Open, FileAccess.Read, FileShare.Read);
-            HashAlgorithm hashAlgorithm = new MD5CryptoServiceProvider();
-            int readLength = 0;//每次读取长度 
-            var output = new byte[bufferSize];
-            while ((readLength = inputStream.Read(buffer, 0, buffer.Length)) > 0)
+            if (type.IsGenericInstance)
             {
-                //计算MD5 
-                hashAlgorithm.TransformBlock(buffer, 0, readLength, output, 0);
+                var genericInstance = (GenericInstanceType)type;
+                return string.Format("{0}.{1}[{2}]", genericInstance.Namespace, type.Name, String.Join(",", genericInstance.GenericArguments.Select(p => p.GetReflectionName()).ToArray()));
             }
-            //完成最后计算，必须调用(由于上一部循环已经完成所有运算，所以调用此方法时后面的两个参数都为0) 
-            hashAlgorithm.TransformFinalBlock(buffer, 0, 0);
-            string md5 = BitConverter.ToString(hashAlgorithm.Hash);
-            hashAlgorithm.Clear();
-            inputStream.Close();
-            inputStream.Dispose();
-
-            md5 = md5.Replace("-", "");
-            return md5;
-        }
-
-        private static void AddResolver(AssemblyDefinition assembly)
-        {
-            var assemblyResolver = assembly.MainModule.AssemblyResolver as DefaultAssemblyResolver;
-            HashSet<string> paths = new HashSet<string>();
-            paths.Add("./Library/ScriptAssemblies/");
-            foreach (string path in (from asm in System.AppDomain.CurrentDomain.GetAssemblies()
-                                     select asm.ManifestModule.FullyQualifiedName).Distinct<string>())
-            {
-                try
-                {
-                    string dir = Path.GetDirectoryName(path);
-                    if (!paths.Contains(dir))
-                    {
-                        paths.Add(dir);
-                    }
-                }
-                catch
-                {
-                }
-            }
-
-            foreach (var item in paths)
-            {
-                assemblyResolver.AddSearchDirectory(item);
-            }
+            return type.FullName;
         }
 
         internal static Instruction FixReturns(this ILProcessor ilProcessor)
@@ -498,21 +390,164 @@ namespace MikuLuaProfiler
         }
         #endregion
 
+        #region tool
+        public static AssemblyDefinition LoadAssembly(string path, bool needRead)
+        {
+            AssemblyDefinition result = null;
+            bool flag = needRead;
+            if (needRead)
+            {
+                flag = File.Exists(path + ".mdb");
+            }
+
+
+            if (flag)
+            {
+                ReaderParameters readerParameters = new ReaderParameters
+                {
+                    ReadSymbols = true
+                };
+                result = AssemblyDefinition.ReadAssembly(path, readerParameters);
+            }
+            else
+            {
+                result = AssemblyDefinition.ReadAssembly(path);
+            }
+            AddResolver(result);
+            return result;
+        }
+
+        public static void WriteAssembly(string path, AssemblyDefinition ass)
+        {
+            bool flag = File.Exists(path + ".mdb");
+
+            if (flag)
+            {
+                WriterParameters writerParameters = new WriterParameters
+                {
+                    WriteSymbols = true
+                };
+                ass.Write(path, writerParameters);
+            }
+            else
+            {
+                ass.Write(path);
+            }
+        }
+
+        public static void Recompile()
+        {
+            BuildTargetGroup bg = BuildTargetGroup.Standalone;
+            switch (EditorUserBuildSettings.activeBuildTarget)
+            {
+                case BuildTarget.Android:
+                    bg = BuildTargetGroup.Android;
+                    break;
+                case BuildTarget.iOS:
+                    bg = BuildTargetGroup.iOS;
+                    break;
+            }
+            string path = PlayerSettings.GetScriptingDefineSymbolsForGroup(bg);
+            bool hasRecompile = false;
+
+            string[] heads = path.Split(';');
+            path = "";
+            foreach (var item in heads)
+            {
+                if (item == "MIKU_RECOMPILE")
+                {
+                    hasRecompile = true;
+                    continue;
+                }
+                path += item + ";";
+            }
+
+            if (!hasRecompile)
+            {
+                path += "MIKU_RECOMPILE;";
+            }
+
+            PlayerSettings.SetScriptingDefineSymbolsForGroup(bg, path);
+        }
+
+        private static string GetMD5HashFromFile(string path)
+        {
+            if (!File.Exists(path))
+                throw new ArgumentException(string.Format("<{0}>, 不存在", path));
+            int bufferSize = 1024 * 1024;//自定义缓冲区大小16K 
+            byte[] buffer = new byte[bufferSize];
+            Stream inputStream = File.Open(path, FileMode.Open, FileAccess.Read, FileShare.Read);
+            HashAlgorithm hashAlgorithm = new MD5CryptoServiceProvider();
+            int readLength = 0;//每次读取长度 
+            var output = new byte[bufferSize];
+            while ((readLength = inputStream.Read(buffer, 0, buffer.Length)) > 0)
+            {
+                //计算MD5 
+                hashAlgorithm.TransformBlock(buffer, 0, readLength, output, 0);
+            }
+            //完成最后计算，必须调用(由于上一部循环已经完成所有运算，所以调用此方法时后面的两个参数都为0) 
+            hashAlgorithm.TransformFinalBlock(buffer, 0, 0);
+            string md5 = BitConverter.ToString(hashAlgorithm.Hash);
+            hashAlgorithm.Clear();
+            inputStream.Close();
+            inputStream.Dispose();
+
+            md5 = md5.Replace("-", "");
+            return md5;
+        }
+
+        private static void AddResolver(AssemblyDefinition assembly)
+        {
+            var assemblyResolver = assembly.MainModule.AssemblyResolver as DefaultAssemblyResolver;
+            HashSet<string> paths = new HashSet<string>();
+            paths.Add("./Library/ScriptAssemblies/");
+            foreach (string path in (from asm in System.AppDomain.CurrentDomain.GetAssemblies()
+                                     select asm.ManifestModule.FullyQualifiedName).Distinct<string>())
+            {
+                try
+                {
+                    string dir = Path.GetDirectoryName(path);
+                    if (!paths.Contains(dir))
+                    {
+                        paths.Add(dir);
+                    }
+                }
+                catch
+                {
+                }
+            }
+
+            foreach (var item in paths)
+            {
+                assemblyResolver.AddSearchDirectory(item);
+            }
+        }
+        #endregion
+
         #region hook
         public static void HookLuaFun()
         {
+            string profilerPath = (typeof(LuaProfiler).Assembly).ManifestModule.FullyQualifiedName;
             string luaPath = (typeof(LuaDLL).Assembly).ManifestModule.FullyQualifiedName;
-            DoHookLuaFun(luaPath);
+            DoHookLuaFun(luaPath, profilerPath);
         }
 
-        private static void DoHookLuaFun(string luaPath)
+        private static void DoHookLuaFun(string luaPath, string profilerPath)
         {
-            AssemblyDefinition assembly;
+            AssemblyDefinition luaAssembly = LoadAssembly(luaPath, false);
+            AssemblyDefinition profilerAssembly = null;
+            if (luaPath == profilerPath)
+            {
+                profilerAssembly = luaAssembly;
+            }
+            else
+            {
+                profilerAssembly = LoadAssembly(profilerPath, false);
+            }
+            
 
-            assembly = AssemblyDefinition.ReadAssembly(luaPath);
-            AddResolver(assembly);
-
-            var profilerType = assembly.MainModule.GetType(LUA_FULL_NAME);
+            #region find lua method
+            var profilerType = luaAssembly.MainModule.GetType(LUA_FULL_NAME);
             if (profilerType == null) return;
             foreach (var m in profilerType.Methods)
             {
@@ -526,8 +561,10 @@ namespace MikuLuaProfiler
                     m_tolstring = m;
                 }
             }
+            #endregion
 
-            var luaProfiler = assembly.MainModule.GetType("MikuLuaProfiler.LuaProfiler");
+            #region find profiler method
+            var luaProfiler = profilerAssembly.MainModule.GetType("MikuLuaProfiler.LuaProfiler");
             foreach (var m in luaProfiler.Methods)
             {
                 if (m.Name == "set_mainL")
@@ -540,7 +577,7 @@ namespace MikuLuaProfiler
                 }
             }
 
-            var luaHookType = assembly.MainModule.GetType("MikuLuaProfiler.LuaHook");
+            var luaHookType = profilerAssembly.MainModule.GetType("MikuLuaProfiler.LuaHook");
             foreach (var m in luaHookType.Methods)
             {
                 if (m.Name == "Hookloadbuffer")
@@ -557,7 +594,7 @@ namespace MikuLuaProfiler
                 }
             }
 
-            var luaRegister = assembly.MainModule.GetType("MikuLuaProfiler.MikuLuaProfilerLuaProfilerWrap");
+            var luaRegister = profilerAssembly.MainModule.GetType("MikuLuaProfiler.MikuLuaProfilerLuaProfilerWrap");
             foreach (var m in luaRegister.Methods)
             {
                 if (m.Name == "__Register")
@@ -566,6 +603,7 @@ namespace MikuLuaProfiler
                     break;
                 }
             }
+            #endregion
 
             Dictionary<string, InjectMethodAction> hookExternfunDict = new Dictionary<string, InjectMethodAction>
             {
@@ -574,13 +612,13 @@ namespace MikuLuaProfiler
                 { LUA_LOAD_BUFFER, InjectLoaderMethod }
             };
 
-            HookDllFun(profilerType, hookExternfunDict, assembly);
+            HookDllFun(profilerType, hookExternfunDict, luaAssembly);
 #if SLUA
-            profilerType = assembly.MainModule.GetType("SLua.LuaDLLWrapper");
-            HookDllFun(profilerType, hookExternfunDict, assembly);
+            profilerType = luaAssembly.MainModule.GetType("SLua.LuaDLLWrapper");
+            HookDllFun(profilerType, hookExternfunDict, luaAssembly);
 #endif
 
-            assembly.Write(luaPath);
+            luaAssembly.Write(luaPath);
         }
 
         private static void HookDllFun(TypeDefinition profilerType, Dictionary<string, InjectMethodAction> hookExternfunDict, AssemblyDefinition assembly)
@@ -815,28 +853,22 @@ namespace MikuLuaProfiler
             il.Append(il.Create(OpCodes.Ret));                                                  //33
 
         }
-#endregion
+        #endregion
 
         [PostProcessScene]
         private static void OnPostprocessScene()
         {
+            var luaPath = (typeof(LuaDLL).Assembly).ManifestModule.FullyQualifiedName;
             var projectPath = System.Reflection.Assembly.Load("Assembly-CSharp").ManifestModule.FullyQualifiedName;
+            var profilerPath = (typeof(LuaProfiler).Assembly).ManifestModule.FullyQualifiedName;
             if (LuaDeepProfilerSetting.Instance.isDeepLuaProfiler)
             {
-                DoHookLuaFun(projectPath);
+                DoHookLuaFun(luaPath, profilerPath);
             }
             if (LuaDeepProfilerSetting.Instance.isDeepMonoProfiler)
             {
-                InjectAllMethods(projectPath);
+                InjectAllMethods(projectPath, profilerPath, false);
             }
-
-            //string path = Environment.CurrentDirectory;
-            //string[] paths = Directory.GetFiles(path, "Assembly-CSharp.dll", SearchOption.AllDirectories);
-            //Debug.Log(path);
-            //foreach (var assPath in paths)
-            //{
-
-            //}
         }
     }
 }

@@ -198,17 +198,11 @@ namespace MikuLuaProfiler
 
         public void Save()
         {
-            StackTrace stackTrace = new StackTrace(true);
-            StackFrame frame = stackTrace.GetFrame(0);
-            string text = frame.GetFileName();
-#if UNITY_EDITOR_WIN
-            text = text.Replace("Core\\Setting\\LuaDeepProfilerSetting.cs", "Resources\\LuaDeepProfilerSettings.bytes");
-#else
-            text = text.Replace("Core/Setting/LuaDeepProfilerSetting.cs", "Resources/LuaDeepProfilerSettings.bytes");
-#endif
-            if (!Directory.Exists(Path.GetDirectoryName(text)))
+            string text = "Assets/Resources/LuaDeepProfilerSettings.bytes";
+
+            if (!Directory.Exists("Assets/Resources"))
             {
-                Directory.CreateDirectory(text);
+                Directory.CreateDirectory("Assets/Resources");
             }
 
             FileStream output = new FileStream(text, FileMode.Create);
@@ -239,14 +233,11 @@ namespace MikuLuaProfiler
             LuaDeepProfilerSetting luaDeepProfilerSetting = new LuaDeepProfilerSetting();
             byte[] datas = null;
 #if UNITY_EDITOR
-            StackTrace stackTrace = new StackTrace(true);
-            StackFrame frame = stackTrace.GetFrame(0);
-            string text = frame.GetFileName();
-#if UNITY_EDITOR_WIN
-            text = text.Replace("Core\\Setting\\LuaDeepProfilerSetting.cs", "Resources\\LuaDeepProfilerSettings.bytes");
-#else
-            text = text.Replace("Core/Setting/LuaDeepProfilerSetting.cs", "Resources/LuaDeepProfilerSettings.bytes");
-#endif
+            string text = "Assets/Resources/LuaDeepProfilerSettings.bytes";
+            if (!File.Exists(text))
+            {
+                luaDeepProfilerSetting.Save();
+            }
             datas = File.ReadAllBytes(text);
 #else
             TextAsset textAsset = Resources.Load<TextAsset>("LuaDeepProfilerSettings");
@@ -275,9 +266,11 @@ namespace MikuLuaProfiler
                 }
                 catch
                 {
+#if UNITY_EDITOR
                     memoryStream.Dispose();
-                    File.Delete("LuaDeepProfilerSettings");
+                    File.Delete(text);
                     return LuaDeepProfilerSetting.Load();
+#endif
                 }
             }
             else

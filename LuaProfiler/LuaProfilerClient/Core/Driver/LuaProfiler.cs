@@ -157,7 +157,8 @@ namespace MikuLuaProfiler
                 var item = beginSampleMemoryStack[i];
                 if (item.fahter == null)
                 {
-                    item.Restore();
+                    NetWorkClient.SendMessage(item);
+                    //item.Restore();
                 }
             }
             beginSampleMemoryStack.Clear();
@@ -189,7 +190,7 @@ namespace MikuLuaProfiler
                 return;
             }
             sample.fahter = beginSampleMemoryStack.Count > 0 ? beginSampleMemoryStack[beginSampleMemoryStack.Count - 1] : null;
-
+            //UnityEngine.Debug.Log(sample.name);
             if (beginSampleMemoryStack.Count == 0)
             {
                 if (setting != null && setting.isNeedCapture)
@@ -214,7 +215,6 @@ namespace MikuLuaProfiler
                 }
                 NetWorkClient.SendMessage(sample);
             }
-
             //释放掉被累加的Sample
             if (beginSampleMemoryStack.Count != 0 && sample.fahter == null)
             {

@@ -14,22 +14,20 @@ using System.Collections.Generic;
 using System.Reflection;
 using System.Text;
 using UnityEngine;
+using System.Runtime;
 
 #if XLUA
 using XLua;
 using LuaDLL = XLua.LuaDLL.Lua;
 using LuaCSFunction = XLua.LuaDLL.lua_CSFunction;
-using StrLen = System.IntPtr;
 #elif TOLUA
 using LuaInterface;
 using LuaDLL = LuaInterface.LuaDLL;
 using LuaCSFunction = LuaInterface.LuaCSFunction;
-using StrLen = System.Int32;
 #elif SLUA
 using SLua;
 using LuaDLL = SLua.LuaDLL;
 using LuaCSFunction = SLua.LuaCSFunction;
-using StrLen = System.Int32;
 #endif
 
 namespace MikuLuaProfiler
@@ -60,7 +58,10 @@ namespace MikuLuaProfiler
                 go.AddComponent<HookLuaSetup>();
                 NetWorkClient.ConnectServer(setting.ip, setting.port);
             }
-
+            if (setting.isDeepMonoProfiler)
+            {
+                GCSettings.LatencyMode = GCLatencyMode.LowLatency;
+            }
         }
 
         private void Awake()

@@ -24,8 +24,8 @@ namespace MikuLuaProfiler
         private static Queue<Sample> m_sampleQueue = new Queue<Sample>(256);
         private const int PACK_HEAD = 0x23333333;
         private static SocketError errorCode;
-        private const int BUFF_LEN = 1024 * 1024 * 100;
-        private static MemoryStream ms;
+        private const int BUFF_LEN = 1024 * 1024;
+        private static NetworkStream ns;
         private static BinaryWriter bw;
 
         #region public
@@ -44,8 +44,8 @@ namespace MikuLuaProfiler
                 m_client.Client.SendTimeout = 30000;
                 m_strDict.Clear();
                 m_key = 0;
-                ms = new MemoryStream(BUFF_LEN);
-                bw = new BinaryWriter(ms);
+                ns = m_client.GetStream();
+                bw = new BinaryWriter(ns);
 
                 m_sendThread = new Thread(new ThreadStart(DoSendMessage));
                 m_sendThread.Start();
@@ -77,14 +77,6 @@ namespace MikuLuaProfiler
             }
             finally
             {
-                if (ms != null)
-                {
-                    ms.Close();
-                    ms = null;
-                    bw = null;
-                    GC.Collect();
-                    UnityEngine.Debug.Log("<color=#00ff00>close client</color>");
-                }
                 m_strDict.Clear();
             }
 
@@ -96,22 +88,11 @@ namespace MikuLuaProfiler
             }
         }
 
-        static Dictionary<string, Sample> m_dict = new Dictionary<string, Sample>(1024);
         public static void SendMessage(Sample sample)
         {
             lock (m_sampleQueue)
             {
-                Sample s;
-                if (m_dict.TryGetValue(sample.name, out s))
-                {
-                    s.AddSample(sample);
-                    sample.Restore();
-                }
-                else
-                {
-                    m_sampleQueue.Enqueue(sample);
-                    m_dict.Add(sample.name, sample);
-                }
+                m_sampleQueue.Enqueue(sample);
             }
         }
         #endregion
@@ -124,7 +105,6 @@ namespace MikuLuaProfiler
                 try
                 {
                     if (m_sendThread == null) return;
-                    byte[] datas = null;
                     lock (m_sampleQueue)
                     {
                         if (m_sampleQueue.Count > 0)
@@ -132,24 +112,17 @@ namespace MikuLuaProfiler
                             while (m_sampleQueue.Count > 0)
                             {
                                 Sample s = m_sampleQueue.Dequeue();
-                                ms.Seek(0, SeekOrigin.Begin);
                                 bw.Write(PACK_HEAD);
                                 Serialize(s, bw);
-                                int len = (int)ms.Position;
-                                datas = ms.GetBuffer();
-                                m_client.Client.Send(datas, len, SocketFlags.None);
+                                ns.Flush();
                                 s.Restore();
                             }
-                            m_dict.Clear();
                         }
                         else
                         {
                             //发点空包过去，别让服务器觉得客户端死掉了
-                            ms.Seek(0, SeekOrigin.Begin);
                             bw.Write((int)0);
-                            int len = (int)ms.Position;
-                            datas = ms.GetBuffer();
-                            m_client.Client.Send(datas, len, SocketFlags.None);
+                            ns.Flush();
                         }
                     }
 
@@ -173,15 +146,23 @@ namespace MikuLuaProfiler
             return m_key++;
         }
 
-        private static Dictionary<string, byte[]> m_strDict = new Dictionary<string, byte[]>(4096);
-        private static bool GetBytes(string s, out byte[] result)
+        private static Dictionary<string, KeyValuePair<int, byte[]>> m_strDict = new Dictionary<string, KeyValuePair<int, byte[]>>(4096);
+        private static bool GetBytes(string s, out byte[] result, out int index)
         {
             bool ret = true;
-            if (!m_strDict.TryGetValue(s, out result))
+            KeyValuePair<int, byte[]> keyValuePair;
+            if (!m_strDict.TryGetValue(s, out keyValuePair))
             {
                 result = Encoding.UTF8.GetBytes(s);
-                m_strDict.Add(s, result);
+                index = GetUniqueKey();
+                keyValuePair = new KeyValuePair<int, byte[]>(index, result);
+                m_strDict.Add(s, keyValuePair);
                 ret = false;
+            }
+            else
+            {
+                index = keyValuePair.Key;
+                result = keyValuePair.Value;
             }
 
             return ret;
@@ -193,9 +174,15 @@ namespace MikuLuaProfiler
             bw.Write(s.costLuaGC);
             bw.Write(s.costMonoGC);
             byte[] datas;
-            GetBytes(s.name, out datas);
-            bw.Write(datas.Length);
-            bw.Write(datas);
+            int index = 0;
+            bool isRef = GetBytes(s.name, out datas, out index);
+            bw.Write(isRef);
+            bw.Write(index);
+            if (!isRef)
+            {
+                bw.Write(datas.Length);
+                bw.Write(datas);
+            }
 
             bw.Write(s.costTime);
             bw.Write(s.currentLuaMemory);
