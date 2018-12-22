@@ -250,10 +250,10 @@ namespace MikuLuaProfiler
 
             s.calls = totalCallTime;
             s.frameCount = 0;
-            s.costLuaGC = totalLuaMemory;
-            s.costMonoGC = totalMonoMemory;
+            s.costLuaGC = (int)totalLuaMemory;
+            s.costMonoGC = (int)totalMonoMemory;
             s.name = m_originName;
-            s.costTime = totalTime;
+            s.costTime = (int)totalTime;
 
             int childCount = childs.Count;
             for (int i = 0; i < childCount; i++)

@@ -78,6 +78,7 @@ namespace MikuLuaProfiler
             try
             {
                 tcpClient = tcpLister.AcceptTcpClient();
+                UnityEngine.Debug.Log("link start");
                 tcpClient.ReceiveBufferSize = BUFF_LEN;
                 tcpClient.ReceiveTimeout = 1000000000;
             }
@@ -88,7 +89,7 @@ namespace MikuLuaProfiler
             }
             NetworkStream ns = tcpClient.GetStream();
             BinaryReader br = new BinaryReader(ns);
-            ns.ReadTimeout = 1000;
+            ns.ReadTimeout = 6000;
             //sign为true 循环接受数据
             while (true)
             {
@@ -164,8 +165,8 @@ namespace MikuLuaProfiler
 
             s.calls = br.ReadInt32();
             s.frameCount = br.ReadInt32();
-            s.costLuaGC = br.ReadInt64();
-            s.costMonoGC = br.ReadInt64();
+            s.costLuaGC = br.ReadInt32();
+            s.costMonoGC = br.ReadInt32();
 
             bool isRef = br.ReadBoolean();
             int index = br.ReadInt32();
@@ -181,11 +182,10 @@ namespace MikuLuaProfiler
                 s.name = m_strCacheDict[index];
             }
 
-            s.costTime = br.ReadInt64();
-            s.currentLuaMemory = br.ReadInt64();
-            s.currentMonoMemory = br.ReadInt64();
-            int count = br.ReadInt32();
-
+            s.costTime = br.ReadInt32();
+            s.currentLuaMemory = br.ReadInt32();
+            s.currentMonoMemory = br.ReadInt32();
+            int count = br.ReadUInt16();
             for (int i = 0, imax = count; i < imax; i++)
             {
                 Deserialize(br).fahter = s;

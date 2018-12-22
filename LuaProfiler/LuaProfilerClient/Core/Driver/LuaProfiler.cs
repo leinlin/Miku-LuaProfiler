@@ -21,7 +21,7 @@ namespace MikuLuaProfiler
         private static readonly List<Sample> beginSampleMemoryStack = new List<Sample>();
         private static int m_currentFrame = 0;
         private static Dictionary<MethodBase, string> m_methodNameDict = new Dictionary<MethodBase, string>(4096);
-        private static int mainThreadId = System.Threading.Thread.CurrentThread.ManagedThreadId;
+        public static int mainThreadId = -100;
         const long MaxB = 1024;
         const long MaxK = MaxB * 1024;
         const long MaxM = MaxK * 1024;
@@ -135,7 +135,11 @@ namespace MikuLuaProfiler
         }
         public static void BeginSample(IntPtr luaState, string name)
         {
-            if (!IsMainThread) return;
+            if (!IsMainThread)
+            {
+                return;
+            }
+
             var setting = LuaDeepProfilerSetting.Instance;
             if (setting == null) return;
 
@@ -147,7 +151,7 @@ namespace MikuLuaProfiler
                 m_currentFrame = m_frameCount;
             }
             long memoryCount = LuaLib.GetLuaMemory(luaState);
-            Sample sample = Sample.Create(getcurrentTime, memoryCount, name);
+            Sample sample = Sample.Create(getcurrentTime, (int)memoryCount, name);
             beginSampleMemoryStack.Add(sample);
         }
         public static void PopAllSampleWhenLateUpdate()
@@ -165,7 +169,11 @@ namespace MikuLuaProfiler
         }
         public static void EndSample(IntPtr luaState)
         {
-            if (!IsMainThread) return;
+            if (!IsMainThread)
+            {
+                return;
+            }
+
             var setting = LuaDeepProfilerSetting.Instance;
             if (setting == null) return;
 
@@ -178,11 +186,11 @@ namespace MikuLuaProfiler
             Sample sample = beginSampleMemoryStack[beginSampleMemoryStack.Count - 1];
             beginSampleMemoryStack.RemoveAt(beginSampleMemoryStack.Count - 1);
 
-            sample.costTime = getcurrentTime - sample.currentTime;
+            sample.costTime = (int)(getcurrentTime - sample.currentTime);
             var monoGC = nowMonoCount - sample.currentMonoMemory;
             var luaGC = nowMemoryCount - sample.currentLuaMemory;
-            sample.costLuaGC = luaGC > 0 ? luaGC : 0;
-            sample.costMonoGC = monoGC > 0 ? monoGC : 0;
+            sample.costLuaGC = (int)(luaGC > 0 ? luaGC : 0);
+            sample.costMonoGC = (int)(monoGC > 0 ? monoGC : 0);
 
             if (!sample.CheckSampleValid())
             {

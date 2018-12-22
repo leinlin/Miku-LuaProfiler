@@ -1,4 +1,4 @@
-#define SLUA
+#define XLUA
 /*
 * ==============================================================================
 * Filename: LuaHookSetup
@@ -44,7 +44,7 @@ namespace MikuLuaProfiler
         private static void OnStartGame()
         {
             var setting = LuaDeepProfilerSetting.MakeInstance();
-            Debug.Log(setting.ip); 
+            LuaProfiler.mainThreadId = System.Threading.Thread.CurrentThread.ManagedThreadId;
             if (setting.isNeedCapture)
             {
                 Screen.SetResolution(480, 270, true);

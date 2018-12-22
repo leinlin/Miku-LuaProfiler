@@ -17,19 +17,49 @@ namespace MikuLuaProfiler
 {
     public class Sample
     {
-        public long currentLuaMemory;
-        public long currentMonoMemory;
+        public int currentLuaMemory;
+        public int currentMonoMemory;
         public long currentTime;
 
         public int calls;
         public int frameCount;
-        public long costLuaGC;
-        public long costMonoGC;
+        public int costLuaGC;
+        public int costMonoGC;
         public string name;
-        public long costTime;
+        public int costTime;
         public Sample _father;
-        public List<Sample> childs = new List<Sample>(32);
+        public List<Sample> childs = new List<Sample>(16);
         public string captureUrl = null;
+
+        public bool CheckSampleValid()
+        {
+            bool result = false;
+
+            do
+            {
+                if (costLuaGC > 0)
+                {
+                    result = true;
+                    break;
+                }
+
+                if (costMonoGC > 0)
+                {
+                    result = true;
+                    break;
+                }
+
+                if (costTime > 100000)
+                {
+                    result = true;
+                    break;
+                }
+
+            } while (false);
+
+
+            return result;
+        }
 
         #region property
         public Sample fahter
@@ -68,15 +98,15 @@ namespace MikuLuaProfiler
 
         #region pool
         private static string capturePath = "";
-        private static ObjectPool<Sample> samplePool = new ObjectPool<Sample>(250);
-        public static Sample Create(long time, long memory, string name)
+        private static ObjectPool<Sample> samplePool = new ObjectPool<Sample>(4096);
+        public static Sample Create(long time, int memory, string name)
         {
             Sample s = samplePool.GetObject();
 
             s.calls = 1;
             s.currentTime = time;
             s.currentLuaMemory = memory;
-            s.currentMonoMemory = GC.GetTotalMemory(false);
+            s.currentMonoMemory = (int)GC.GetTotalMemory(false);
             s.frameCount = LuaProfiler.m_frameCount;
             s.costLuaGC = 0;
             s.costMonoGC = 0;
@@ -89,35 +119,7 @@ namespace MikuLuaProfiler
             return s;
         }
 
-        public bool CheckSampleValid()
-        {
-            bool result = false;
 
-            do
-            {
-                if (costLuaGC > 0)
-                {
-                    result = true;
-                    break;
-                }
-
-                if (costMonoGC > 0)
-                {
-                    result = true;
-                    break;
-                }
-
-                if (costTime > 100000)
-                {
-                    result = true;
-                    break;
-                }
-
-            } while (false);
-
-
-            return result;
-        }
 
         public void Restore()
         {

@@ -1,4 +1,4 @@
-#define SLUA
+#define XLUA
 /*
 * ==============================================================================
 * Filename: StartUp
@@ -33,7 +33,7 @@ namespace MikuLuaProfiler
     [InitializeOnLoad]
     public static class StartUp
     {
-        private static int tickNum = 0;
+        //private static int tickNum = 0;
         static StartUp()
         {
             if (LuaDeepProfilerSetting.Instance.isDeepLuaProfiler)
@@ -206,10 +206,27 @@ namespace MikuLuaProfiler
                         continue;
                     }
 
-                    if (item.Name == ".ctor")
+                    if (item.Name == ".cctor")
                     {
                         continue;
                     }
+
+                    if (item.Name == ".ctor")
+                    {
+                        if (item.DeclaringType.IsSerializable)
+                        {
+                            continue;
+                        }
+                        var t = item.DeclaringType.GetMonoType();
+                        bool isMonoBehaviour = typeof(MonoBehaviour).IsAssignableFrom(t);
+                        if (isMonoBehaviour)
+                        {
+                            continue;
+                        } 
+                    }
+
+
+
                     if (item.IsAbstract)
                     {
                         continue;
@@ -233,7 +250,7 @@ namespace MikuLuaProfiler
 
         public static Type GetMonoType(this TypeReference type)
         {
-            return Type.GetType(type.GetReflectionName());
+            return System.Reflection.Assembly.Load(type.Module.Assembly.Name.Name).GetType(type.GetReflectionName());
         }
 
         private static string GetReflectionName(this TypeReference type)
@@ -855,6 +872,7 @@ namespace MikuLuaProfiler
         }
         #endregion
 
+#if USE_LUA_PROFILER
         [PostProcessScene]
         private static void OnPostprocessScene()
         {
@@ -870,5 +888,6 @@ namespace MikuLuaProfiler
                 InjectAllMethods(projectPath, profilerPath, false);
             }
         }
+#endif
     }
 }

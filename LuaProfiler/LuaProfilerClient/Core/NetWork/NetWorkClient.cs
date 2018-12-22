@@ -14,8 +14,8 @@ namespace MikuLuaProfiler
     using System.Collections.Generic;
     using System.IO;
     using System.Net.Sockets;
-    using System.Threading;
     using System.Text;
+    using System.Threading;
 
     public static class NetWorkClient
     {
@@ -24,7 +24,7 @@ namespace MikuLuaProfiler
         private static Queue<Sample> m_sampleQueue = new Queue<Sample>(256);
         private const int PACK_HEAD = 0x23333333;
         private static SocketError errorCode;
-        private const int BUFF_LEN = 1024 * 1024;
+        private const int BUFF_LEN = 10 * 1024 * 1024;
         private static NetworkStream ns;
         private static BinaryWriter bw;
 
@@ -32,6 +32,7 @@ namespace MikuLuaProfiler
         public static void ConnectServer(string host, int port)
         {
             if (m_client != null) return;
+
             m_client = new TcpClient();
 
             m_client.SendBufferSize = BUFF_LEN;
@@ -42,6 +43,7 @@ namespace MikuLuaProfiler
 
                 UnityEngine.Debug.Log("<color=#00ff00>connect success</color>");
                 m_client.Client.SendTimeout = 30000;
+                m_sampleDict.Clear();
                 m_strDict.Clear();
                 m_key = 0;
                 ns = m_client.GetStream();
@@ -88,11 +90,25 @@ namespace MikuLuaProfiler
             }
         }
 
+        private static Dictionary<string, Sample> m_sampleDict = new Dictionary<string, Sample>(256);
+
         public static void SendMessage(Sample sample)
         {
-            lock (m_sampleQueue)
+            if (m_client == null) return;
+            lock (m_sampleDict)
             {
-                m_sampleQueue.Enqueue(sample);
+                Sample s;
+                if (m_sampleDict.TryGetValue(sample.name, out s))
+                {
+                    s.AddSample(sample);
+                    sample.Restore();
+                }
+                else
+                {
+                    m_sampleDict.Add(sample.name, sample);
+                    m_sampleQueue.Enqueue(sample);
+                }
+
             }
         }
         #endregion
@@ -104,31 +120,35 @@ namespace MikuLuaProfiler
             {
                 try
                 {
-                    if (m_sendThread == null) return;
-                    lock (m_sampleQueue)
+                    if (m_sendThread == null)
                     {
-                        if (m_sampleQueue.Count > 0)
-                        {
-                            while (m_sampleQueue.Count > 0)
-                            {
-                                Sample s = m_sampleQueue.Dequeue();
-                                bw.Write(PACK_HEAD);
-                                Serialize(s, bw);
-                                ns.Flush();
-                                s.Restore();
-                            }
-                        }
-                        else
-                        {
-                            //发点空包过去，别让服务器觉得客户端死掉了
-                            bw.Write((int)0);
-                            ns.Flush();
-                        }
+                        UnityEngine.Debug.LogError("<color=#ff0000>m_sendThread null</color>");
+                        return;
                     }
 
-                    Thread.Sleep(50);
+                    lock (m_sampleDict)
+                    {
+                        m_sampleDict.Clear();
+                    }
+                    while (m_sampleQueue.Count > 0)
+                    {
+                        Sample s = null;
+                        bw.Write(PACK_HEAD);
+                        lock (m_sampleQueue)
+                        {
+                            s = m_sampleQueue.Dequeue();
+                        }
+                        Serialize(s, bw);
+                        s.Restore();
+                        ns.Flush();
+                    }
+
+                    Thread.Sleep(10);
                 }
 #pragma warning disable 0168
+                catch (ThreadAbortException e)
+                {
+                }
                 catch (Exception e)
                 {
                     UnityEngine.Debug.Log(e);
@@ -187,16 +207,21 @@ namespace MikuLuaProfiler
             bw.Write(s.costTime);
             bw.Write(s.currentLuaMemory);
             bw.Write(s.currentMonoMemory);
-            bw.Write(s.childs.Count);
-            for (int i = 0, imax = s.childs.Count; i < imax; i++)
+            bw.Write((ushort)s.childs.Count);
+
+            Thread.Sleep(5);
+
+            var childs = s.childs;
+            for (int i = 0; i < childs.Count; i++)
             {
-                Serialize(s.childs[i], bw);
+                Serialize(childs[i], bw);
             }
 
         }
         #endregion
 
     }
+
 }
 
 #endif

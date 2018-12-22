@@ -18,20 +18,20 @@ namespace MikuLuaProfiler
 {
     public class Sample
     {
-        public long currentLuaMemory;
-        public long currentMonoMemory;
-        private string _fullName = null;
+        public int currentLuaMemory;
+        public int currentMonoMemory;
         public long currentTime;
 
         public int calls;
         public int frameCount;
-        public long costLuaGC;
-        public long costMonoGC;
+        public int costLuaGC;
+        public int costMonoGC;
         public string name;
-        public long costTime;
+        public int costTime;
         public Sample _father;
-        public List<Sample> childs = new List<Sample>(32);
+        public List<Sample> childs = new List<Sample>(16);
         public string captureUrl = null;
+        private string _fullName;
 
         public long selfLuaGC
         {
@@ -298,14 +298,14 @@ namespace MikuLuaProfiler
 
             s.calls = b.ReadInt32();
             s.frameCount = b.ReadInt32();
-            s.costLuaGC = b.ReadInt64();
-            s.costMonoGC = b.ReadInt64();
+            s.costLuaGC = b.ReadInt32();
+            s.costMonoGC = b.ReadInt32();
 
             int len = b.ReadInt32();
             byte[] datas = b.ReadBytes(len);
             s.name = Encoding.UTF8.GetString(datas);
 
-            s.costTime = b.ReadInt64();
+            s.costTime = b.ReadInt32();
 
             int childCount = b.ReadInt32();
             for (int i = 0; i < childCount; i++)
@@ -338,8 +338,8 @@ namespace MikuLuaProfiler
                 }
 
             }
-            s.currentLuaMemory = b.ReadInt64();
-            s.currentMonoMemory = b.ReadInt64();
+            s.currentLuaMemory = b.ReadInt32();
+            s.currentMonoMemory = b.ReadInt32();
 
             b.Close();
 
