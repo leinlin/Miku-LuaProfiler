@@ -11,12 +11,12 @@ namespace MikuLuaProfiler
 {
     using System;
     using System.Collections.Generic;
+    using System.IO;
     using System.Net;
     using System.Net.Sockets;
+    using System.Text;
     using System.Threading;
     using UnityEditor;
-    using System.Text;
-    using System.IO;
 
     [InitializeOnLoad]
     public static class StartUp
@@ -25,17 +25,28 @@ namespace MikuLuaProfiler
 
         static StartUp()
         {
-            EditorApplication.playmodeStateChanged += () =>
+#if UNITY_2017_1_OR_NEWER
+            EditorApplication.playModeStateChanged += (state) =>
             {
-            if (isPlaying == true && EditorApplication.isPlaying == false)
+                if (isPlaying == true && EditorApplication.isPlaying == false)
                 {
                     NetWorkServer.Close();
                 }
 
                 isPlaying = EditorApplication.isPlaying;
             };
-        }
+#else
+            EditorApplication.playmodeStateChanged += () =>
+            {
+                if (isPlaying == true && EditorApplication.isPlaying == false)
+                {
+                    NetWorkServer.Close();
+                }
 
+                isPlaying = EditorApplication.isPlaying;
+            };
+#endif
+        }
     }
 
     public static class NetWorkServer
@@ -43,7 +54,7 @@ namespace MikuLuaProfiler
         private static TcpListener tcpLister;
         private static TcpClient tcpClient = null;
         private static Thread acceptThread;
-        private const int BUFF_LEN = 1024 * 1024;
+        private const int BUFF_LEN = 10 * 1024 * 1024;
 
         private const int PACK_HEAD = 0x23333333;
         private static Action<Sample> m_onReceive;
@@ -80,7 +91,7 @@ namespace MikuLuaProfiler
                 tcpClient = tcpLister.AcceptTcpClient();
                 UnityEngine.Debug.Log("link start");
                 tcpClient.ReceiveBufferSize = BUFF_LEN;
-                tcpClient.ReceiveTimeout = 1000000000;
+                tcpClient.ReceiveTimeout = 1000000;
             }
             catch
             {
@@ -133,12 +144,11 @@ namespace MikuLuaProfiler
             }
         }
 
-
         public static void Close()
         {
             try
             {
-                if(tcpLister != null)
+                if (tcpLister != null)
                 {
                     UnityEngine.Debug.Log("stop");
                     tcpLister.Stop();
@@ -194,4 +204,5 @@ namespace MikuLuaProfiler
         }
 
     }
+
 }

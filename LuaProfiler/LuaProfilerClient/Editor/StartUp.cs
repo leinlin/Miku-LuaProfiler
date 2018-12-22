@@ -1,4 +1,3 @@
-#define XLUA
 /*
 * ==============================================================================
 * Filename: StartUp
@@ -144,6 +143,13 @@ namespace MikuLuaProfiler
         private const string LUA_TOSTRING = "lua_tostring";
         private const string LUA_LOAD_BUFFER = "luaLS_loadbuffer";
         private const string LUA_NATIVE_TOSTRING = "luaS_tolstring32";
+#elif TOLUA
+        private const string LUA_FULL_NAME = "LuaInterface.LuaDLL";
+        private const string LUA_NEW_STATE = "luaL_newstate";
+        private const string LUA_CLOSE = "lua_close";
+        private const string LUA_TOSTRING = "lua_tostring";
+        private const string LUA_LOAD_BUFFER = "tolua_loadbuffer";
+        private const string LUA_NATIVE_TOSTRING = "tolua_tolstring";
 #endif
 
         #region try finally
@@ -810,6 +816,8 @@ namespace MikuLuaProfiler
 #if XLUA
             injection = new VariableDefinition(module.TypeSystem.IntPtr);
 #elif SLUA
+            injection = new VariableDefinition(module.TypeSystem.Int32);
+#elif TOLUA
             injection = new VariableDefinition(module.TypeSystem.Int32);
 #endif
             tostring.Body.Variables.Add(injection);

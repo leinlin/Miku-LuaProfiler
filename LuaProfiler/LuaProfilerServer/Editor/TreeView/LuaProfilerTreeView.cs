@@ -116,7 +116,7 @@ namespace MikuLuaProfiler
         }
 
         private static readonly char[] splitDot = new char[] { ',' };
-        private static readonly char[] splitFun = new char[] { '&' };
+        //private static readonly char[] splitFun = new char[] { '&' };
         public void ResetBySample(Sample sample, int depth, LuaProfilerTreeViewItem father)
         {
             if (sample != null)
@@ -139,15 +139,7 @@ namespace MikuLuaProfiler
                 selfLuaMemory = sample.selfLuaGC;
                 selfMonoMemory = sample.selfMonoGC;
                 totalTime = sample.costTime;
-                string[] tmp = sample.name.Split(splitFun, 2);
-                if (tmp.Length >= 2)
-                {
-                    displayName = tmp[1].Trim();
-                }
-                else
-                {
-                    displayName = sample.name;
-                }
+                displayName = sample.name;
                 m_originName = sample.name;
 
                 fullName = sample.fullName;
@@ -538,6 +530,9 @@ namespace MikuLuaProfiler
                 startUrl = null;
                 endUrl = null;
             }
+
+            m_luaMemory = 0;
+            m_monoMemory = 0;
             needRebuild = true;
             GC.Collect();
             EditorUtility.UnloadUnusedAssetsImmediate();

@@ -130,18 +130,27 @@ namespace MikuLuaProfiler
                     {
                         m_sampleDict.Clear();
                     }
-                    while (m_sampleQueue.Count > 0)
+                    if (m_sampleQueue.Count > 0)
                     {
-                        Sample s = null;
-                        bw.Write(PACK_HEAD);
-                        lock (m_sampleQueue)
+                        while (m_sampleQueue.Count > 0)
                         {
-                            s = m_sampleQueue.Dequeue();
+                            Sample s = null;
+                            bw.Write(PACK_HEAD);
+                            lock (m_sampleQueue)
+                            {
+                                s = m_sampleQueue.Dequeue();
+                            }
+                            Serialize(s, bw);
+                            s.Restore();
+                            ns.Flush();
                         }
-                        Serialize(s, bw);
-                        s.Restore();
+                    }
+                    else
+                    {
+                        bw.Write((int)0);
                         ns.Flush();
                     }
+
 
                     Thread.Sleep(10);
                 }
