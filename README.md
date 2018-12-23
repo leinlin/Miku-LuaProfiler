@@ -3,7 +3,7 @@
 
 ### Purpose
 ****Unity** + Lua** script is now most popular I**ncremental Update FrameWork** For Mobile Game In China,But Because that not has a **easy-to-use profiler** cause more cpu usage to lua gc and also more memory usage. so much so that programmers don't know how to optimize their game.then they replace lua code with C# to find the problems,but also more buildin code and less flexibility in operation activity<br>
-so this tool is design to support a **easy-to-use profiler** for unity that help the game which use the lua script more early to **officially online** and **stable operation**
+so this tool is design to support a **easy-to-use profiler** for unity that help finding battleneck and make your game more fast and stable.
 
 ## 
 If you want to test this project,use administrator mode to run the **link.bat** <br/>
