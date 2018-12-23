@@ -66,7 +66,6 @@ namespace MikuLuaProfiler
             #endregion
 
             #region socket
-            /*
             GUILayout.Space(10);
             GUILayout.Label("connet");
 
@@ -79,14 +78,14 @@ namespace MikuLuaProfiler
             GUILayout.Label("port:", GUILayout.Height(30), GUILayout.Width(35));
             setting.port = EditorGUILayout.IntField(setting.port, GUILayout.Height(16), GUILayout.Width(50));
             EditorGUILayout.EndHorizontal();
-
+            /*
             if (GUILayout.Button("Connent", GUILayout.Height(50)))
             {
                 NetWorkClient.ConnectServer(setting.ip, setting.port);
             }
-            GUILayout.Space(5);
+            GUILayout.Space(5);*/
 
-            GUILayout.EndVertical();*/
+            GUILayout.EndVertical();
             #endregion
 
             #region gc control
