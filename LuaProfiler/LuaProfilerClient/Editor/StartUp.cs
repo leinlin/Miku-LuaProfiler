@@ -885,7 +885,7 @@ namespace MikuLuaProfiler
         #endregion
 
 #if USE_LUA_PROFILER
-        [PostProcessScene]
+        [UnityEditor.Callbacks.PostProcessScene]
         private static void OnPostprocessScene()
         {
             var luaPath = (typeof(LuaDLL).Assembly).ManifestModule.FullyQualifiedName;
