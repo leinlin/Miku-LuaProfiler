@@ -59,6 +59,7 @@ InjectLua.exe "inpath" "outpath"
 ![](doc/ljjc.jpg)
 
 ## 
+要测试工程项目，请使用管理员模式运行link.bat <br/>
 有什么BUG可以联系加群：[882425563](https://jq.qq.com/?_wv=1027&k=5QkOBSc)
 
 ## 
