@@ -11,13 +11,13 @@ If you want to test this project,use administrator mode to run the **link.bat** 
 ##
 
 ### Contact
-If you find **any bug** or has **any suggest** join the **qq group**：[882425563](https://jq.qq.com/?_wv=1027&k=5QkOBSc) to contact us
+If you find **any bug** or have **any suggest** join the **qq group**：[882425563](https://jq.qq.com/?_wv=1027&k=5QkOBSc) to contact us
 
 ### Deploy and Install
 This tool now support **XLua**、**SLua**、**ToLua**.This is a remote profiler tool so it support **Windows**、**Android**、**IOS** On-device Profiler。
 
 - Open **LuaProfiler** folder
-- Copy **LuaProfilerClient** folder to you game project content,if your C# Lua script is in **Plugins** folder,Copy **LuaProfilerClient** to **Plugins**.This Tool must confirm That Code must in the same DLL which has C# Lua Scirpt.
+- Copy **LuaProfilerClient** folder to you game project content,if your C# Lua script is in **Plugins** folder,Copy **LuaProfilerClient** to **Plugins**.This Tool must make sure That Code must in the same DLL which has C# Lua Scirpt.
 - Use **Unity5.6 or newer** unity version to create a project, Copy **LuaProfilerServer** To the project content
 
 ### Theory
