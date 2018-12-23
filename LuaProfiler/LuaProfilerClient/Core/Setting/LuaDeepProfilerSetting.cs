@@ -240,8 +240,17 @@ namespace MikuLuaProfiler
             }
             datas = File.ReadAllBytes(text);
 #else
-            TextAsset textAsset = Resources.Load<TextAsset>("LuaDeepProfilerSettings");
-            datas = textAsset != null ? textAsset.bytes : null;
+            TextAsset textAsset = null;
+            string path = Application.persistentDataPath + "/LuaDeepProfilerSettings.bytes";
+            if (File.Exists(path))
+            {
+                datas = File.ReadAllBytes(path);
+            }
+            else
+            {
+                textAsset = Resources.Load<TextAsset>("LuaDeepProfilerSettings");
+                datas = textAsset != null ? textAsset.bytes : null;
+            }
 #endif
 
             if (datas != null)
@@ -278,6 +287,10 @@ namespace MikuLuaProfiler
                 luaDeepProfilerSetting.Save();
             }
 #if !UNITY_EDITOR
+            if (!File.Exists(path))
+            {
+                File.WriteAllBytes(path, datas);
+            }
             if (textAsset != null)
             {
                 Resources.UnloadAsset(textAsset);

@@ -83,6 +83,11 @@ namespace MikuLuaProfiler
     {
         public static byte[] Hookloadbuffer(IntPtr L, byte[] buff, string name)
         {
+            if (buff[0] == 0x1b && buff[1] == 0x4c)
+            {
+                return buff;
+            }
+
             string value = "";
             string hookedValue = "";
 
