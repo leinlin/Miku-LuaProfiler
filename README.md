@@ -51,14 +51,14 @@ Click **Record** button, when Game connect to server, Toggle **StartRecord** To 
 
 <br/>
 
-#### On-device Profiler
-Set Pack Macro **USE_LUA_PROFILER** to Inject Profiler code in you App.if you want use **luac code or luajit bytecode** ,Use **InjectLua.exe** in folder Tools To Inject the lua profiler code.
+### On-device Profiler
+Set Macro **USE_LUA_PROFILER** to Inject Profiler code in you App.if you want to use **luac code or luajit bytecode** ,Use **InjectLua.exe** in folder Tools To Inject the lua profiler code.
 
 ```
 InjectLua.exe "inpath" "outpath"
 ```
 
-#### Use Case
+### Use Case
 ![](doc/ljjc.jpg)
 
 ## 
