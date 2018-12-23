@@ -7,6 +7,10 @@ so this tool is design to support a **easy-to-use profiler** for unity that help
 
 ## 
 If you want to test this project,use administrator mode to run the **link.bat** <br/>
+
+##
+
+### Contact
 If you find **any bug** or has **any suggest** join the **qq group**：[882425563](https://jq.qq.com/?_wv=1027&k=5QkOBSc) to contact us
 
 ### Deploy and Install
