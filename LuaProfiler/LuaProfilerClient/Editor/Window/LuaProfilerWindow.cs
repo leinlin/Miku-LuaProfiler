@@ -66,6 +66,7 @@ namespace MikuLuaProfiler
             #endregion
 
             #region socket
+            /*
             GUILayout.Space(10);
             GUILayout.Label("connet");
 
@@ -85,7 +86,7 @@ namespace MikuLuaProfiler
             }
             GUILayout.Space(5);
 
-            GUILayout.EndVertical();
+            GUILayout.EndVertical();*/
             #endregion
 
             #region gc control
