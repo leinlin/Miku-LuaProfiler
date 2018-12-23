@@ -15,7 +15,6 @@ using System.IO;
 using System.Linq;
 using System.Security.Cryptography;
 using UnityEditor;
-using UnityEditor.Callbacks;
 using UnityEngine;
 #if XLUA
 using LuaDLL = XLua.LuaDLL.Lua;
@@ -24,7 +23,6 @@ using LuaDLL = LuaInterface.LuaDLL;
 #elif SLUA
 using LuaDLL = SLua.LuaDLL;
 #endif
-
 
 namespace MikuLuaProfiler
 {
@@ -550,13 +548,16 @@ namespace MikuLuaProfiler
         #region hook
         public static void HookLuaFun()
         {
+            #if XLUA || TOLUA || SLUA
             string profilerPath = (typeof(LuaProfiler).Assembly).ManifestModule.FullyQualifiedName;
             string luaPath = (typeof(LuaDLL).Assembly).ManifestModule.FullyQualifiedName;
             DoHookLuaFun(luaPath, profilerPath);
+            #endif
         }
 
         private static void DoHookLuaFun(string luaPath, string profilerPath)
         {
+#if XLUA || TOLUA || SLUA
             AssemblyDefinition luaAssembly = LoadAssembly(luaPath, false);
             AssemblyDefinition profilerAssembly = null;
             if (luaPath == profilerPath)
@@ -642,10 +643,12 @@ namespace MikuLuaProfiler
 #endif
 
             luaAssembly.Write(luaPath);
+#endif
         }
 
         private static void HookDllFun(TypeDefinition profilerType, Dictionary<string, InjectMethodAction> hookExternfunDict, AssemblyDefinition assembly)
         {
+#if XLUA || TOLUA || SLUA
             var methods = new List<MethodDefinition>(profilerType.Methods);
             foreach (var m in methods)
             {
@@ -691,6 +694,7 @@ namespace MikuLuaProfiler
                     ModifyTostring(m, assembly.MainModule, method);
                 }
             }
+#endif
         }
 
         private static void InjectNewStateMethod(MethodDefinition method, ModuleDefinition module, MethodDefinition newMethod)

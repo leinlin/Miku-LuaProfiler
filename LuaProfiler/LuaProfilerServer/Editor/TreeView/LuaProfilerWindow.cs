@@ -158,18 +158,18 @@ namespace MikuLuaProfiler
 
             EditorGUILayout.EndHorizontal();
         }
-
         void DoRecord()
         {
-            if (!LuaDeepProfilerSetting.Instance.isRecord) return;
+            var instance = LuaDeepProfilerSetting.Instance;
+            if (!instance.isRecord) return;
 
             EditorGUILayout.BeginHorizontal(EditorStyles.toolbar);
 
-            bool flag = GUILayout.Toggle(LuaDeepProfilerSetting.Instance.isNeedRecord,
-    "NeedRecord", EditorStyles.toolbarButton, GUILayout.Height(30));
-            if (flag != LuaDeepProfilerSetting.Instance.isNeedRecord)
+            instance.isStartRecord = GUILayout.Toggle(instance.isStartRecord, "StartRecord", EditorStyles.toolbarButton, GUILayout.Height(30));
+
+            if (instance.isStartRecord)
             {
-                LuaDeepProfilerSetting.Instance.isNeedRecord = flag;
+                m_TreeView.Clear(true);
             }
 
             int count = m_TreeView.history.Count - 1;
@@ -227,6 +227,7 @@ namespace MikuLuaProfiler
             }
 
             GUILayout.Space(25);
+            /*
             GUILayout.Label("capture lua gc", EditorStyles.toolbarButton, GUILayout.Height(30), GUILayout.Width(80));
             LuaDeepProfilerSetting.Instance.captureLuaGC
                 = EditorGUILayout.IntField(LuaDeepProfilerSetting.Instance.captureLuaGC, GUILayout.Height(16), GUILayout.Width(50));
@@ -241,7 +242,7 @@ namespace MikuLuaProfiler
             LuaDeepProfilerSetting.Instance.captureFrameRate
                 = EditorGUILayout.IntField(LuaDeepProfilerSetting.Instance.captureFrameRate, GUILayout.Height(16), GUILayout.Width(40));
             LuaDeepProfilerSetting.Instance.captureFrameRate = Mathf.Max(0, LuaDeepProfilerSetting.Instance.captureFrameRate);
-
+            */
             m_lastCount = count;
 
             GUILayout.Space(25);

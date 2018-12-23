@@ -193,6 +193,7 @@ namespace MikuLuaProfiler
             }
             this.father = father;
         }
+
         public void AddSample(Sample sample)
         {
             if (_frameCount == sample.frameCount)
@@ -748,6 +749,13 @@ namespace MikuLuaProfiler
 
         private void LoadRootSample(Sample sample, bool needRecord)
         {
+            var instance = LuaDeepProfilerSetting.Instance;
+            if (instance.isRecord && !instance.isStartRecord )
+            {
+                sample.Restore();
+                return;
+            }
+
             LuaProfilerTreeViewItem item;
             string f = sample.fullName;
             m_luaMemory = sample.currentLuaMemory;

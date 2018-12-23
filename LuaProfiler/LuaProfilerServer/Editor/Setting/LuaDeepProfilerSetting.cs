@@ -61,8 +61,8 @@ namespace MikuLuaProfiler
             }
         }
 
-        private bool m_isNeedRecord = true;
-        public bool isNeedRecord
+        private bool m_isNeedRecord = false;
+        public bool isStartRecord
         {
             get
             {

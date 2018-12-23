@@ -158,7 +158,7 @@ namespace MikuLuaProfiler
 
             Directory.CreateDirectory(capturePath);
 
-            string result = capturePath + "/" + UnityEngine.Time.frameCount.ToString() + ".png";
+            string result = capturePath + "/" + Time.frameCount.ToString() + ".png";
 #if UNITY_2017_1_OR_NEWER
             ScreenCapture.CaptureScreenshot(result, 0);
 #else

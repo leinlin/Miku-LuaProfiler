@@ -218,7 +218,7 @@ namespace MikuLuaProfiler
             bw.Write(s.currentMonoMemory);
             bw.Write((ushort)s.childs.Count);
 
-            Thread.Sleep(5);
+            Thread.Sleep(0);
 
             var childs = s.childs;
             for (int i = 0; i < childs.Count; i++)

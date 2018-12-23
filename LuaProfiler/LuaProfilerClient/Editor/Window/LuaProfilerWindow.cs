@@ -120,6 +120,7 @@ namespace MikuLuaProfiler
             #endregion
 
             #region capture
+            /*
             GUILayout.Space(10);
 
             GUILayout.Label("capture setting");
@@ -159,7 +160,7 @@ namespace MikuLuaProfiler
             EditorGUILayout.EndHorizontal();
 
             GUILayout.EndVertical();
-
+            */
             #endregion
 
         }

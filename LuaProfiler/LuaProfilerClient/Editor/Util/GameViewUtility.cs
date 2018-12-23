@@ -1,5 +1,4 @@
-﻿#if UNITY_EDITOR
-namespace MikuLuaProfiler
+﻿namespace MikuLuaProfiler
 {
 
     using System;
@@ -120,4 +119,3 @@ namespace MikuLuaProfiler
 
     }
 }
-#endif
