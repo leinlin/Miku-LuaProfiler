@@ -108,6 +108,7 @@ namespace MikuLuaProfiler
                 {
                     if (tcpClient == null)
                     {
+                        Close();
                         return;
                     }
 
@@ -128,6 +129,7 @@ namespace MikuLuaProfiler
 #pragma warning disable 0168
                         catch (EndOfStreamException ex)
                         {
+                            Close();
                             return;
                         }
 #pragma warning restore 0168
@@ -163,7 +165,11 @@ namespace MikuLuaProfiler
             GC.Collect();
             if (acceptThread != null)
             {
-                acceptThread.Abort();
+                try
+                {
+                    acceptThread.Abort();
+                }
+                catch { }
                 acceptThread = null;
             }
         }

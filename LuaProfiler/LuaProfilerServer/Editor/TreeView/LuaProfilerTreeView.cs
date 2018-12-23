@@ -332,7 +332,7 @@ namespace MikuLuaProfiler
                         lock (this)
                         {
                             Sample s = m_historySamplesQueue.Dequeue();
-                            LoadRootSample(s, false);
+                            LoadRootSample(s, false, true);
                         }
                         delNum++;
                     }
@@ -747,14 +747,17 @@ namespace MikuLuaProfiler
             return Mathf.Max(Mathf.Min(ret, history.Count - 1), 0);
         }
 
-        private void LoadRootSample(Sample sample, bool needRecord)
+        private void LoadRootSample(Sample sample, bool needRecord, bool isHistory = false)
         {
             var instance = LuaDeepProfilerSetting.Instance;
-            if (instance.isRecord && !instance.isStartRecord )
+            if (!isHistory)
             {
-                sample.Restore();
-                return;
+                if (instance.isRecord && !instance.isStartRecord)
+                {
+                    return;
+                }
             }
+
 
             LuaProfilerTreeViewItem item;
             string f = sample.fullName;
@@ -764,7 +767,7 @@ namespace MikuLuaProfiler
             if (m_nodeDict.TryGetValue(f, out item))
             {
                 item.AddSample(sample);
-                if (needRecord)
+                if (instance.isRecord && !isHistory)
                 {
                     history.Add(sample.Clone());
                 }
@@ -774,7 +777,7 @@ namespace MikuLuaProfiler
                 item = LuaProfilerTreeViewItem.Create(sample, 0, null);
                 roots.Add(item);
                 needRebuild = true;
-                if (needRecord)
+                if (instance.isRecord && !isHistory)
                 {
                     history.Add(sample.Clone());
                 }

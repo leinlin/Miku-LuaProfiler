@@ -31,7 +31,7 @@ namespace MikuLuaProfiler
             }
         }
 
-        private int m_captureLuaGC = 50 * 1024;
+        private int m_captureLuaGC = 0;
         public int captureLuaGC
         {
             get
@@ -106,7 +106,7 @@ namespace MikuLuaProfiler
             }
         }
 
-        private int m_captureMonoGC = 50 * 1024;
+        private int m_captureMonoGC = 0;
         public int captureMonoGC
         {
             get
