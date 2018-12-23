@@ -1,35 +1,36 @@
-## Lua的性能分析器 For Unity
+## Lua Profiler For Unity
 <br/>
 
-### 设计目的
-unity配合上lua脚本可以说是目前最流行的热更新框架了，但是因为缺少对应的性能分析器，使很多团队在优化性能的时候简直不知道从何查起，而一些项目往往会通过削减lua脚本的使用来达到性能优化的目的，这样做项目是得到了优化，不过也带来了大量不可热更的代码，降低了运营灵活度。<br>
-而这个工具就是要给在Unity、甚至其他游戏引擎提供一套很好用的性能检测工具，帮助使用lua脚本开发的游戏早日上线以及稳定运营。
+### Purpose
+****Unity** + Lua** script is now most popular I**ncremental Update FrameWork** For Mobile Game In China,But Becase that not has a **easy-to-use profiler** cause many game more cpu usage to lua gc and also more memory usage. so much so that programmers don't know how to optimize their game.then they replace lua code with C# to find the problems,but also more buildin code and less flexibility in operation activity<br>
+so this tool is design to support a **easy-to-use profiler** for unity that help the game which use the lua script more early to **officially online** and **stable operations**
 
 ## 
-要测试工程项目，请使用管理员模式运行link.bat <br/>
-有什么BUG或者建议可以加群：[882425563](https://jq.qq.com/?_wv=1027&k=5QkOBSc)
+If you want to test this project,use administrator mode to run the **link.bat** <br/><br/>
+If you find **any bug** or has **any suggest** join the **qq group**：[882425563](https://jq.qq.com/?_wv=1027&k=5QkOBSc) to contact us
 
-### 部署安装
-目前支持XLua、SLua、ToLua。这个版本是远程调试版，支持Windows、Android、IL2CPP、IOS的真机Profiler。
+### Deploy and Install
+This tool now support **XLua**、**SLua**、**ToLua**.This is a remote profiler tool so it support **Windows**、**Android**、**IOS** On-device Profiler。
 
-- 打开LuaProfiler目录
-- 把`LuaProfilerClient`文件夹Copy到项目工程目录下，如果你把Lua的代码放到了Plugins下，那么也一起挪过去，必须要保证代码的DLL跟Lua库打在一个DLL中。
-- 用Unity5.6以上的版本新建一个工程把`LuaProfilerServer`Copy到工程中。
+- Open **LuaProfiler** folder
+- Copy `LuaProfilerClient` folder to you game project content,if your C# Lua script is in **Plugins** folder,Copy `LuaProfilerServer` to **Plugins**.This Tool must confirm That Code must in the same DLL which has C# Lua Scirpt.
+- Use **Unity5.6 or newer** unity version to create a project, Copy `LuaProfilerServer` To the project content
 
-### 原理
-本工具使用mono.ceil的IL注入功能(XLUA的热修复原理)，在代码编译完成后对代码进行hook改造，在C#还有Lua的代码中强行在对应的开始结束位置插入Profiler代码，然后统计得到统计结果。
+### Theory
+It use mono.ceil's IL Inject feature(also use in XLua),Inject The profiler Code to Game Code
 
 ## 
 
-### 使用教程
+### Tutors
 
-#### 开启
+#### Config your Client
 
-游戏工程中打开 "Window->Lua Profiler Window"配置窗口，勾选要profiler的内容，以及配置本机的IP地址。
+Open windows by **"Window->Lua Profiler Window"**, toggle profiler's feature and configure the server ip address.
 ## 
 ![](doc/config_client.png)
 
-Profiler编辑器工程中也打开profiler窗口，然后OpenService，等待客户端连接
+#### Open server
+Also Open windows by **"Window->Lua Profiler Window"**, then OpenService,wait for client connects
 ## 
 ![](doc/config_server.png)
 
@@ -37,37 +38,33 @@ Profiler编辑器工程中也打开profiler窗口，然后OpenService，等待�
 ![](doc/profiler.gif)
 ## 
 
-#### Record模式
-&nbsp;&nbsp;&nbsp;&nbsp;这个版本的Record模式比较轻量，直接点击Record,然后游戏工程和Profiler编辑器对接上后，点击StartRecord即可开始记录Record,再次点击即可关闭Record模式。
+#### Record mode
+Click **Record** button, when Game connect to server, Toggle **StartRecord** To Start Or Stop Record.
 
-##### 按钮功能介绍
+##### Record button feature
 
 
-- 拉动滑条可以快速大概的调整sample帧
-- 点击 __'<'__ 、 __'>'__ 两个按钮一次只增加或减少1帧
-- 点击 __'<<'__ 、 __'>>'__ 两个按钮可以快速移动到效率出了问题的某些帧
-- 设置Capture Lua GC、Capture Mono GC、Frame Count可以设置问题阈值
-- Save跟Load 两个按钮可以保存和载入Sample的采样信息
+- drag slider to modify samples
+- click __'<'__ 、 __'>'__ to increase or discrease frames one by one
+- click __'<<'__ 、 __'>>'__ to fast locate the frames control by 
+**Capture Lua GC**、**Capture Mono GC**、**Frame Count**
 
 <br/>
 
-#### 打包真机
-设置打包宏`USE_LUA_PROFILER`即可开关打包宏，lua代码如果用使用luac或者luajit请使用Tools下的InjectLua.exe对代码进行hook插桩
+#### On-device Profiler
+Set Pack Macro **USE_LUA_PROFILER** to Inject Profiler code in you App.if you want use **luac code or luajit bytecode** ,Use **InjectLua.exe** in folder Tools To Inject the lua profiler code.
 
 ```
 InjectLua.exe "inpath" "outpath"
 ```
 
-#### 使用项目
+#### Use Case
 ![](doc/ljjc.jpg)
 
 ## 
-### 感谢
-
-#### 关键问题解决者
-[Xavier](https://github.com/starwing)
-
-#### 关键测试的成员
+### Thanks
+[easy66](https://github.com/easy66) <br/>
+[Xavier](https://github.com/starwing) <br/>
 [Jay](https://github.com/Jayatubi) <br/>
 [ZhangDi](https://github.com/ZhangDi2018) <br/>
-以及[LuaProfiler](https://jq.qq.com/?_wv=1027&k=5QkOBSc)群中的所有群成员
+and all members in qq group [LuaProfiler](https://jq.qq.com/?_wv=1027&k=5QkOBSc)
