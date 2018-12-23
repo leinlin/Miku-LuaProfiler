@@ -71,7 +71,7 @@ namespace MikuLuaProfiler
         {
             EditorGUILayout.BeginVertical();
             DoToolbar();
-            GUILayout.Space(20);
+            GUILayout.Space(10);
             DoRecord();
             DoCapture();
             DoTreeView();
@@ -118,6 +118,7 @@ namespace MikuLuaProfiler
             #endregion
 
             #region path
+            /*
             if (GUILayout.Button("Lua Path", EditorStyles.toolbarButton, GUILayout.Height(30)))
             {
                 LocalToLuaIDE.SetExternalProjectRootPath();
@@ -138,21 +139,18 @@ namespace MikuLuaProfiler
             if (GUILayout.Button("Load Result", EditorStyles.toolbarButton, GUILayout.Height(30)))
             {
                 m_TreeView.LoadHistory();
-            }
+            }*/
             #endregion
 
             #region gc value
-            GUILayout.Space(5);
+            GUILayout.Space(100);
             GUILayout.FlexibleSpace();
             GUILayout.Label(string.Format("Lua Total:{0}", m_TreeView.GetLuaMemory()), EditorStyles.toolbarButton, GUILayout.Height(30));
 
-            GUILayout.Space(5);
-            GUILayout.FlexibleSpace();
+            GUILayout.Space(15);
             GUILayout.Label(string.Format("Mono Total:{0}", m_TreeView.GetMonoMemory()), EditorStyles.toolbarButton, GUILayout.Height(30));
+            GUILayout.Space(25);
             #endregion
-
-            GUILayout.Space(100);
-            GUILayout.FlexibleSpace();
 
             m_TreeView.searchString = m_SearchField.OnToolbarGUI(m_TreeView.searchString);
 

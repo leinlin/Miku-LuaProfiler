@@ -46,8 +46,6 @@ Profiler编辑器工程中也打开profiler窗口，然后OpenService，等待�
 - 设置Capture Lua GC、Capture Mono GC、Frame Count可以设置问题阈值
 - Save跟Load 两个按钮可以保存和载入Sample的采样信息
 
-使用效果
-![](doc/profiler.gif)
 <br/>
 
 #### 打包真机
