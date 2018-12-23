@@ -2,11 +2,11 @@
 <br/>
 
 ### Purpose
-****Unity** + Lua** script is now most popular I**ncremental Update FrameWork** For Mobile Game In China,But Becase that not has a **easy-to-use profiler** cause many game more cpu usage to lua gc and also more memory usage. so much so that programmers don't know how to optimize their game.then they replace lua code with C# to find the problems,but also more buildin code and less flexibility in operation activity<br>
-so this tool is design to support a **easy-to-use profiler** for unity that help the game which use the lua script more early to **officially online** and **stable operations**
+****Unity** + Lua** script is now most popular I**ncremental Update FrameWork** For Mobile Game In China,But Because that not has a **easy-to-use profiler** cause more cpu usage to lua gc and also more memory usage. so much so that programmers don't know how to optimize their game.then they replace lua code with C# to find the problems,but also more buildin code and less flexibility in operation activity<br>
+so this tool is design to support a **easy-to-use profiler** for unity that help the game which use the lua script more early to **officially online** and **stable operation**
 
 ## 
-If you want to test this project,use administrator mode to run the **link.bat** <br/><br/>
+If you want to test this project,use administrator mode to run the **link.bat** <br/>
 If you find **any bug** or has **any suggest** join the **qq group**：[882425563](https://jq.qq.com/?_wv=1027&k=5QkOBSc) to contact us
 
 ### Deploy and Install
@@ -68,3 +68,6 @@ InjectLua.exe "inpath" "outpath"
 [Jay](https://github.com/Jayatubi) <br/>
 [ZhangDi](https://github.com/ZhangDi2018) <br/>
 and all members in qq group [LuaProfiler](https://jq.qq.com/?_wv=1027&k=5QkOBSc)
+
+## 
+![](doc/meizi.gif)
