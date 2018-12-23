@@ -239,6 +239,7 @@ namespace MikuLuaProfiler
             s.calls = calls;
             s.frameCount = frameCount;
             s.costLuaGC = costLuaGC;
+            s.costMonoGC = costMonoGC;
             s.name = name;
             s.costTime = costTime;
 
