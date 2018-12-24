@@ -11,6 +11,7 @@ using UnityEditor.IMGUI.Controls;
 using UnityEditor;
 using System;
 using System.IO;
+using System.Collections.Generic;
 
 namespace MikuLuaProfiler
 {
@@ -18,6 +19,36 @@ namespace MikuLuaProfiler
     public class LuaProfilerWindow : EditorWindow
     {
         [SerializeField] TreeViewState m_TreeViewState;
+        private readonly GUILayoutOption[] _frameInfoRectsOption = new GUILayoutOption[]
+        {
+            GUILayout.ExpandHeight(false),
+            GUILayout.ExpandWidth(true),
+            GUILayout.Height(18f)
+        };
+        private readonly GUILayoutOption[] _mainRectsOption = new GUILayoutOption[]
+        {
+            GUILayout.ExpandHeight(false),
+            GUILayout.ExpandWidth(true),
+            GUILayout.Height(130f)
+        };
+        private static readonly Vector3[] CachedVec = new Vector3[2];
+        private readonly SplitterState _minmaxSlider = new SplitterState(new int[]
+            {
+            1,
+            1,
+            1
+            }, new int[]
+            {
+            1,
+            1,
+            1
+            }, new int[]
+            {
+            100000,
+            100000,
+            100000
+            }
+        );
 
         LuaProfilerTreeView m_TreeView;
         SearchField m_SearchField;
@@ -27,6 +58,9 @@ namespace MikuLuaProfiler
         bool isAscending = false;
         private int m_lastCount = 0;
         int port = 2333;
+        private bool isShowLuaChart = true;
+        private bool isShowMonoChart = false;
+        private int currentFrameIndex = 0;
 
         private string oldStartUrl = null;
         private string oldEndUrl = null;
@@ -73,7 +107,11 @@ namespace MikuLuaProfiler
             DoToolbar();
             GUILayout.Space(10);
             DoRecord();
-            DoCapture();
+            if (isShowLuaChart || isShowMonoChart)
+            {
+                DoChart();
+            }
+            //DoCapture();
             DoTreeView();
             EditorGUILayout.EndVertical();
         }
@@ -86,6 +124,7 @@ namespace MikuLuaProfiler
             bool isClear = GUILayout.Button("Clear", EditorStyles.toolbarButton, GUILayout.Height(30));
             if (isClear)
             {
+                currentFrameIndex = 0;
                 m_TreeView.Clear(true);
             }
             GUILayout.Space(5);
@@ -102,19 +141,28 @@ namespace MikuLuaProfiler
 
             #region socket
 
-            if (GUILayout.Button("OpenServie", EditorStyles.toolbarButton, GUILayout.Height(30)))
+            if (GUILayout.Button("OpenService", EditorStyles.toolbarButton, GUILayout.Height(30)))
             {
                 NetWorkServer.Close();
+                currentFrameIndex = 0;
+                m_TreeView.Clear(true);
                 NetWorkServer.RegisterOnReceive(m_TreeView.LoadRootSample);
-                NetWorkServer.BeginListen("0.0.0.0", port); 
+                NetWorkServer.BeginListen("0.0.0.0", port);
             }
             GUILayout.Label("port:", GUILayout.Height(30), GUILayout.Width(35));
             port = EditorGUILayout.IntField(port, GUILayout.Height(16), GUILayout.Width(50));
 
-            if (GUILayout.Button("CloseServie", EditorStyles.toolbarButton, GUILayout.Height(30)))
+            if (GUILayout.Button("CloseService", EditorStyles.toolbarButton, GUILayout.Height(30)))
             {
                 NetWorkServer.Close();
             }
+            #endregion
+
+            #region chart
+            isShowLuaChart = GUILayout.Toggle(isShowLuaChart, "LuaChart", EditorStyles.toolbarButton, GUILayout.Height(30));
+            GUILayout.Space(5);
+            isShowMonoChart = GUILayout.Toggle(isShowMonoChart, "MonoChart", EditorStyles.toolbarButton, GUILayout.Height(30));
+            GUILayout.Space(25);
             #endregion
 
             #region path
@@ -169,6 +217,11 @@ namespace MikuLuaProfiler
             if (!state && instance.isStartRecord)
             {
                 m_TreeView.Clear(true);
+            }
+
+            if (state && !instance.isStartRecord)
+            {
+                m_TreeView.LoadHistoryCurve();
             }
 
             int count = m_TreeView.history.Count - 1;
@@ -267,7 +320,37 @@ namespace MikuLuaProfiler
             GUILayout.Space(10);
             EditorGUILayout.EndHorizontal();
         }
+        void DoChart()
+        {
+            EditorGUILayout.BeginVertical(new GUILayoutOption[0]);
+            EditorGUILayout.BeginHorizontal(new GUILayoutOption[0]);
+            //curveScale = GUILayout.VerticalSlider(curveScale, 1f, 0.01f, this._surveScaleOption);
+            EditorGUILayout.BeginVertical(new GUILayoutOption[0]);
+            EditorGUILayout.BeginVertical(TPGuiSkinManager.Styles.textField, new GUILayoutOption[]
+                {
+                GUILayout.MinHeight(50f),
+                GUILayout.ExpandWidth(true)
+                });
+            GUILayout.Space(3f);
+            Rect controlRect = EditorGUILayout.GetControlRect(false, this._frameInfoRectsOption);
+            GUI.Label(controlRect, GUIContent.none, TPGuiSkinManager.Styles.entryOdd);
+            GUILayout.Space(3f);
+            Rect controlRect2 = EditorGUILayout.GetControlRect(false, this._mainRectsOption);
+            GUILayout.Space(5f);
+            EditorGUILayout.EndVertical();
 
+            EditorGUILayout.EndVertical();
+            EditorGUILayout.EndHorizontal();
+
+            GUILayout.Space(7f);
+            TPSplitterGUILayout.BeginHorizontalSplit(this._minmaxSlider, new GUILayoutOption[0]);
+            TPSplitterGUILayout.EndHorizontalSplit();
+            GUILayout.Space(2f);
+
+            DrawChart(controlRect2);
+            EditorGUILayout.EndVertical();
+
+        }
         void DoCapture()
         {
             // 游戏进行中别这么搞，闪屏
@@ -330,7 +413,6 @@ namespace MikuLuaProfiler
 
             EditorGUILayout.EndHorizontal();
         }
-
         void DoTreeView()
         {
             Rect rect = GUILayoutUtility.GetRect(0, 100000, 0, 100000);
@@ -342,6 +424,186 @@ namespace MikuLuaProfiler
                 isAscending = m_TreeView.multiColumnHeader.IsSortedAscending(sortColIndex);
             }
         }
+
+
+        #region chart
+        private void DrawChart(Rect rect)
+        {
+            Handles.color = new Color(1f, 1f, 1f, 0.2f);
+            CachedVec[0].Set(rect.xMin, rect.y + 0.33f * rect.height, 0f);
+            CachedVec[1].Set(rect.xMax, rect.y + 0.33f * rect.height, 0f);
+            Handles.DrawAAPolyLine(2.5f, CachedVec);
+            CachedVec[0].Set(rect.xMin, rect.y + 0.66f * rect.height, 0f);
+            CachedVec[1].Set(rect.xMax, rect.y + 0.66f * rect.height, 0f);
+            Handles.DrawAAPolyLine(2.5f, CachedVec);
+            if (m_TreeView.historyCurve == null) return;
+
+            if (isShowLuaChart)
+            {
+                Handles.color = new Color(0.4f, 0.7f, 0.9f, 1.0f);
+                DrawLuaCurve(m_TreeView.historyCurve, rect);
+            }
+
+            if (isShowMonoChart)
+            {
+                Handles.color = new Color32(154, 255, 154, 255);
+                DrawMonoCurve(m_TreeView.historyCurve, rect);
+            }
+
+            var intance = LuaDeepProfilerSetting.Instance;
+            if (intance.isRecord && !intance.isStartRecord)
+            {
+                HandleInputForChart(rect);
+            }
+            base.Repaint();
+        }
+        private void DrawLuaCurve(HistoryCurve curve, Rect rect)
+        {
+            if (curve.IsLuaEmpty()) return;
+            int count = curve.GetLuaRecordCount();
+            float minValue = curve.minLuaValue;
+            float maxValue = curve.maxLuaValue;
+            float lastPoint = 0;
+            curve.TryGetLuaMemory(0, out lastPoint);
+
+            if (count > 1)
+            {
+                int len = 0;
+                var setting = LuaDeepProfilerSetting.Instance;
+
+                if (setting.isRecord && !setting.isStartRecord)
+                {
+                    len = count - 1;
+                }
+                else
+                {
+                    len = HistoryCurve.RECORD_FRAME_COUNT - 1;
+                }
+
+                for (int i = 1; i < count; i++)
+                {
+                    float currentMetric = 0;
+                    if (!curve.TryGetLuaMemory(i, out currentMetric))
+                    {
+                        continue;
+                    }
+                    Vector3 currentPos = PointFromRect(0, len, i, minValue, maxValue, currentMetric, rect);
+                    Vector3 lastPos = PointFromRect(0, len, i - 1, minValue, maxValue, lastPoint, rect);
+                    lastPoint = currentMetric;
+                    CachedVec[0].Set(lastPos.x, lastPos.y, 0);
+                    CachedVec[1].Set(currentPos.x, currentPos.y, 0f);
+                    Handles.DrawAAPolyLine(2.5f, CachedVec);
+                }
+            }
+        }
+
+        private void DrawMonoCurve(HistoryCurve curve, Rect rect)
+        {
+            if (curve.IsMonoEmpty()) return;
+            int count = curve.GetMonoRecordCount();
+            float minValue = curve.minMonoValue;
+            float maxValue = curve.maxMonoValue;
+            float lastPoint = 0;
+            curve.TryGetMonoMemory(0, out lastPoint);
+
+            if (count > 1)
+            {
+                int len = 0;
+                var setting = LuaDeepProfilerSetting.Instance;
+
+                if (setting.isRecord && !setting.isStartRecord)
+                {
+                    len = count - 1;
+                }
+                else
+                {
+                    len = HistoryCurve.RECORD_FRAME_COUNT - 1;
+                }
+
+                for (int i = 1; i < count; i++)
+                {
+                    float currentMetric = 0;
+                    if (!curve.TryGetMonoMemory(i, out currentMetric))
+                    {
+                        continue;
+                    }
+                    Vector3 currentPos = PointFromRect(0, len, i, minValue, maxValue, currentMetric, rect);
+                    Vector3 lastPos = PointFromRect(0, len, i - 1, minValue, maxValue, lastPoint, rect);
+                    lastPoint = currentMetric;
+                    CachedVec[0].Set(lastPos.x, lastPos.y, 0);
+                    CachedVec[1].Set(currentPos.x, currentPos.y, 0f);
+                    Handles.DrawAAPolyLine(2.5f, CachedVec);
+                }
+            }
+        }
+
+        private Vector3 PointFromRect(float minH, float maxH, float h, float minV, float maxV, float v, Rect rect)
+        {
+            v = Mathf.Max(minV, v);
+            Vector3 v3 = new Vector3();
+            float dh = maxH - minH;
+            dh = (dh == 0) ? 1 : dh;
+            v3.x = (rect.xMax - rect.xMin) * (h - minH) / dh + rect.xMin;
+            //v3.y = (rect.yMax - rect.yMin) * (v - minV) / (maxV - minV) + rect.yMin;
+            float dv = minV - maxV;
+            dv = (dv == 0) ? 1 : dv;
+            v3.y = (rect.yMax - rect.yMin) * (v - maxV) / dv + rect.yMin;
+            return v3;
+        }
+
+        void HandleInputForChart(Rect expandRect)
+        {
+            int metricCount = m_TreeView.historyCurve.GetLuaRecordCount();
+
+            if (metricCount == 0) return;
+
+            bool isEvent = false;
+            if (Event.current.type == EventType.MouseDrag || Event.current.type == EventType.MouseUp)
+            {
+                Vector2 mousePosition = Event.current.mousePosition;
+                if (mousePosition.x >= expandRect.xMin && mousePosition.x <= expandRect.xMax &&
+                    mousePosition.y >= expandRect.yMin && mousePosition.y <= expandRect.yMax)
+                {
+                    currentFrameIndex = (int)(metricCount * (mousePosition.x - expandRect.xMin) / (expandRect.xMax - expandRect.xMin));
+                    GUIUtility.keyboardControl = 0;
+                    isEvent = true;
+                }
+            }
+            else if (Event.current.type == EventType.KeyDown)
+            {
+                if (Event.current.keyCode == KeyCode.RightArrow)
+                {
+                    if (currentFrameIndex + 1 <= metricCount)
+                    {
+                        currentFrameIndex++;
+                        isEvent = true;
+                    }
+                }
+                if (Event.current.keyCode == KeyCode.LeftArrow)
+                {
+                    if (currentFrameIndex - 1 >= 0)
+                    {
+                        currentFrameIndex--;
+                        isEvent = true;
+                    }
+                }
+            }
+            Vector3 upPos = PointFromRect(0, metricCount, currentFrameIndex, 0, 1, 0, expandRect);
+            Vector3 downPos = PointFromRect(0, metricCount, currentFrameIndex, 0, 1, 1, expandRect);
+
+            Handles.color = new Color(0.8f, 0.2f, 0.5f, 1f);
+            CachedVec[0].Set(upPos.x, upPos.y, 0f);
+            CachedVec[1].Set(downPos.x, downPos.y, 0f);
+            Handles.DrawAAPolyLine(3.5f, CachedVec);
+
+            if (isEvent)
+            {
+                startFrame = currentFrameIndex;
+                endFrame = currentFrameIndex;
+                m_TreeView.ReLoadSamples(startFrame, endFrame);
+            }
+        }
+        #endregion
 
         // Add menu named "My Window" to the Window menu
         [MenuItem("Window/Lua Profiler Window")]

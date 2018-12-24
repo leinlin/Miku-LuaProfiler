@@ -285,6 +285,7 @@ namespace MikuLuaProfiler
         private long m_monoMemory = 0;
 
         public bool needRebuild = true;
+        public readonly HistoryCurve historyCurve = new HistoryCurve(1024);
         public readonly List<Sample> history = new List<Sample>(2160);
         public string startUrl = null;
         public string endUrl = null;
@@ -301,6 +302,7 @@ namespace MikuLuaProfiler
             needRebuild = true;
             multiColumnHeader.sortingChanged += (header) => { needRebuild = true; };
             history.Clear();
+            historyCurve.Clear();
             EditorApplication.update -= DequeueSample;
             EditorApplication.update += DequeueSample;
             Reload();
@@ -530,6 +532,7 @@ namespace MikuLuaProfiler
                 history.Clear();
                 startUrl = null;
                 endUrl = null;
+                historyCurve.Clear();
             }
 
             m_luaMemory = 0;
@@ -604,6 +607,12 @@ namespace MikuLuaProfiler
             end = Mathf.Max(Mathf.Min(end, history.Count - 1), 0);
             start = Mathf.Max(Mathf.Min(start, history.Count - 1), 0);
 
+            if (end == start)
+            {
+                LoadRootSample(history[start], false, true);
+                return;
+            }
+
             startUrl = history[start].captureUrl;
             endUrl = history[end].captureUrl;
 
@@ -611,6 +620,17 @@ namespace MikuLuaProfiler
             for (int i = start; i <= end; i++)
             {
                 LoadHistoryRootSample(history[i]);
+            }
+        }
+
+        public void LoadHistoryCurve()
+        {
+            historyCurve.Clear();
+            for (int i = 0; i < history.Count; i++)
+            {
+                Sample sample = history[i];
+                historyCurve.SlotLuaMemory(sample.currentLuaMemory);
+                historyCurve.SlotMonoMemory(sample.currentMonoMemory);
             }
         }
 
@@ -635,7 +655,10 @@ namespace MikuLuaProfiler
         {
             string path = EditorUtility.OpenFilePanel("Load Sample", "", "sample");
             history.Clear();
-            history.AddRange(Sample.DeserializeList(path));
+            historyCurve.Clear();
+            List<Sample> samples = Sample.DeserializeList(path);
+            history.AddRange(samples);
+
             ReLoadSamples(0, history.Count);
         }
 
@@ -760,29 +783,31 @@ namespace MikuLuaProfiler
                 }
             }
 
-
             LuaProfilerTreeViewItem item;
             string f = sample.fullName;
             m_luaMemory = sample.currentLuaMemory;
             m_monoMemory = sample.currentMonoMemory;
 
+            if (!(instance.isRecord && !instance.isStartRecord))
+            {
+                historyCurve.SlotLuaMemory(sample.currentLuaMemory);
+                historyCurve.SlotMonoMemory(sample.currentMonoMemory);
+            }
+
+            if (instance.isRecord && !isHistory)
+            {
+                history.Add(sample.Clone());
+            }
+            
             if (m_nodeDict.TryGetValue(f, out item))
             {
                 item.AddSample(sample);
-                if (instance.isRecord && !isHistory)
-                {
-                    history.Add(sample.Clone());
-                }
             }
             else
             {
                 item = LuaProfilerTreeViewItem.Create(sample, 0, null);
                 roots.Add(item);
                 needRebuild = true;
-                if (instance.isRecord && !isHistory)
-                {
-                    history.Add(sample.Clone());
-                }
             }
 
         }

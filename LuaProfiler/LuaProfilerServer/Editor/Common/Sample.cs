@@ -190,9 +190,12 @@ namespace MikuLuaProfiler
                 Sample child = childs[i].Clone();
                 child.fahter = s;
             }
-            s.captureUrl = captureUrl;
-            s.currentLuaMemory = currentLuaMemory;
 
+            s.currentLuaMemory = currentLuaMemory;
+            s.currentMonoMemory = currentMonoMemory;
+            s.currentTime = currentTime;
+            s._fullName = _fullName;
+            s.captureUrl = captureUrl;
             return s;
         }
 #endregion
