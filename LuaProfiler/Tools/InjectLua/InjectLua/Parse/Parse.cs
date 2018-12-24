@@ -22,7 +22,7 @@ namespace MikuLuaProfiler
         {
             LLex l = new LLex(new StringLoadInfo(value), name);
 
-            l.InsertString(0, LOCAL_PROFILER + "BeginMikuSample(\"" + name + ",line:1&[lua]:require " + name +"\") ");
+            l.InsertString(0, LOCAL_PROFILER + "BeginMikuSample(\"" + name + ",line:1&[lua]:require " + name + "\") ");
             int lastPos = 0;
             int nextPos = l.pos;
             l.Next();
@@ -62,7 +62,7 @@ namespace MikuLuaProfiler
                             var hisToken = history[index];
                             while (hisToken is JumpToken)
                             {
-                                index--; 
+                                index--;
                                 if (index < 0) break;
                                 hisToken = history[index];
                             }
@@ -87,7 +87,7 @@ namespace MikuLuaProfiler
                                     {
                                         funName = ':' + funName;
                                     }
-                                    else if ((hisToken.TokenType == (int)'.') 
+                                    else if ((hisToken.TokenType == (int)'.')
                                         || (hisToken.TokenType == (int)'['))
                                     {
                                         funName = '.' + funName;
@@ -110,7 +110,7 @@ namespace MikuLuaProfiler
 
                             lastPos = nextPos;
                             nextPos = l.pos;
- 
+
 
                             if (!isLeft && !isForward)
                             {
@@ -120,7 +120,7 @@ namespace MikuLuaProfiler
                                 }
                                 else if ((l.Token.TokenType == (int)':'))
                                 {
-                                    funName += ':'; 
+                                    funName += ':';
                                 }
                                 else if ((l.Token.TokenType == (int)'.'))
                                 {
@@ -139,7 +139,7 @@ namespace MikuLuaProfiler
                                 {
                                     funName = l.Source + ",line " + l.LineNumber;
                                 }
-                                l.InsertString(nextPos - 1, " BeginMikuSample(\"" + l.Source 
+                                l.InsertString(nextPos - 1, " BeginMikuSample(\"" + l.Source
                                     + ",line:" + l.LineNumber + "&[lua]:" + funName + "\") ");
                                 nextPos = l.pos;
                                 break;
