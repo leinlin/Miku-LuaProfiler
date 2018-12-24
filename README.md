@@ -2,7 +2,7 @@
 <br/>
 
 ### Purpose
-**Unity + Lua** script is now most popular incremental update frameWork for mobile game in China , But because that not has an **easy-to-use profiler** cause more cpu usage to lua gc and also more memory usage . so much so that programmers don't know how to optimize their game . Then they replace lua code with C# to find the problems , but also more build code and less flexibility in operation activity .<br>
+**Unity + Lua** script is now most popular incremental update frameWork for mobile game in China , But because that not has an **easy-to-use profiler** cause more cpu usage to lua gc and also more memory usage . so much so that programmers don't know how to optimize their game . Then they replace lua code with C# to find the problems , but also more buildin code and less flexibility in operation activity .<br>
 so this tool is designed to support an **easy-to-use profiler** for unity that help finding battleneck and make your game more fast and stable.
 
 ## 
@@ -34,7 +34,7 @@ Open windows by **"Window->Lua Profiler Window"**, toggle profiler's feature and
 ![](doc/config_client.png)
 
 #### Open server
-Also open windows by **"Window->Lua Profiler Window"**, then OpenService,wait for client connects
+Also open windows by **"Window->Lua Profiler Window"**, then click **OpenService**,wait for client connects
 ## 
 ![](doc/config_server.png)
 
