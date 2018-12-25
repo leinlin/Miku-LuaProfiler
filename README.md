@@ -2,7 +2,7 @@
 <br/>
 
 ### Purpose
-**Unity + Lua** script is now most popular incremental update frameWork for mobile game in China,However, since there haven't been good tool to monitor the cpu and memory usage of lua vm, lots of developers have no idea to optimize their code.So there are many potential risks in lua codes<br>
+**Unity + Lua** script is now most popular incremental update frameWork for mobile game in China,However, since there haven't been good tool to monitor the cpu and memory usage of lua vm, lots of developers have no idea to optimize their code,so there are many potential risks in lua codes.<br>
 this tool is designed to support an **easy-to-use profiler** for unity that help finding bottleneck and make your game more fast and stable.
 
 ## 
@@ -14,8 +14,9 @@ If you want to test this project,use administrator mode to run the **link.bat** 
 If you find any bug or have any suggests join the QQ group：[882425563](https://jq.qq.com/?_wv=1027&k=5QkOBSc) to contact us
 
 ### Deploy and Install
-This tool now supports **XLua**、**SLua**、**ToLua**.This is a remote profiler tool so it supports **Windows**、**Android**、**IOS** On-device Profiler.
+This tool now supports **XLua**、**SLua**、**ToLua** and also a remote profiler tool so it supports **Windows**、**Android**、**IOS** On-device Profiler.
 
+- you must open two unity projects,one for game client ,one for editor server
 - Open **LuaProfiler** folder
 - Copy **LuaProfilerClient** folder to you game project content,if your C# Lua script is in **Plugins** folder,Copy **LuaProfilerClient** to **Plugins**.This Tool must make sure That code must in the same DLL which has C# lua codes.
 - Use **Unity5.6 or newer** unity version to create a project, copy **LuaProfilerServer** to the project content
@@ -26,8 +27,6 @@ It use mono.ceil's IL inject feature(also use in XLua),inject the profiler code 
 ## 
 
 ### Tutors
-
-you must open two unity projects,one for game client ,one for editor server
 
 #### Config your client
 
