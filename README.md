@@ -54,6 +54,7 @@ Click **Record** button, when game connect to server, toggle **StartRecord** to 
 - click __'<'__ 、 __'>'__ to increase or discrease frames one by one
 - click __'<<'__ 、 __'>>'__ to fast locate the frames control by 
 **Capture Lua GC**、**Capture Mono GC**、**Frame Count**
+- stop record and press left or right arrow keybord to increase or discrease frames one by one
 
 ##
 ![](doc/record.gif)
