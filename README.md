@@ -5,8 +5,8 @@
 **Unity + Lua** script is now most popular incremental update frameWork for mobile game in China,However, since there haven't been good tool to monitor the cpu and memory usage of lua vm, lots of developers have no idea to optimize their code,so there are many potential risks in lua codes.<br>
 this tool is designed to support an **easy-to-use profiler** for unity that help finding bottleneck and make your game more fast and stable.
 
-## 
-If you want to test this project,use administrator mode to run the **link.bat** <br/>
+### Test Demo 
+use administrator mode to run the **link.bat** <br/>
 
 ##
 
