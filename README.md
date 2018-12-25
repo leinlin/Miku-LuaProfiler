@@ -27,7 +27,7 @@ It use mono.ceil's IL inject feature(also use in XLua),inject the profiler code 
 
 ### Tutors
 
-you must open two unity projects,one for Client ,one for Server
+you must open two unity projects,one for game client ,one for editor server
 
 #### Config your client
 
