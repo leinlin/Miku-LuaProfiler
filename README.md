@@ -17,8 +17,8 @@ If you find any bug or have any suggests join the QQ group：[882425563](https:/
 This tool now supports **XLua**、**SLua**、**ToLua**.This is a remote profiler tool so it supports **Windows**、**Android**、**IOS** On-device Profiler.
 
 - Open **LuaProfiler** folder
-- Copy **LuaProfilerClient** folder to you game project content,if your C# Lua script is in **Plugins** folder,Copy **LuaProfilerClient** to **Plugins**.This Tool must make sure That Code must in the same DLL which has C# Lua Scirpt.
-- Use **Unity5.6 or newer** unity version to create a project, Copy **LuaProfilerServer** To the project content
+- Copy **LuaProfilerClient** folder to you game project content,if your C# Lua script is in **Plugins** folder,Copy **LuaProfilerClient** to **Plugins**.This Tool must make sure That code must in the same DLL which has C# lua codes.
+- Use **Unity5.6 or newer** unity version to create a project, copy **LuaProfilerServer** to the project content
 
 ### Theory
 It use mono.ceil's IL inject feature(also use in XLua),inject the profiler code to game code
