@@ -24,6 +24,7 @@ namespace MikuLuaProfiler
 
         public int calls;
         public int frameCount;
+        public float fps;
         public int costLuaGC;
         public int costMonoGC;
         public string name;
@@ -179,6 +180,7 @@ namespace MikuLuaProfiler
 
             s.calls = calls;
             s.frameCount = frameCount;
+            s.fps = fps;
             s.costMonoGC = costMonoGC;
             s.costLuaGC = costLuaGC;
             s.name = name;
@@ -198,7 +200,7 @@ namespace MikuLuaProfiler
             s.captureUrl = captureUrl;
             return s;
         }
-#endregion
+        #endregion
 
         #region 序列化
         public static void SerializeList(List<Sample> samples, string path)
@@ -252,6 +254,7 @@ namespace MikuLuaProfiler
 
             b.Write(calls);
             b.Write(frameCount);
+            b.Write(fps);
             b.Write(costLuaGC);
             b.Write(costMonoGC);
 
@@ -302,6 +305,7 @@ namespace MikuLuaProfiler
 
             s.calls = b.ReadInt32();
             s.frameCount = b.ReadInt32();
+            s.fps = b.ReadSingle();
             s.costLuaGC = b.ReadInt32();
             s.costMonoGC = b.ReadInt32();
 

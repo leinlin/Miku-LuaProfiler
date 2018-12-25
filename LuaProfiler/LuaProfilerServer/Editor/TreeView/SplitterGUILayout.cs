@@ -15,7 +15,7 @@ using UnityEngine;
 
 namespace MikuLuaProfiler
 {
-    internal class TPSplitterGUILayout
+    internal class SplitterGUILayout
     {
         private static MethodInfo _beginVerticalSplitMethod;
 
@@ -30,23 +30,23 @@ namespace MikuLuaProfiler
             private set;
         }
 
-        static TPSplitterGUILayout()
+        static SplitterGUILayout()
         {
             Assembly assembly = Assembly.GetAssembly(typeof(ActiveEditorTracker));
-            TPSplitterGUILayout.SplitterGUILayoutType = assembly.GetType("UnityEditor.SplitterGUILayout");
+            SplitterGUILayout.SplitterGUILayoutType = assembly.GetType("UnityEditor.SplitterGUILayout");
         }
 
         public static void BeginVerticalSplit(SplitterState state, params GUILayoutOption[] options)
         {
-            if (TPSplitterGUILayout._beginVerticalSplitMethod == null)
+            if (SplitterGUILayout._beginVerticalSplitMethod == null)
             {
-                TPSplitterGUILayout._beginVerticalSplitMethod = TPSplitterGUILayout.SplitterGUILayoutType.GetMethod("BeginVerticalSplit", new Type[]
+                SplitterGUILayout._beginVerticalSplitMethod = SplitterGUILayout.SplitterGUILayoutType.GetMethod("BeginVerticalSplit", new Type[]
                 {
                     SplitterState.SplitterStateType,
                     typeof(GUILayoutOption[])
                 });
             }
-            TPSplitterGUILayout._beginVerticalSplitMethod.Invoke(null, new object[]
+            SplitterGUILayout._beginVerticalSplitMethod.Invoke(null, new object[]
             {
                 state.InternalObject,
                 options
@@ -55,15 +55,15 @@ namespace MikuLuaProfiler
 
         public static void BeginHorizontalSplit(SplitterState state, params GUILayoutOption[] options)
         {
-            if (TPSplitterGUILayout._beginHorizontalSplitMethod == null)
+            if (SplitterGUILayout._beginHorizontalSplitMethod == null)
             {
-                TPSplitterGUILayout._beginHorizontalSplitMethod = TPSplitterGUILayout.SplitterGUILayoutType.GetMethod("BeginHorizontalSplit", new Type[]
+                SplitterGUILayout._beginHorizontalSplitMethod = SplitterGUILayout.SplitterGUILayoutType.GetMethod("BeginHorizontalSplit", new Type[]
                 {
                     SplitterState.SplitterStateType,
                     typeof(GUILayoutOption[])
                 });
             }
-            TPSplitterGUILayout._beginHorizontalSplitMethod.Invoke(null, new object[]
+            SplitterGUILayout._beginHorizontalSplitMethod.Invoke(null, new object[]
             {
                 state.InternalObject,
                 options
@@ -72,20 +72,20 @@ namespace MikuLuaProfiler
 
         public static void EndVerticalSplit()
         {
-            if (TPSplitterGUILayout._endVerticalSplitMethod == null)
+            if (SplitterGUILayout._endVerticalSplitMethod == null)
             {
-                TPSplitterGUILayout._endVerticalSplitMethod = TPSplitterGUILayout.SplitterGUILayoutType.GetMethod("EndVerticalSplit");
+                SplitterGUILayout._endVerticalSplitMethod = SplitterGUILayout.SplitterGUILayoutType.GetMethod("EndVerticalSplit");
             }
-            TPSplitterGUILayout._endVerticalSplitMethod.Invoke(null, null);
+            SplitterGUILayout._endVerticalSplitMethod.Invoke(null, null);
         }
 
         public static void EndHorizontalSplit()
         {
-            if (TPSplitterGUILayout._endHorizontalSplitMethod == null)
+            if (SplitterGUILayout._endHorizontalSplitMethod == null)
             {
-                TPSplitterGUILayout._endHorizontalSplitMethod = TPSplitterGUILayout.SplitterGUILayoutType.GetMethod("EndHorizontalSplit");
+                SplitterGUILayout._endHorizontalSplitMethod = SplitterGUILayout.SplitterGUILayoutType.GetMethod("EndHorizontalSplit");
             }
-            TPSplitterGUILayout._endHorizontalSplitMethod.Invoke(null, null);
+            SplitterGUILayout._endHorizontalSplitMethod.Invoke(null, null);
         }
     }
 }

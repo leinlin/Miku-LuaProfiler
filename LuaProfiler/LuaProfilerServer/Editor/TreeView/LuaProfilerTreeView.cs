@@ -632,6 +632,7 @@ namespace MikuLuaProfiler
                 Sample sample = history[i];
                 historyCurve.SlotLuaMemory(sample.currentLuaMemory);
                 historyCurve.SlotMonoMemory(sample.currentMonoMemory);
+                historyCurve.SlotFpsMemory(sample.fps);
             }
         }
 
@@ -793,6 +794,7 @@ namespace MikuLuaProfiler
             {
                 historyCurve.SlotLuaMemory(sample.currentLuaMemory);
                 historyCurve.SlotMonoMemory(sample.currentMonoMemory);
+                historyCurve.SlotFpsMemory(sample.fps);
             }
 
             if (instance.isRecord && !isHistory)

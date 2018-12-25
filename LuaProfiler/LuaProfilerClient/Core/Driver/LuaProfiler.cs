@@ -26,7 +26,6 @@ namespace MikuLuaProfiler
         const long MaxK = MaxB * 1024;
         const long MaxM = MaxK * 1024;
         const long MaxG = MaxM * 1024;
-        public static int m_frameCount = 0;
         #endregion
 
         #region property
@@ -143,12 +142,12 @@ namespace MikuLuaProfiler
             var setting = LuaDeepProfilerSetting.Instance;
             if (setting == null) return;
 
-            m_frameCount = HookLuaSetup.frameCount;
+            int frameCount = HookLuaSetup.frameCount;
 
-            if (m_currentFrame != m_frameCount)
+            if (m_currentFrame != frameCount)
             {
                 PopAllSampleWhenLateUpdate();
-                m_currentFrame = m_frameCount;
+                m_currentFrame = frameCount;
             }
             long memoryCount = LuaLib.GetLuaMemory(luaState);
             Sample sample = Sample.Create(getcurrentTime, (int)memoryCount, name);

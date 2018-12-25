@@ -60,6 +60,7 @@ namespace MikuLuaProfiler
         int port = 2333;
         private bool isShowLuaChart = true;
         private bool isShowMonoChart = false;
+        private bool isShowFpsChart = false;
         private int currentFrameIndex = 0;
 
         private string oldStartUrl = null;
@@ -162,6 +163,8 @@ namespace MikuLuaProfiler
             isShowLuaChart = GUILayout.Toggle(isShowLuaChart, "LuaChart", EditorStyles.toolbarButton, GUILayout.Height(30));
             GUILayout.Space(5);
             isShowMonoChart = GUILayout.Toggle(isShowMonoChart, "MonoChart", EditorStyles.toolbarButton, GUILayout.Height(30));
+            GUILayout.Space(5);
+            isShowFpsChart = GUILayout.Toggle(isShowFpsChart, "FpsChart", EditorStyles.toolbarButton, GUILayout.Height(30));
             GUILayout.Space(25);
             #endregion
 
@@ -326,14 +329,14 @@ namespace MikuLuaProfiler
             EditorGUILayout.BeginHorizontal(new GUILayoutOption[0]);
             //curveScale = GUILayout.VerticalSlider(curveScale, 1f, 0.01f, this._surveScaleOption);
             EditorGUILayout.BeginVertical(new GUILayoutOption[0]);
-            EditorGUILayout.BeginVertical(TPGuiSkinManager.Styles.textField, new GUILayoutOption[]
+            EditorGUILayout.BeginVertical(GuiSkinManager.Styles.textField, new GUILayoutOption[]
                 {
                 GUILayout.MinHeight(50f),
                 GUILayout.ExpandWidth(true)
                 });
             GUILayout.Space(3f);
             Rect controlRect = EditorGUILayout.GetControlRect(false, this._frameInfoRectsOption);
-            GUI.Label(controlRect, GUIContent.none, TPGuiSkinManager.Styles.entryOdd);
+            GUI.Label(controlRect, GUIContent.none, GuiSkinManager.Styles.entryOdd);
             GUILayout.Space(3f);
             Rect controlRect2 = EditorGUILayout.GetControlRect(false, this._mainRectsOption);
             GUILayout.Space(5f);
@@ -343,8 +346,8 @@ namespace MikuLuaProfiler
             EditorGUILayout.EndHorizontal();
 
             GUILayout.Space(7f);
-            TPSplitterGUILayout.BeginHorizontalSplit(this._minmaxSlider, new GUILayoutOption[0]);
-            TPSplitterGUILayout.EndHorizontalSplit();
+            SplitterGUILayout.BeginHorizontalSplit(this._minmaxSlider, new GUILayoutOption[0]);
+            SplitterGUILayout.EndHorizontalSplit();
             GUILayout.Space(2f);
 
             DrawChart(controlRect2);
@@ -450,6 +453,13 @@ namespace MikuLuaProfiler
                 DrawMonoCurve(m_TreeView.historyCurve, rect);
             }
 
+            if (isShowFpsChart)
+            {
+                Handles.color = new Color32(255, 193, 37, 255) * GUI.skin.label.normal.textColor;
+                DrawFpsCurve(m_TreeView.historyCurve, rect);
+                DrawYAxis(rect);
+            }
+
             var intance = LuaDeepProfilerSetting.Instance;
             if (intance.isRecord && !intance.isStartRecord)
             {
@@ -457,6 +467,22 @@ namespace MikuLuaProfiler
             }
             base.Repaint();
         }
+
+        private void DrawYAxis(Rect xRect)
+        {
+            int intervalCount = 15;
+            float intervalDistance = ((xRect.yMax - xRect.yMin) / 6);
+            Rect rect = new Rect(xRect.x, xRect.yMax, xRect.width, xRect.yMin);
+            Color c = GUI.color;
+            GUI.color = new Color32(255, 193, 37, 255) * GUI.skin.label.normal.textColor;
+            for (int f = 0; f <= 90; f += intervalCount)
+            {
+                rect.y -= intervalDistance;
+                GUI.Label(rect, f.ToString());
+            }
+            GUI.color = c;
+        }
+
         private void DrawLuaCurve(HistoryCurve curve, Rect rect)
         {
             if (curve.IsLuaEmpty()) return;
@@ -541,6 +567,47 @@ namespace MikuLuaProfiler
             }
         }
 
+        private void DrawFpsCurve(HistoryCurve curve, Rect rect)
+        {
+            if (curve.IsFpsEmpty()) return;
+            float split = 1;
+            int count = curve.GetFpsRecordCount(out split);
+            float minValue = curve.minFpsValue;
+            float maxValue = curve.maxFpsValue;
+            float lastPoint = 0;
+            curve.TryGetFpsMemory(0, out lastPoint);
+
+            if (count > 1)
+            {
+                int len = 0;
+                var setting = LuaDeepProfilerSetting.Instance;
+
+                if (setting.isRecord && !setting.isStartRecord)
+                {
+                    len = count - 1;
+                }
+                else
+                {
+                    len = HistoryCurve.RECORD_FRAME_COUNT - 1;
+                }
+
+                for (int i = 1; i < count; i++)
+                {
+                    float currentMetric = 0;
+                    int index = (int)(i * split);
+                    if (!curve.TryGetFpsMemory(index, out currentMetric))
+                    {
+                        continue;
+                    }
+                    Vector3 currentPos = PointFromRect(0, len, i, minValue, maxValue, currentMetric, rect);
+                    Vector3 lastPos = PointFromRect(0, len, i - 1, minValue, maxValue, lastPoint, rect);
+                    lastPoint = currentMetric;
+                    CachedVec[0].Set(lastPos.x, lastPos.y, 0);
+                    CachedVec[1].Set(currentPos.x, currentPos.y, 0f);
+                    Handles.DrawAAPolyLine(2.5f, CachedVec);
+                }
+            }
+        }
         private Vector3 PointFromRect(float minH, float maxH, float h, float minV, float maxV, float v, Rect rect)
         {
             v = Mathf.Max(minV, v);

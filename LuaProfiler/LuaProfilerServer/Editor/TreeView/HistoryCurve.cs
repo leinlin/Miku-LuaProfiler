@@ -16,10 +16,14 @@ namespace MikuLuaProfiler
         #region field
         private int addLuaCount = 0;
         private int addMonoCount = 0;
+        private int addFpsCount = 0;
         public const int splitCount = 60;
         public const int RECORD_FRAME_COUNT = 100;
+
         private readonly List<int> m_luaMemoryHistory;
         private readonly List<int> m_monoMemoryHistory;
+        private readonly List<float> m_fpsHistory;
+
         private LuaDeepProfilerSetting setting = LuaDeepProfilerSetting.Instance;
         #endregion
 
@@ -27,6 +31,7 @@ namespace MikuLuaProfiler
         {
             m_luaMemoryHistory = new List<int>(count);
             m_monoMemoryHistory = new List<int>(count);
+            m_fpsHistory = new List<float>(count);
         }
 
         #region lua
@@ -306,19 +311,155 @@ namespace MikuLuaProfiler
         }
         #endregion
 
+        #region fps
+        private float m_minFpsValue = 0;
+        public float minFpsValue
+        {
+            get
+            {
+                if (m_minFpsValue < 0)
+                {
+                    m_minFpsValue = FindMinFpsValue();
+                }
+
+                return m_minFpsValue;
+            }
+        }
+        private float m_maxFpsValue = 90;
+        private float FindMinFpsValue()
+        {
+            float result = float.MaxValue;
+            int imax = m_fpsHistory.Count - 1;
+            int imin = Mathf.Max(imax - RECORD_FRAME_COUNT, 0);
+            for (int i = imax; i >= imin; --i)
+            {
+                if (result > m_fpsHistory[i])
+                {
+                    result = m_fpsHistory[i];
+                }
+            }
+            return result;
+        }
+
+
+        public float maxFpsValue
+        {
+            get
+            {
+                if (m_maxFpsValue < 0)
+                {
+                    m_maxFpsValue = FindMaxFpsValue();
+                }
+                return m_maxFpsValue;
+            }
+        }
+
+        private float FindMaxFpsValue()
+        {
+            float result = 0;
+            int imax = m_fpsHistory.Count - 1;
+            int imin = Mathf.Max(imax - RECORD_FRAME_COUNT, 0);
+            for (int i = imax; i >= imin; --i)
+            {
+                if (result < m_fpsHistory[i])
+                {
+                    result = m_fpsHistory[i];
+                }
+            }
+            return result;
+        }
+
+        public bool TryGetFpsMemory(int index, out float result)
+        {
+            if (index < 0 || index >= m_fpsHistory.Count)
+            {
+                result = 0;
+                return false;
+            }
+
+            if (setting.isRecord && !setting.isStartRecord)
+            {
+                result = m_fpsHistory[index];
+                return true;
+
+            }
+            else
+            {
+                int firstIndex = Mathf.Max(0, m_fpsHistory.Count - RECORD_FRAME_COUNT);
+                result = m_fpsHistory[firstIndex + index];
+                return true;
+            }
+        }
+
+        public int GetFpsRecordLength()
+        {
+            if (setting.isRecord && !setting.isStartRecord)
+            {
+                return m_fpsHistory.Count;
+            }
+            else
+            {
+                return Mathf.Min(m_fpsHistory.Count, RECORD_FRAME_COUNT);
+            }
+        }
+
+        public int GetFpsRecordCount(out float split)
+        {
+            split = 1;
+            if (setting.isRecord && !setting.isStartRecord)
+            {
+                int count = m_fpsHistory.Count;
+                split = (float)count / 1000;
+                return (int)((float)count / split);
+            }
+            else
+            {
+                return Mathf.Min(m_fpsHistory.Count, RECORD_FRAME_COUNT);
+            }
+        }
+
+        public void SlotFpsMemory(float value)
+        {
+            addFpsCount++;
+
+            if (setting.isRecord && !setting.isStartRecord)
+            {
+                m_fpsHistory.Add(value);
+            }
+            else if (addFpsCount % splitCount == 0)
+            {
+                m_fpsHistory.Add(value);
+                if (m_fpsHistory.Count >= 2 * RECORD_FRAME_COUNT)
+                {
+                    m_fpsHistory.RemoveRange(0, RECORD_FRAME_COUNT - 1);
+                }
+            }
+        }
+
+        public bool IsFpsEmpty()
+        {
+            return m_fpsHistory.Count <= 0;
+        }
+        #endregion
 
         public void Clear()
         {
             m_monoMemoryHistory.Clear();
             m_luaMemoryHistory.Clear();
+            m_fpsHistory.Clear();
+
             addLuaCount = 0;
             addMonoCount = 0;
+            addFpsCount = 0;
 
             m_maxLuaValue = 0;
             m_minLuaValue = 0;
 
             m_maxMonoValue = 0;
             m_minMonoValue = 0;
+
+            m_minFpsValue = 0;
+            m_maxFpsValue = 90;
         }
 
     }

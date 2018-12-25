@@ -34,8 +34,8 @@ namespace MikuLuaProfiler
     public class HookLuaSetup : MonoBehaviour
     {
         #region field
+        public static float fps { private set; get; }
         public static int frameCount { private set; get; }
-        public static bool isPlaying = false;
         #endregion
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
@@ -66,10 +66,10 @@ namespace MikuLuaProfiler
         {
             var inx = LuaDeepProfilerSetting.Instance;
         }
-        private void Update()
+        private void LateUpdate()
         {
-            isPlaying = Application.isPlaying;
             frameCount = Time.frameCount;
+            fps = 1.0f / Time.unscaledDeltaTime;
         }
 
         private void OnApplicationQuit()

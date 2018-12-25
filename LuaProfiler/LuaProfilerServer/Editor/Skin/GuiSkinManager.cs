@@ -13,9 +13,9 @@ using UnityEngine;
 
 namespace MikuLuaProfiler
 {
-    internal static class TPGuiSkinManager
+    internal static class GuiSkinManager
     {
-        public class TPGuiStyleManager
+        public class GuiStyleManager
         {
             public GUIStyle entryOdd = "OL EntryBackOdd";
 
@@ -83,7 +83,7 @@ namespace MikuLuaProfiler
 
 
 
-            public TPGuiStyleManager()
+            public GuiStyleManager()
             {
                 GUIStyle gUIStyle = new GUIStyle("OL Label");
                 gUIStyle.fontStyle = (FontStyle)1;
@@ -104,12 +104,12 @@ namespace MikuLuaProfiler
                 this.foldout = "IN foldout";
                 this.smallHeader = new GUIStyle("OL title");
                 GUIStyle gUIStyle6 = new GUIStyle("OL title");
-                gUIStyle6.font = TPGuiSkinManager.TPSkin.font;
+                gUIStyle6.font = GuiSkinManager.TPSkin.font;
                 gUIStyle6.fontStyle = 0;
                 this.smallLabel = gUIStyle6;
                 GUIStyle gUIStyle7 = new GUIStyle("OL title");
                 gUIStyle7.fontSize = 15;
-                gUIStyle7.font = TPGuiSkinManager.TPSkin.font;
+                gUIStyle7.font = GuiSkinManager.TPSkin.font;
                 gUIStyle7.fontStyle = 0;
                 gUIStyle7.fixedHeight = 0f;
                 gUIStyle7.padding = new RectOffset(0, 0, 5, 5);
@@ -117,7 +117,7 @@ namespace MikuLuaProfiler
                 this.largeHeader1 = gUIStyle7;
                 GUIStyle gUIStyle8 = new GUIStyle("OL title");
                 gUIStyle8.fontSize = 15;
-                gUIStyle8.font = TPGuiSkinManager.TPSkin.font;
+                gUIStyle8.font = GuiSkinManager.TPSkin.font;
                 gUIStyle8.fontStyle = 0;
                 gUIStyle8.fixedHeight = 0f;
                 gUIStyle8.padding = new RectOffset(7, 0, 5, 5);
@@ -125,7 +125,7 @@ namespace MikuLuaProfiler
                 this.largeHeader2 = gUIStyle8;
                 GUIStyle gUIStyle9 = new GUIStyle("button");
                 gUIStyle9.fontSize = 15;
-                gUIStyle9.font = TPGuiSkinManager.TPSkin.font;
+                gUIStyle9.font = GuiSkinManager.TPSkin.font;
                 gUIStyle9.fontStyle = 0;
                 gUIStyle9.fixedHeight = 0f;
                 gUIStyle9.padding = new RectOffset(0, 0, 10, 10);
@@ -133,7 +133,7 @@ namespace MikuLuaProfiler
                 this.mode = gUIStyle9;
                 GUIStyle gUIStyle10 = new GUIStyle("ButtonLeft");
                 gUIStyle10.fontSize = 15;
-                gUIStyle10.font = TPGuiSkinManager.TPSkin.font;
+                gUIStyle10.font = GuiSkinManager.TPSkin.font;
                 gUIStyle10.fontStyle = 0;
                 gUIStyle10.fixedHeight = 0f;
                 gUIStyle10.padding = new RectOffset(0, 0, 10, 10);
@@ -141,7 +141,7 @@ namespace MikuLuaProfiler
                 this.buttonLeft = gUIStyle10;
                 GUIStyle gUIStyle11 = new GUIStyle("ButtonRight");
                 gUIStyle11.fontSize = 15;
-                gUIStyle11.font = TPGuiSkinManager.TPSkin.font;
+                gUIStyle11.font = GuiSkinManager.TPSkin.font;
                 gUIStyle11.fontStyle = 0;
                 gUIStyle11.fixedHeight = 0f;
                 gUIStyle11.padding = new RectOffset(0, 0, 10, 10);
@@ -149,7 +149,7 @@ namespace MikuLuaProfiler
                 this.buttonRight = gUIStyle11;
                 GUIStyle gUIStyle12 = new GUIStyle("button");
                 gUIStyle12.fontSize = 15;
-                gUIStyle12.font = TPGuiSkinManager.TPSkin.font;
+                gUIStyle12.font = GuiSkinManager.TPSkin.font;
                 gUIStyle12.fontStyle = 0;
                 gUIStyle12.fixedHeight = 0f;
                 gUIStyle12.padding = new RectOffset(0, 0, 5, 5);
@@ -174,32 +174,32 @@ namespace MikuLuaProfiler
 
         private static GUISkin _tpSkin = null;
 
-        private static TPGuiSkinManager.TPGuiStyleManager _styles = null;
+        private static GuiSkinManager.GuiStyleManager _styles = null;
 
         public static GUISkin TPSkin
         {
             get
             {
-                if (TPGuiSkinManager._tpSkin == null)
+                if (GuiSkinManager._tpSkin == null)
                 {
-                    TPGuiSkinManager._tpSkin = (AssetDatabase.LoadAssetAtPath("Assets/LuaProfilerServer/Editor/Skin/TopFunctionsGUISkin.guiskin", typeof(GUISkin)) as GUISkin);
+                    GuiSkinManager._tpSkin = (AssetDatabase.LoadAssetAtPath("Assets/LuaProfilerServer/Editor/Skin/GUISkin.guiskin", typeof(GUISkin)) as GUISkin);
                 }
-                return TPGuiSkinManager._tpSkin;
+                return GuiSkinManager._tpSkin;
             }
             private set
             {
             }
         }
 
-        public static TPGuiSkinManager.TPGuiStyleManager Styles
+        public static GuiSkinManager.GuiStyleManager Styles
         {
             get
             {
-                if (TPGuiSkinManager._styles == null)
+                if (GuiSkinManager._styles == null)
                 {
-                    TPGuiSkinManager._styles = new TPGuiSkinManager.TPGuiStyleManager();
+                    GuiSkinManager._styles = new GuiSkinManager.GuiStyleManager();
                 }
-                return TPGuiSkinManager._styles;
+                return GuiSkinManager._styles;
             }
         }
     }

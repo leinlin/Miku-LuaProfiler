@@ -23,6 +23,7 @@ namespace MikuLuaProfiler
 
         public int calls;
         public int frameCount;
+        public float fps;
         public int costLuaGC;
         public int costMonoGC;
         public string name;
@@ -107,7 +108,8 @@ namespace MikuLuaProfiler
             s.currentTime = time;
             s.currentLuaMemory = memory;
             s.currentMonoMemory = (int)GC.GetTotalMemory(false);
-            s.frameCount = LuaProfiler.m_frameCount;
+            s.frameCount = HookLuaSetup.frameCount;
+            s.fps = HookLuaSetup.fps;
             s.costLuaGC = 0;
             s.costMonoGC = 0;
             s.name = name;
@@ -118,8 +120,6 @@ namespace MikuLuaProfiler
 
             return s;
         }
-
-
 
         public void Restore()
         {
@@ -173,6 +173,8 @@ namespace MikuLuaProfiler
 
             s.calls = calls;
             s.frameCount = frameCount;
+            s.fps = fps;
+            s.costMonoGC = costMonoGC;
             s.costLuaGC = costLuaGC;
             s.name = name;
             s.costTime = costTime;
@@ -183,9 +185,11 @@ namespace MikuLuaProfiler
                 Sample child = childs[i].Clone();
                 child.fahter = s;
             }
-            s.captureUrl = captureUrl;
-            s.currentLuaMemory = currentLuaMemory;
 
+            s.currentLuaMemory = currentLuaMemory;
+            s.currentMonoMemory = currentMonoMemory;
+            s.currentTime = currentTime;
+            s.captureUrl = captureUrl;
             return s;
         }
         #endregion
