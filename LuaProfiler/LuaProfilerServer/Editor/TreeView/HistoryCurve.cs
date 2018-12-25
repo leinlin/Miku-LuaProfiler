@@ -109,11 +109,26 @@ namespace MikuLuaProfiler
             }
         }
 
-        public int GetLuaRecordCount()
+        public int GetLuaRecordLength()
         {
             if (setting.isRecord && !setting.isStartRecord)
             {
                 return m_luaMemoryHistory.Count;
+            }
+            else
+            {
+                return Mathf.Min(m_luaMemoryHistory.Count, RECORD_FRAME_COUNT);
+            }
+        }
+
+        public int GetLuaRecordCount(out float split)
+        {
+            split = 1;
+            if (setting.isRecord && !setting.isStartRecord)
+            {
+                int count = m_luaMemoryHistory.Count;
+                split = (float)count / 1000;
+                return (int)((float)count / split);
             }
             else
             {
@@ -184,8 +199,6 @@ namespace MikuLuaProfiler
             }
             return (float)result;
         }
-
-
         public float maxMonoValue
         {
             get
@@ -197,7 +210,6 @@ namespace MikuLuaProfiler
                 return m_maxMonoValue;
             }
         }
-
         private float FindMaxMonoValue()
         {
             int result = 0;
@@ -212,7 +224,6 @@ namespace MikuLuaProfiler
             }
             return (float)result;
         }
-
         public bool TryGetMonoMemory(int index, out float result)
         {
             if (index < 0 || index >= m_monoMemoryHistory.Count)
@@ -234,12 +245,26 @@ namespace MikuLuaProfiler
                 return true;
             }
         }
-
-        public int GetMonoRecordCount()
+        public int GetMonoRecordLength()
         {
             if (setting.isRecord && !setting.isStartRecord)
             {
                 return m_monoMemoryHistory.Count;
+            }
+            else
+            {
+                return Mathf.Min(m_monoMemoryHistory.Count, RECORD_FRAME_COUNT);
+            }
+        }
+
+        public int GetMonoRecordCount(out float split)
+        {
+            split = 1;
+            if (setting.isRecord && !setting.isStartRecord)
+            {
+                int count = m_monoMemoryHistory.Count;
+                split = (float)count / 1000;
+                return (int)((float)count / split);
             }
             else
             {

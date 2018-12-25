@@ -446,7 +446,7 @@ namespace MikuLuaProfiler
 
             if (isShowMonoChart)
             {
-                Handles.color = new Color32(154, 255, 154, 255);
+                Handles.color = new Color32(154, 255, 154, 255) * GUI.skin.label.normal.textColor;
                 DrawMonoCurve(m_TreeView.historyCurve, rect);
             }
 
@@ -460,7 +460,8 @@ namespace MikuLuaProfiler
         private void DrawLuaCurve(HistoryCurve curve, Rect rect)
         {
             if (curve.IsLuaEmpty()) return;
-            int count = curve.GetLuaRecordCount();
+            float split = 1;
+            int count = curve.GetLuaRecordCount(out split);
             float minValue = curve.minLuaValue;
             float maxValue = curve.maxLuaValue;
             float lastPoint = 0;
@@ -483,7 +484,8 @@ namespace MikuLuaProfiler
                 for (int i = 1; i < count; i++)
                 {
                     float currentMetric = 0;
-                    if (!curve.TryGetLuaMemory(i, out currentMetric))
+                    int index = (int)(i * split);
+                    if (!curve.TryGetLuaMemory(index, out currentMetric))
                     {
                         continue;
                     }
@@ -500,7 +502,8 @@ namespace MikuLuaProfiler
         private void DrawMonoCurve(HistoryCurve curve, Rect rect)
         {
             if (curve.IsMonoEmpty()) return;
-            int count = curve.GetMonoRecordCount();
+            float split = 1;
+            int count = curve.GetMonoRecordCount(out split);
             float minValue = curve.minMonoValue;
             float maxValue = curve.maxMonoValue;
             float lastPoint = 0;
@@ -523,7 +526,8 @@ namespace MikuLuaProfiler
                 for (int i = 1; i < count; i++)
                 {
                     float currentMetric = 0;
-                    if (!curve.TryGetMonoMemory(i, out currentMetric))
+                    int index = (int)(i * split);
+                    if (!curve.TryGetMonoMemory(index, out currentMetric))
                     {
                         continue;
                     }
@@ -553,7 +557,7 @@ namespace MikuLuaProfiler
 
         void HandleInputForChart(Rect expandRect)
         {
-            int metricCount = m_TreeView.historyCurve.GetLuaRecordCount();
+            int metricCount = m_TreeView.historyCurve.GetLuaRecordLength();
 
             if (metricCount == 0) return;
 

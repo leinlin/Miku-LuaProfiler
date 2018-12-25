@@ -275,6 +275,7 @@ namespace MikuLuaProfiler
         #endregion
 
         #region field
+        private static Color m_luaColor = new Color(0.4f, 0.7f, 0.9f, 1.0f);
         private List<int> m_expandIds = new List<int>();
         private readonly LuaProfilerTreeViewItem m_root;
         private readonly List<TreeViewItem> m_treeViewItems = new List<TreeViewItem>();
@@ -914,7 +915,11 @@ namespace MikuLuaProfiler
             Color color = m_gs.normal.textColor;
             if (item.line != -1)
             {
-                m_gs.normal.textColor = Color.green;
+                m_gs.normal.textColor = m_luaColor * color;
+            }
+            else
+            {
+                m_gs.normal.textColor = color * Color.green;
             }
             Rect r = args.GetCellRect(0);
             args.rowRect = r;
