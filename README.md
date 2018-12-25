@@ -55,7 +55,8 @@ Click **Record** button, when game connect to server, toggle **StartRecord** to 
 - click __'<<'__ 、 __'>>'__ to fast locate the frames control by 
 **Capture Lua GC**、**Capture Mono GC**、**Frame Count**
 
-<br/>
+##
+![](doc/record.gif)
 
 ### On-device Profiler
 Set macro **USE_LUA_PROFILER** to inject profiler code in you App.If you want to use **luac code or luajit bytecode** ,use **InjectLua.exe** in folder tools To inject the lua profiler code.
