@@ -27,6 +27,8 @@ It use mono.ceil's IL inject feature(also use in XLua),inject the profiler code 
 
 ### Tutors
 
+you must open two unity projects,one for Client ,one for Server
+
 #### Config your client
 
 Open windows by **"Window->Lua Profiler Window"**, toggle profiler's feature and configure the server ip address.
