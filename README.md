@@ -19,10 +19,10 @@ If you find any bug or have any suggests join the QQ group：[882425563](https:/
 ### Deploy and Install
 Lua Profiler For Unity supports **XLua**、**SLua**、**ToLua** and also a remote profiler tool so it supports **Windows**、**Android**、**IOS** On-device Profiler.
 
-- You must open two unity projects,one for game client ,one for editor server
+- You must open two Unity projects,one for game client ,one for editor server
 - Open **LuaProfiler** folder
 - Copy **LuaProfilerClient** folder to you game project content,if your C# Lua script is in **Plugins** folder,Copy **LuaProfilerClient** to **Plugins**.This Tool must make sure That code must in the same DLL which has C# lua codes.If you already import Mono.ceil library,delete `LuaProfilerClient/Editor/Ceil`
-- Use **Unity5.6 or newer** unity version to create a project, copy **LuaProfilerServer** to the project content
+- Use **Unity5.6 or Newer** Unity version to create a project, copy **LuaProfilerServer** to the project content
 
 ### Datas Descriptions
 
