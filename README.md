@@ -21,7 +21,7 @@ Lua Profiler For Unity supports **XLua**、**SLua**、**ToLua** and also a remot
 
 - You must open two unity projects,one for game client ,one for editor server
 - Open **LuaProfiler** folder
-- Copy **LuaProfilerClient** folder to you game project content,if your C# Lua script is in **Plugins** folder,Copy **LuaProfilerClient** to **Plugins**.This Tool must make sure That code must in the same DLL which has C# lua codes.
+- Copy **LuaProfilerClient** folder to you game project content,if your C# Lua script is in **Plugins** folder,Copy **LuaProfilerClient** to **Plugins**.This Tool must make sure That code must in the same DLL which has C# lua codes.If you already import Mono.ceil Library,delete `LuaProfilerClient/Editor/Ceil`
 - Use **Unity5.6 or newer** unity version to create a project, copy **LuaProfilerServer** to the project content
 
 ### Datas Descriptions
