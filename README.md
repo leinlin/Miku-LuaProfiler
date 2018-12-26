@@ -32,7 +32,7 @@ Lua Profiler For Unity supports **XLua**、**SLua**、**ToLua** and also a remot
 | `totalLuaMemory`        | The sum of all Lua GCs produced by this function If GC happens then the value will not be very accurate   |
 | `self`                  | The amount of GC produced by the function itself,**If the value is negative, the subfunction produces a GC**  |
 | `totalMonoMemory`       | The sum of all Mono GCs produced by this function If GC happens then the value will not be very accurate  |
-| `self`                  | The amount of GC produced by the function itself                                                          |
+| `self`                  | The amount of GC produced by the function itself ,**If the value is negative, the subfunction produces a GC** |
 | `currentTime`           | The time it takes for the function to run in current frame                                                |
 | `averageTime`           | Count the average value of the time spent on the function                                                 |
 | `totalTime`             | All the time consumed by this function                                                                    |
