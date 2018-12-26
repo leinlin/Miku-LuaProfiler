@@ -52,7 +52,9 @@ It use mono.ceil's IL inject feature(also use in XLua),inject the profiler code 
 
 Open windows by **"Window->Lua Profiler Window"**, toggle profiler's feature and configure the server ip address.
 ## 
-![](doc/config_client.png)
+![](doc/config_client.png)<br/>
+
+Select the kind of code you want profiler,C# code color is green,and lua code color is blue.<br/>
 
 #### Open server
 Also open windows by **"Window->Lua Profiler Window"**, then click **OpenService**,wait for client connects
@@ -62,6 +64,12 @@ Also open windows by **"Window->Lua Profiler Window"**, then click **OpenService
 ## 
 ![](doc/profiler.gif)
 ## 
+
+### Charts
+- Toggle `LuaChart` to open lua memory chart,line color is blue.
+- Toggle `MonoChart` to open mono memory chart,line color is green.
+- Toggle `FpsChart` to open fps chart,line color is orange.
+
 
 #### Record mode
 Click **Record** button, when game connect to server, toggle **StartRecord** to start or stop record.
