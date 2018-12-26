@@ -175,7 +175,7 @@ namespace MikuLuaProfiler
             return m_key++;
         }
 
-        private static Dictionary<string, KeyValuePair<int, byte[]>> m_strDict = new Dictionary<string, KeyValuePair<int, byte[]>>(4096);
+        private static Dictionary<string, KeyValuePair<int, byte[]>> m_strDict = new Dictionary<string, KeyValuePair<int, byte[]>>(8192);
         private static bool GetBytes(string s, out byte[] result, out int index)
         {
             bool ret = true;
