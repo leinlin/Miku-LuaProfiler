@@ -534,13 +534,12 @@ namespace MikuLuaProfiler
                 startUrl = null;
                 endUrl = null;
                 historyCurve.Clear();
+                //EditorUtility.UnloadUnusedAssetsImmediate();
             }
 
             m_luaMemory = 0;
             m_monoMemory = 0;
             needRebuild = true;
-            GC.Collect();
-            EditorUtility.UnloadUnusedAssetsImmediate();
         }
 
         protected override void DoubleClickedItem(int id)

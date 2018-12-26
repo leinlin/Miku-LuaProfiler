@@ -161,8 +161,6 @@ namespace MikuLuaProfiler
             {
                 UnityEngine.Debug.Log(e);
             }
-
-            GC.Collect();
             if (acceptThread != null)
             {
                 try
