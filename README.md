@@ -68,6 +68,8 @@ Click **Record** button, when game connect to server, toggle **StartRecord** to 
 
 ##### Record button feature
 
+##
+![](doc/use3.gif)<br/>
 
 - drag slider to modify samples
 - click __'<'__ 、 __'>'__ to increase or discrease frames one by one
@@ -76,8 +78,6 @@ Click **Record** button, when game connect to server, toggle **StartRecord** to 
 - stop record and press left or right arrow keybord to increase or discrease frames one by one
 
 ##
-![](doc/use3.gif)
-<br/>
 ![](doc/record.gif)
 
 ### On-device Profiler
