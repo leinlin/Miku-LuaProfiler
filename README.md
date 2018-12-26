@@ -65,7 +65,7 @@ Also open windows by **"Window->Lua Profiler Window"**, then click **OpenService
 ![](doc/profiler.gif)
 ## 
 
-### Charts
+#### Charts
 - Toggle `LuaChart` to open lua memory chart,line color is blue.
 - Toggle `MonoChart` to open mono memory chart,line color is green.
 - Toggle `FpsChart` to open fps chart,line color is orange.
