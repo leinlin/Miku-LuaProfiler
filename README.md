@@ -8,6 +8,9 @@ this tool is designed to support an **easy-to-use profiler** for unity that help
 ### Test Demo 
 use administrator mode to run the **link.bat** <br/>
 
+### Use renderings
+![](doc/use.gif)
+
 ##
 
 ### Contact
@@ -73,6 +76,8 @@ Click **Record** button, when game connect to server, toggle **StartRecord** to 
 - stop record and press left or right arrow keybord to increase or discrease frames one by one
 
 ##
+![](doc/use3.gif)
+<br/>
 ![](doc/record.gif)
 
 ### On-device Profiler
