@@ -54,7 +54,6 @@ namespace MikuLuaProfiler
         private static TcpListener tcpLister;
         private static TcpClient tcpClient = null;
         private static Thread acceptThread;
-        private const int BUFF_LEN = 10 * 1024 * 1024;
 
         private const int PACK_HEAD = 0x23333333;
         private static Action<Sample> m_onReceive;
@@ -90,7 +89,6 @@ namespace MikuLuaProfiler
             {
                 tcpClient = tcpLister.AcceptTcpClient();
                 UnityEngine.Debug.Log("link start");
-                tcpClient.ReceiveBufferSize = BUFF_LEN;
                 tcpClient.ReceiveTimeout = 1000000;
             }
             catch
@@ -100,7 +98,7 @@ namespace MikuLuaProfiler
             }
             NetworkStream ns = tcpClient.GetStream();
             BinaryReader br = new BinaryReader(ns);
-            ns.ReadTimeout = 6000;
+            ns.ReadTimeout = 600000;
             //sign为true 循环接受数据
             while (true)
             {

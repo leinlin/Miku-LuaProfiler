@@ -24,7 +24,6 @@ namespace MikuLuaProfiler
         private static Queue<Sample> m_sampleQueue = new Queue<Sample>(256);
         private const int PACK_HEAD = 0x23333333;
         private static SocketError errorCode;
-        private const int BUFF_LEN = 10 * 1024 * 1024;
         private static NetworkStream ns;
         private static BinaryWriter bw;
 
@@ -35,15 +34,14 @@ namespace MikuLuaProfiler
 
             m_client = new TcpClient();
 
-            m_client.SendBufferSize = BUFF_LEN;
-            m_client.NoDelay = true;
+            m_client.NoDelay = false;
             try
             {
                 m_client.Connect(host, port);
 
                 UnityEngine.Debug.Log("<color=#00ff00>connect success</color>");
                 m_client.Client.SendTimeout = 30000;
-                m_sampleDict.Clear();
+                //m_sampleDict.Clear();
                 m_strDict.Clear();
                 m_key = 0;
                 ns = m_client.GetStream();
@@ -90,24 +88,14 @@ namespace MikuLuaProfiler
             }
         }
 
-        private static Dictionary<string, Sample> m_sampleDict = new Dictionary<string, Sample>(256);
+        //private static Dictionary<string, Sample> m_sampleDict = new Dictionary<string, Sample>(256);
 
         public static void SendMessage(Sample sample)
         {
             if (m_client == null) return;
-            lock (m_sampleDict)
+            lock (m_sampleQueue)
             {
-                Sample s;
-                if (m_sampleDict.TryGetValue(sample.name, out s))
-                {
-                    s.AddSample(sample);
-                    sample.Restore();
-                }
-                else
-                {
-                    m_sampleDict.Add(sample.name, sample);
-                    m_sampleQueue.Enqueue(sample);
-                }
+                m_sampleQueue.Enqueue(sample);
 
             }
         }
@@ -126,10 +114,6 @@ namespace MikuLuaProfiler
                         return;
                     }
 
-                    lock (m_sampleDict)
-                    {
-                        m_sampleDict.Clear();
-                    }
                     if (m_sampleQueue.Count > 0)
                     {
                         while (m_sampleQueue.Count > 0)
@@ -142,13 +126,11 @@ namespace MikuLuaProfiler
                             }
                             Serialize(s, bw);
                             s.Restore();
-                            ns.Flush();
                         }
                     }
                     else
                     {
                         bw.Write((int)0);
-                        ns.Flush();
                     }
 
 
