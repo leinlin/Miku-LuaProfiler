@@ -38,8 +38,10 @@ namespace MikuLuaProfiler
         public static int frameCount { private set; get; }
         #endregion
 
+#if UNITY_5 || UNITY_2017_1_OR_NEWER
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
-        private static void OnStartGame()
+#endif
+        public static void OnStartGame()
         {
             var setting = LuaDeepProfilerSetting.MakeInstance();
             LuaProfiler.mainThreadId = System.Threading.Thread.CurrentThread.ManagedThreadId;
