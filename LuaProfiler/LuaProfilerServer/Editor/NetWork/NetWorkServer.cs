@@ -140,7 +140,7 @@ namespace MikuLuaProfiler
                     Close();
                 }
 #pragma warning restore 0168
-                Thread.Sleep(0);
+                Thread.Sleep(10);
             }
         }
 
