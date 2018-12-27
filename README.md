@@ -24,7 +24,9 @@ Lua Profiler For Unity supports **XLua**、**SLua**、**ToLua** and also a remot
 - Copy **LuaProfilerClient** folder to you game project content,if your C# Lua script is in **Plugins** folder,Copy **LuaProfilerClient** to **Plugins**.This Tool must make sure That code must in the same DLL which has C# lua codes.If you already import Mono.ceil library,delete `LuaProfilerClient/Editor/Ceil`
 - Use **Unity5.6 or Newer** Unity version to create a project, copy **LuaProfilerServer** to the project content
 - If your Unity version is below 4,call the following code before start the game.
-
+```
+MikuLuaProfiler.HookLuaSetup.OnStartGame();
+```
 
 ### Datas Descriptions
 
@@ -45,9 +47,7 @@ Lua Profiler For Unity supports **XLua**、**SLua**、**ToLua** and also a remot
 
 ### Theory
 It use mono.ceil's IL inject feature(also use in XLua),inject the profiler code to game code
-```
-MikuLuaProfiler.HookLuaSetup.OnStartGame();
-```
+
 ## 
 
 ### Tutors
