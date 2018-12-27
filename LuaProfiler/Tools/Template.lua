@@ -20,7 +20,7 @@ function()
 end
 
 function()
-    return function()print("fk")end
+    return function()print("\u888fk")end
 end
 
 function()

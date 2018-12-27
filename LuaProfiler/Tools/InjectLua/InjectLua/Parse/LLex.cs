@@ -621,7 +621,7 @@ namespace MikuLuaProfiler
 
                                 case '\n':
                                 case '\r': _Save('\n'); _IncLineNumber(); continue;
-
+                                case 'u' :
                                 case '\\':
                                 case '\"':
                                 case '\'': c = (byte)Current; break;
