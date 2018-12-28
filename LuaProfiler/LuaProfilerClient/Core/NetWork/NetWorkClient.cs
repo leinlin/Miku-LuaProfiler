@@ -25,7 +25,7 @@ namespace MikuLuaProfiler
         private const int PACK_HEAD = 0x23333333;
         private static SocketError errorCode;
         private static NetworkStream ns;
-        private static BinaryWriter bw;
+        private static MBinaryWriter bw;
 
         #region public
         public static void ConnectServer(string host, int port)
@@ -45,7 +45,7 @@ namespace MikuLuaProfiler
                 m_strDict.Clear();
                 m_key = 0;
                 ns = m_client.GetStream();
-                bw = new BinaryWriter(ns);
+                bw = new MBinaryWriter(ns);
 
                 m_sendThread = new Thread(new ThreadStart(DoSendMessage));
                 m_sendThread.Start();
