@@ -6,11 +6,6 @@ using NumberStyles = System.Globalization.NumberStyles;
 
 namespace MikuLuaProfiler
 {
-    public class LLexException : Exception
-    {
-        public LLexException(string info) : base(info) { }
-    }
-
     public enum TK
     {
         // reserved words

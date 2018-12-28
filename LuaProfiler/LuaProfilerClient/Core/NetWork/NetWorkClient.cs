@@ -34,7 +34,7 @@ namespace MikuLuaProfiler
 
             m_client = new TcpClient();
 
-            m_client.NoDelay = false;
+            m_client.NoDelay = true;
             try
             {
                 m_client.Connect(host, port);

@@ -229,8 +229,6 @@ namespace MikuLuaProfiler
                         } 
                     }
 
-
-
                     if (item.IsAbstract)
                     {
                         continue;
@@ -412,6 +410,16 @@ namespace MikuLuaProfiler
         #endregion
 
         #region tool
+        private static SequencePoint GetSequencePoint(MethodBody body)
+        {
+            if (body == null)
+            {
+                return null;
+            }
+            Instruction instruction = body.Instructions.FirstOrDefault(x => x.SequencePoint != null);
+            return instruction == null ? null : instruction.SequencePoint;
+        }
+
         public static AssemblyDefinition LoadAssembly(string path, bool needRead)
         {
             AssemblyDefinition result = null;
