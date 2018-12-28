@@ -26,12 +26,12 @@ namespace MikuLuaProfiler
         private static SocketError errorCode;
         private static NetworkStream ns;
         private static MBinaryWriter bw;
+        private static int m_frameCount = 0;
 
         #region public
         public static void ConnectServer(string host, int port)
         {
             if (m_client != null) return;
-
             m_client = new TcpClient();
 
             m_client.NoDelay = true;
@@ -128,12 +128,15 @@ namespace MikuLuaProfiler
                             s.Restore();
                         }
                     }
-                    else
+                    else if(m_frameCount != HookLuaSetup.frameCount)
                     {
-                        bw.Write((int)0);
+                        bw.Write(PACK_HEAD);
+                        Sample s = Sample.Create(0, 0, "");
+                        Serialize(s, bw);
+                        s.Restore();
                     }
 
-
+                    m_frameCount = HookLuaSetup.frameCount;
                     Thread.Sleep(10);
                 }
 #pragma warning disable 0168
@@ -183,6 +186,7 @@ namespace MikuLuaProfiler
             bw.Write(s.calls);
             bw.Write(s.frameCount);
             bw.Write(s.fps);
+            bw.Write(s.pss);
             bw.Write(s.costLuaGC);
             bw.Write(s.costMonoGC);
             byte[] datas;

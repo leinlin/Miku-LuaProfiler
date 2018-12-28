@@ -17,12 +17,14 @@ namespace MikuLuaProfiler
         private int addLuaCount = 0;
         private int addMonoCount = 0;
         private int addFpsCount = 0;
+        private int addPssCount = 0;
         public const int splitCount = 60;
         public const int RECORD_FRAME_COUNT = 100;
 
         private readonly List<int> m_luaMemoryHistory;
         private readonly List<int> m_monoMemoryHistory;
         private readonly List<float> m_fpsHistory;
+        private readonly List<int> m_pssHistory;
 
         private LuaDeepProfilerSetting setting = LuaDeepProfilerSetting.Instance;
         #endregion
@@ -32,6 +34,7 @@ namespace MikuLuaProfiler
             m_luaMemoryHistory = new List<int>(count);
             m_monoMemoryHistory = new List<int>(count);
             m_fpsHistory = new List<float>(count);
+            m_pssHistory = new List<int>(count);
         }
 
         #region lua
@@ -63,7 +66,6 @@ namespace MikuLuaProfiler
             }
             return (float)result;
         }
-
 
         public float maxLuaValue
         {
@@ -421,7 +423,7 @@ namespace MikuLuaProfiler
         public void SlotFpsMemory(float value)
         {
             addFpsCount++;
-
+            value = Mathf.Min(90, value);
             if (setting.isRecord && !setting.isStartRecord)
             {
                 m_fpsHistory.Add(value);
@@ -442,15 +444,158 @@ namespace MikuLuaProfiler
         }
         #endregion
 
+        #region pss
+        private float m_minPssValue = int.MaxValue;
+        public float minPssValue
+        {
+            get
+            {
+                if (m_minPssValue < 0)
+                {
+                    m_minPssValue = FindMinPssValue();
+                }
+
+                return m_minPssValue;
+            }
+        }
+        private float m_maxPssValue = 0;
+        private float FindMinPssValue()
+        {
+            int result = int.MaxValue;
+            int imax = m_pssHistory.Count - 1;
+            int imin = Mathf.Max(imax - RECORD_FRAME_COUNT, 0);
+            for (int i = imax; i >= imin; --i)
+            {
+                if (result > m_pssHistory[i])
+                {
+                    result = m_pssHistory[i];
+                }
+            }
+            return (float)result;
+        }
+
+
+        public float maxPssValue
+        {
+            get
+            {
+                if (m_maxPssValue < 0)
+                {
+                    m_maxPssValue = FindMaxPssValue();
+                }
+                return m_maxPssValue;
+            }
+        }
+
+        private float FindMaxPssValue()
+        {
+            int result = 0;
+            int imax = m_pssHistory.Count - 1;
+            int imin = Mathf.Max(imax - RECORD_FRAME_COUNT, 0);
+            for (int i = imax; i >= imin; --i)
+            {
+                if (result < m_pssHistory[i])
+                {
+                    result = m_pssHistory[i];
+                }
+            }
+            return (float)result;
+        }
+
+        public bool TryGetPssMemory(int index, out float result)
+        {
+            if (index < 0 || index >= m_pssHistory.Count)
+            {
+                result = 0;
+                return false;
+            }
+
+            if (setting.isRecord && !setting.isStartRecord)
+            {
+                result = m_pssHistory[index];
+                return true;
+
+            }
+            else
+            {
+                int firstIndex = Mathf.Max(0, m_pssHistory.Count - RECORD_FRAME_COUNT);
+                result = m_pssHistory[firstIndex + index];
+                return true;
+            }
+        }
+
+        public int GetPssRecordLength()
+        {
+            if (setting.isRecord && !setting.isStartRecord)
+            {
+                return m_pssHistory.Count;
+            }
+            else
+            {
+                return Mathf.Min(m_pssHistory.Count, RECORD_FRAME_COUNT);
+            }
+        }
+
+        public int GetPssRecordCount(out float split)
+        {
+            split = 1;
+            if (setting.isRecord && !setting.isStartRecord)
+            {
+                int count = m_pssHistory.Count;
+                split = (float)count / 1000;
+                return (int)((float)count / split);
+            }
+            else
+            {
+                return Mathf.Min(m_pssHistory.Count, RECORD_FRAME_COUNT);
+            }
+        }
+
+        public void SlotPssMemory(int value)
+        {
+            addPssCount++;
+            if (value < m_minPssValue && value != 0)
+            {
+                m_minPssValue = value;
+            }
+            if (value > m_maxPssValue)
+            {
+                m_maxPssValue = value;
+            }
+
+            if (setting.isRecord && !setting.isStartRecord)
+            {
+                m_pssHistory.Add(value);
+            }
+            else if (addPssCount % splitCount == 0)
+            {
+                m_pssHistory.Add(value);
+                if (m_pssHistory.Count >= 2 * RECORD_FRAME_COUNT)
+                {
+                    m_pssHistory.RemoveRange(0, RECORD_FRAME_COUNT - 1);
+                    m_minPssValue = -1;
+                    m_maxPssValue = -1;
+                }
+            }
+        }
+
+        public bool IsPssEmpty()
+        {
+            return m_pssHistory.Count <= 0;
+        }
+        #endregion
+
         public void Clear()
         {
             m_monoMemoryHistory.Clear();
             m_luaMemoryHistory.Clear();
             m_fpsHistory.Clear();
+            m_pssHistory.Clear();
 
             addLuaCount = 0;
             addMonoCount = 0;
             addFpsCount = 0;
+            addPssCount = 0;
 
             m_maxLuaValue = 0;
             m_minLuaValue = 0;
@@ -460,6 +605,9 @@ namespace MikuLuaProfiler
 
             m_minFpsValue = 0;
             m_maxFpsValue = 90;
+
+            m_minPssValue = 0;
+            m_maxPssValue = 0;
         }
 
     }

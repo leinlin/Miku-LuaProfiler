@@ -50,6 +50,20 @@ namespace MikuLuaProfiler
         #endregion
 
         #region api
+        public static int GetLuaMemorySize()
+        {
+            long result = 0;
+            if (mainL != IntPtr.Zero)
+            {
+                try
+                {
+                    result = LuaLib.GetLuaMemory(mainL);
+                }
+                catch { }
+            }
+
+            return (int)result;
+        }
         public static string GetLuaMemory()
         {
             long result = 0;

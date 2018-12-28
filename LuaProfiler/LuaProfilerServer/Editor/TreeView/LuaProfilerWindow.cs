@@ -61,6 +61,7 @@ namespace MikuLuaProfiler
         private bool isShowLuaChart = true;
         private bool isShowMonoChart = false;
         private bool isShowFpsChart = false;
+        private bool isShowPssChart = true;
         private int currentFrameIndex = 0;
 
         private string oldStartUrl = null;
@@ -165,6 +166,8 @@ namespace MikuLuaProfiler
             isShowMonoChart = GUILayout.Toggle(isShowMonoChart, "MonoChart", EditorStyles.toolbarButton, GUILayout.Height(30));
             GUILayout.Space(5);
             isShowFpsChart = GUILayout.Toggle(isShowFpsChart, "FpsChart", EditorStyles.toolbarButton, GUILayout.Height(30));
+            GUILayout.Space(5);
+            isShowPssChart = GUILayout.Toggle(isShowPssChart, "PssChart", EditorStyles.toolbarButton, GUILayout.Height(30));
             GUILayout.Space(25);
             #endregion
 
@@ -200,6 +203,8 @@ namespace MikuLuaProfiler
 
             GUILayout.Space(15);
             GUILayout.Label(string.Format("Mono Total:{0}", m_TreeView.GetMonoMemory()), EditorStyles.toolbarButton, GUILayout.Height(30));
+            GUILayout.Space(15);
+            GUILayout.Label(string.Format("Pss Total:{0}", m_TreeView.GetPssMemory()), EditorStyles.toolbarButton, GUILayout.Height(30));
             GUILayout.Space(25);
             #endregion
 
@@ -460,6 +465,12 @@ namespace MikuLuaProfiler
                 DrawYAxis(rect);
             }
 
+            if (isShowPssChart)
+            {
+                Handles.color = Color.red;
+                DrawPssCurve(m_TreeView.historyCurve, rect);
+            }
+
             var intance = LuaDeepProfilerSetting.Instance;
             if (intance.isRecord && !intance.isStartRecord)
             {
@@ -608,6 +619,49 @@ namespace MikuLuaProfiler
                 }
             }
         }
+
+        private void DrawPssCurve(HistoryCurve curve, Rect rect)
+        {
+            if (curve.IsPssEmpty()) return;
+            float split = 1;
+            int count = curve.GetPssRecordCount(out split);
+            float minValue = curve.minPssValue;
+            float maxValue = curve.maxPssValue;
+            float lastPoint = 0;
+            curve.TryGetPssMemory(0, out lastPoint);
+
+            if (count > 1)
+            {
+                int len = 0;
+                var setting = LuaDeepProfilerSetting.Instance;
+
+                if (setting.isRecord && !setting.isStartRecord)
+                {
+                    len = count - 1;
+                }
+                else
+                {
+                    len = HistoryCurve.RECORD_FRAME_COUNT - 1;
+                }
+
+                for (int i = 1; i < count; i++)
+                {
+                    float currentMetric = 0;
+                    int index = (int)(i * split);
+                    if (!curve.TryGetPssMemory(index, out currentMetric))
+                    {
+                        continue;
+                    }
+                    Vector3 currentPos = PointFromRect(0, len, i, minValue, maxValue, currentMetric, rect);
+                    Vector3 lastPos = PointFromRect(0, len, i - 1, minValue, maxValue, lastPoint, rect);
+                    lastPoint = currentMetric;
+                    CachedVec[0].Set(lastPos.x, lastPos.y, 0);
+                    CachedVec[1].Set(currentPos.x, currentPos.y, 0f);
+                    Handles.DrawAAPolyLine(2.5f, CachedVec);
+                }
+            }
+        }
+
         private Vector3 PointFromRect(float minH, float maxH, float h, float minV, float maxV, float v, Rect rect)
         {
             v = Mathf.Max(minV, v);

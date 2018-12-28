@@ -284,6 +284,7 @@ namespace MikuLuaProfiler
         private Queue<Sample> m_historySamplesQueue = new Queue<Sample>(256);
         private long m_luaMemory = 0;
         private long m_monoMemory = 0;
+        private long m_pssMemory = 0;
 
         public bool needRebuild = true;
         public readonly HistoryCurve historyCurve = new HistoryCurve(1024);
@@ -539,6 +540,7 @@ namespace MikuLuaProfiler
 
             m_luaMemory = 0;
             m_monoMemory = 0;
+            m_pssMemory = 0;
             needRebuild = true;
         }
 
@@ -632,6 +634,7 @@ namespace MikuLuaProfiler
                 historyCurve.SlotLuaMemory(sample.currentLuaMemory);
                 historyCurve.SlotMonoMemory(sample.currentMonoMemory);
                 historyCurve.SlotFpsMemory(sample.fps);
+                historyCurve.SlotPssMemory(sample.pss);
             }
         }
 
@@ -704,6 +707,10 @@ namespace MikuLuaProfiler
         public string GetMonoMemory()
         {
             return GetMemoryString(m_monoMemory);
+        }
+        public string GetPssMemory()
+        {
+            return GetMemoryString(m_pssMemory);
         }
         private void LoadHistoryRootSample(Sample sample)
         {
@@ -788,12 +795,19 @@ namespace MikuLuaProfiler
             string f = sample.fullName;
             m_luaMemory = sample.currentLuaMemory;
             m_monoMemory = sample.currentMonoMemory;
+            m_pssMemory = sample.pss;
 
             if (!(instance.isRecord && !instance.isStartRecord))
             {
                 historyCurve.SlotLuaMemory(sample.currentLuaMemory);
                 historyCurve.SlotMonoMemory(sample.currentMonoMemory);
                 historyCurve.SlotFpsMemory(sample.fps);
+                historyCurve.SlotPssMemory(sample.pss);
+            }
+
+            if (string.IsNullOrEmpty(sample.name))
+            {
+                return;
             }
 
             if (instance.isRecord && !isHistory)

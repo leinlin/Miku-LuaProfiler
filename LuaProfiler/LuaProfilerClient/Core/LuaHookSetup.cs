@@ -14,10 +14,15 @@ using System.Text;
 using UnityEngine;
 using System.Runtime;
 
+#if UNITY_5_6_OR_NEWER
+using UnityEngine.Profiling;
+#endif
+
 #if XLUA
 using XLua;
 using LuaDLL = XLua.LuaDLL.Lua;
 using LuaCSFunction = XLua.LuaDLL.lua_CSFunction;
+using System.Threading;
 #elif TOLUA
 using LuaInterface;
 using LuaDLL = LuaInterface.LuaDLL;
@@ -34,8 +39,14 @@ namespace MikuLuaProfiler
     public class HookLuaSetup : MonoBehaviour
     {
         #region field
+        private static AndroidJavaClass m_debugClass;
+        private static IntPtr m_debug;
+        private static IntPtr m_pssFun;
         public static float fps { private set; get; }
         public static int frameCount { private set; get; }
+        public static int pss { private set; get; }
+        public const float DELTA_TIME = 1.0f;
+        public float currentTime = 0;
         #endregion
 
 #if UNITY_5 || UNITY_2017_1_OR_NEWER
@@ -66,12 +77,27 @@ namespace MikuLuaProfiler
 
         private void Awake()
         {
+#if UNITY_ANDROID && !UNITY_EDITOR
+            m_debugClass = new AndroidJavaClass("com.miku.profiler.Profiler");
+            m_debugClass.CallStatic("run");
+#endif
             var inx = LuaDeepProfilerSetting.Instance;
         }
+
+        public void SetPss(string value)
+        {
+            pss = int.Parse(value);
+        }
+
         private void LateUpdate()
         {
             frameCount = Time.frameCount;
             fps = 1.0f / Time.unscaledDeltaTime;
+
+#if UNITY_ANDROID && !UNITY_EDITOR
+#else
+            pss = (int)Profiler.GetTotalAllocatedMemoryLong();
+#endif
         }
 
         private void OnApplicationQuit()
@@ -135,7 +161,7 @@ namespace MikuLuaProfiler
 
     public class LuaLib
     {
-        #region memory
+#region memory
         public static void RunGC()
         {
 #if XLUA || TOLUA || SLUA
@@ -178,7 +204,7 @@ namespace MikuLuaProfiler
 #endif
             return result;
         }
-        #endregion
+#endregion
 
 #if XLUA || TOLUA || SLUA
         public static void lua_pushstdcallcfunction(IntPtr L, LuaCSFunction fun)
@@ -217,7 +243,7 @@ namespace MikuLuaProfiler
     }
 
 #if XLUA || TOLUA || SLUA
-    #region bind
+#region bind
 
     public class MikuLuaProfilerLuaProfilerWrap
     {
@@ -324,7 +350,7 @@ end
             return 0;
         }
     }
-    #endregion
+#endregion
 #endif
 }
 
