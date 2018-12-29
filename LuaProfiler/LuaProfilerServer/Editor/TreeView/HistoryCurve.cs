@@ -18,6 +18,7 @@ namespace MikuLuaProfiler
         private int addMonoCount = 0;
         private int addFpsCount = 0;
         private int addPssCount = 0;
+        private int addPowerCount = 0;
         public const int splitCount = 60;
         public const int RECORD_FRAME_COUNT = 100;
 
@@ -25,6 +26,7 @@ namespace MikuLuaProfiler
         private readonly List<int> m_monoMemoryHistory;
         private readonly List<float> m_fpsHistory;
         private readonly List<int> m_pssHistory;
+        private readonly List<float> m_powerHistory;
 
         private LuaDeepProfilerSetting setting = LuaDeepProfilerSetting.Instance;
         #endregion
@@ -35,6 +37,7 @@ namespace MikuLuaProfiler
             m_monoMemoryHistory = new List<int>(count);
             m_fpsHistory = new List<float>(count);
             m_pssHistory = new List<int>(count);
+            m_powerHistory = new List<float>(count);
         }
 
         #region lua
@@ -585,12 +588,144 @@ namespace MikuLuaProfiler
         }
         #endregion
 
+        #region power
+        private float m_minPowerValue = 0;
+        public float minPowerValue
+        {
+            get
+            {
+                if (m_minPowerValue < 0)
+                {
+                    m_minPowerValue = FindMinPowerValue();
+                }
+
+                return m_minPowerValue;
+            }
+        }
+        private float m_maxPowerValue = 90;
+        private float FindMinPowerValue()
+        {
+            float result = float.MaxValue;
+            int imax = m_powerHistory.Count - 1;
+            int imin = Mathf.Max(imax - RECORD_FRAME_COUNT, 0);
+            for (int i = imax; i >= imin; --i)
+            {
+                if (result > m_powerHistory[i])
+                {
+                    result = m_powerHistory[i];
+                }
+            }
+            return result;
+        }
+
+
+        public float maxPowerValue
+        {
+            get
+            {
+                if (m_maxPowerValue < 0)
+                {
+                    m_maxPowerValue = FindMaxPowerValue();
+                }
+                return m_maxPowerValue;
+            }
+        }
+
+        private float FindMaxPowerValue()
+        {
+            float result = 0;
+            int imax = m_powerHistory.Count - 1;
+            int imin = Mathf.Max(imax - RECORD_FRAME_COUNT, 0);
+            for (int i = imax; i >= imin; --i)
+            {
+                if (result < m_powerHistory[i])
+                {
+                    result = m_powerHistory[i];
+                }
+            }
+            return result;
+        }
+
+        public bool TryGetPowerMemory(int index, out float result)
+        {
+            if (index < 0 || index >= m_powerHistory.Count)
+            {
+                result = 0;
+                return false;
+            }
+
+            if (setting.isRecord && !setting.isStartRecord)
+            {
+                result = m_powerHistory[index];
+                return true;
+
+            }
+            else
+            {
+                int firstIndex = Mathf.Max(0, m_powerHistory.Count - RECORD_FRAME_COUNT);
+                result = m_powerHistory[firstIndex + index];
+                return true;
+            }
+        }
+
+        public int GetPowerRecordLength()
+        {
+            if (setting.isRecord && !setting.isStartRecord)
+            {
+                return m_powerHistory.Count;
+            }
+            else
+            {
+                return Mathf.Min(m_powerHistory.Count, RECORD_FRAME_COUNT);
+            }
+        }
+
+        public int GetPowerRecordCount(out float split)
+        {
+            split = 1;
+            if (setting.isRecord && !setting.isStartRecord)
+            {
+                int count = m_powerHistory.Count;
+                split = (float)count / 1000;
+                return (int)((float)count / split);
+            }
+            else
+            {
+                return Mathf.Min(m_powerHistory.Count, RECORD_FRAME_COUNT);
+            }
+        }
+
+        public void SlotPowerMemory(float value)
+        {
+            addPowerCount++;
+            value = Mathf.Min(90, value);
+            if (setting.isRecord && !setting.isStartRecord)
+            {
+                m_powerHistory.Add(value);
+            }
+            else if (addPowerCount % splitCount == 0)
+            {
+                m_powerHistory.Add(value);
+                if (m_powerHistory.Count >= 2 * RECORD_FRAME_COUNT)
+                {
+                    m_powerHistory.RemoveRange(0, RECORD_FRAME_COUNT - 1);
+                }
+            }
+        }
+
+        public bool IsPowerEmpty()
+        {
+            return m_powerHistory.Count <= 0;
+        }
+        #endregion
+
         public void Clear()
         {
             m_monoMemoryHistory.Clear();
             m_luaMemoryHistory.Clear();
             m_fpsHistory.Clear();
             m_pssHistory.Clear();
+            m_powerHistory.Clear();
 
             addLuaCount = 0;
             addMonoCount = 0;
@@ -608,6 +743,9 @@ namespace MikuLuaProfiler
 
             m_minPssValue = 0;
             m_maxPssValue = 0;
+
+            m_minPowerValue = 0;
+            m_maxPowerValue = 0;
         }
 
     }

@@ -168,7 +168,7 @@ namespace MikuLuaProfiler
         private static void InjectAllMethods(string injectPath, string profilerPath, bool needMdb)
         {
             string md5 = null;
-            md5 = GetMD5HashFromFile(injectPath);
+            md5 = new FileInfo(injectPath).LastWriteTimeUtc.Ticks.ToString();
             if (md5 == LuaDeepProfilerSetting.Instance.assMd5) return;
 
             AssemblyDefinition injectAss = LoadAssembly(injectPath, needMdb);
@@ -247,7 +247,7 @@ namespace MikuLuaProfiler
             }
 
             WriteAssembly(injectPath, injectAss);
-            LuaDeepProfilerSetting.Instance.assMd5 = GetMD5HashFromFile(injectPath);
+            LuaDeepProfilerSetting.Instance.assMd5 = new FileInfo(injectPath).LastWriteTimeUtc.Ticks.ToString();
         }
 
         public static Type GetMonoType(this TypeReference type)

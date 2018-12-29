@@ -187,6 +187,7 @@ namespace MikuLuaProfiler
             bw.Write(s.frameCount);
             bw.Write(s.fps);
             bw.Write(s.pss);
+            bw.Write(s.power);
             bw.Write(s.costLuaGC);
             bw.Write(s.costMonoGC);
             byte[] datas;

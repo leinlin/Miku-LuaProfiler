@@ -179,6 +179,7 @@ namespace MikuLuaProfiler
             s.frameCount = br.ReadInt32();
             s.fps = br.ReadSingle();
             s.pss = br.ReadInt32();
+            s.power = br.ReadSingle();
             s.costLuaGC = br.ReadInt32();
             s.costMonoGC = br.ReadInt32();
 

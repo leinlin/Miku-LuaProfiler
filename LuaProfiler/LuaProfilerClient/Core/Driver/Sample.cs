@@ -25,6 +25,8 @@ namespace MikuLuaProfiler
         public int frameCount;
         public float fps;
         public int pss;
+        public float power;
+
         public int costLuaGC;
         public int costMonoGC;
         public string name;
@@ -112,6 +114,7 @@ namespace MikuLuaProfiler
             s.frameCount = HookLuaSetup.frameCount;
             s.fps = HookLuaSetup.fps;
             s.pss = HookLuaSetup.pss;
+            s.power = HookLuaSetup.power;
             s.costLuaGC = 0;
             s.costMonoGC = 0;
             s.name = name;
@@ -177,6 +180,7 @@ namespace MikuLuaProfiler
             s.frameCount = frameCount;
             s.fps = fps;
             s.pss = pss;
+            s.power = power;
             s.costMonoGC = costMonoGC;
             s.costLuaGC = costLuaGC;
             s.name = name;

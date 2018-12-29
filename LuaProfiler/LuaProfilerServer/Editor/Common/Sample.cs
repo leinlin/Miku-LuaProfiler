@@ -21,11 +21,13 @@ namespace MikuLuaProfiler
         public int currentLuaMemory;
         public int currentMonoMemory;
         public long currentTime;
+        public float fps;
+        public int pss;
+        public float power;
 
         public int calls;
         public int frameCount;
-        public float fps;
-        public int pss;
+
         public int costLuaGC;
         public int costMonoGC;
         public string name;
@@ -183,6 +185,7 @@ namespace MikuLuaProfiler
             s.frameCount = frameCount;
             s.fps = fps;
             s.pss = pss;
+            s.power = power;
             s.costMonoGC = costMonoGC;
             s.costLuaGC = costLuaGC;
             s.name = name;
@@ -258,6 +261,7 @@ namespace MikuLuaProfiler
             b.Write(frameCount);
             b.Write(fps);
             b.Write(pss);
+            b.Write(power);
             b.Write(costLuaGC);
             b.Write(costMonoGC);
 

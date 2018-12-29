@@ -51,11 +51,11 @@ namespace MikuLuaProfiler
 
             EditorGUILayout.EndHorizontal();
 
-            GUILayout.Space(5);
-            if (GUILayout.Button("Inject Method", GUILayout.Height(50)))
-            {
-                InjectMethods.InjectAllMethods();
-            }
+            //GUILayout.Space(5);
+            //if (GUILayout.Button("Inject Method", GUILayout.Height(50)))
+            //{
+            //    InjectMethods.InjectAllMethods();
+            //}
             GUILayout.Space(5);
             if (GUILayout.Button("ReCompile", GUILayout.Height(50)))
             {

@@ -31,6 +31,13 @@ namespace MikuLuaProfiler
             GUILayout.ExpandWidth(true),
             GUILayout.Height(130f)
         };
+        private readonly GUILayoutOption[] _chartLineOption = new GUILayoutOption[]
+        {
+            GUILayout.ExpandHeight(false),
+            GUILayout.ExpandWidth(true),
+            GUILayout.Height(148f)
+        };
+
         private static readonly Vector3[] CachedVec = new Vector3[2];
         private readonly SplitterState _minmaxSlider = new SplitterState(new int[]
             {
@@ -59,10 +66,18 @@ namespace MikuLuaProfiler
         private int m_lastCount = 0;
         int port = 2333;
         private bool isShowLuaChart = true;
-        private bool isShowMonoChart = false;
-        private bool isShowFpsChart = false;
+        private bool isShowMonoChart = true;
+        private bool isShowFpsChart = true;
         private bool isShowPssChart = true;
+        private bool isShowPowerChart = true;
         private int currentFrameIndex = 0;
+
+        private Texture2D disableChart;
+        private Texture2D luaChart;
+        private Texture2D monoChart;
+        private Texture2D fpsChart;
+        private Texture2D pssChart;
+        private Texture2D powrChart;
 
         private string oldStartUrl = null;
         private string oldEndUrl = null;
@@ -71,6 +86,7 @@ namespace MikuLuaProfiler
 
         void OnEnable()
         {
+            EditorUtility.UnloadUnusedAssetsImmediate();
             if (m_TreeViewState == null)
                 m_TreeViewState = new TreeViewState();
 
@@ -88,6 +104,12 @@ namespace MikuLuaProfiler
             Destory(oldEndT);
             m_SearchField = new SearchField();
             m_SearchField.downOrUpArrowKeyPressed += m_TreeView.SetFocusAndEnsureSelectedItem;
+            disableChart = AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/LuaProfilerServer/Editor/Skin/disable.png");
+            luaChart = AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/LuaProfilerServer/Editor/Skin/lua.png");
+            monoChart = AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/LuaProfilerServer/Editor/Skin/mono.png");
+            fpsChart = AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/LuaProfilerServer/Editor/Skin/fps.png");
+            pssChart = AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/LuaProfilerServer/Editor/Skin/pss.png");
+            powrChart = AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/LuaProfilerServer/Editor/Skin/power.png");
         }
 
         void Destory(UnityEngine.Object o)
@@ -109,9 +131,12 @@ namespace MikuLuaProfiler
             DoToolbar();
             GUILayout.Space(10);
             DoRecord();
-            if (isShowLuaChart || isShowMonoChart)
+            if (isShowLuaChart || isShowMonoChart || isShowFpsChart || isShowPssChart || isShowPowerChart)
             {
+                EditorGUILayout.BeginHorizontal();
+                DoChartToggle();
                 DoChart();
+                EditorGUILayout.EndHorizontal();
             }
             //DoCapture();
             DoTreeView();
@@ -160,17 +185,6 @@ namespace MikuLuaProfiler
             }
             #endregion
 
-            #region chart
-            isShowLuaChart = GUILayout.Toggle(isShowLuaChart, "LuaChart", EditorStyles.toolbarButton, GUILayout.Height(30));
-            GUILayout.Space(5);
-            isShowMonoChart = GUILayout.Toggle(isShowMonoChart, "MonoChart", EditorStyles.toolbarButton, GUILayout.Height(30));
-            GUILayout.Space(5);
-            isShowFpsChart = GUILayout.Toggle(isShowFpsChart, "FpsChart", EditorStyles.toolbarButton, GUILayout.Height(30));
-            GUILayout.Space(5);
-            isShowPssChart = GUILayout.Toggle(isShowPssChart, "PssChart", EditorStyles.toolbarButton, GUILayout.Height(30));
-            GUILayout.Space(25);
-            #endregion
-
             #region path
             /*
             if (GUILayout.Button("Lua Path", EditorStyles.toolbarButton, GUILayout.Height(30)))
@@ -199,13 +213,6 @@ namespace MikuLuaProfiler
             #region gc value
             GUILayout.Space(100);
             GUILayout.FlexibleSpace();
-            GUILayout.Label(string.Format("Lua Total:{0}", m_TreeView.GetLuaMemory()), EditorStyles.toolbarButton, GUILayout.Height(30));
-
-            GUILayout.Space(15);
-            GUILayout.Label(string.Format("Mono Total:{0}", m_TreeView.GetMonoMemory()), EditorStyles.toolbarButton, GUILayout.Height(30));
-            GUILayout.Space(15);
-            GUILayout.Label(string.Format("Pss Total:{0}", m_TreeView.GetPssMemory()), EditorStyles.toolbarButton, GUILayout.Height(30));
-            GUILayout.Space(25);
             #endregion
 
             m_TreeView.searchString = m_SearchField.OnToolbarGUI(m_TreeView.searchString);
@@ -328,6 +335,59 @@ namespace MikuLuaProfiler
             GUILayout.Space(10);
             EditorGUILayout.EndHorizontal();
         }
+
+        void DoChartToggle()
+        {
+            EditorGUILayout.BeginVertical(EditorStyles.helpBox, GUILayout.Width(130));
+            Texture2D t = null;
+            #region chart
+
+            EditorGUILayout.BeginHorizontal();
+            t = isShowPssChart ? pssChart : disableChart;
+            isShowPssChart = GUILayout.Toggle(isShowPssChart, t, EditorStyles.label, GUILayout.Width(15), GUILayout.Height(15));
+            GUILayout.Label("Pss", GUILayout.Width(40));
+            GUILayout.Label(m_TreeView.GetPssMemory());
+            EditorGUILayout.EndHorizontal();
+
+            GUILayout.Space(5);
+            EditorGUILayout.BeginHorizontal();
+            t = isShowPowerChart ? powrChart : disableChart;
+            isShowPowerChart = GUILayout.Toggle(isShowPowerChart, t, EditorStyles.label, GUILayout.Width(15), GUILayout.Height(15));
+            GUILayout.Label("Power", GUILayout.Width(40));
+            GUILayout.Label(m_TreeView.GetPower());
+            EditorGUILayout.EndHorizontal();
+
+            GUILayout.Space(5);
+            EditorGUILayout.BeginHorizontal();
+            t = isShowMonoChart ? monoChart : disableChart;
+            isShowMonoChart = GUILayout.Toggle(isShowMonoChart, t, EditorStyles.label, GUILayout.Width(15), GUILayout.Height(15));
+            GUILayout.Label("Mono  ", GUILayout.Width(40));
+            GUILayout.Label(m_TreeView.GetMonoMemory());
+            EditorGUILayout.EndHorizontal();
+
+            GUILayout.Space(5);
+            EditorGUILayout.BeginHorizontal();
+            t = isShowLuaChart ? luaChart : disableChart;
+            isShowLuaChart = GUILayout.Toggle(isShowLuaChart, t, EditorStyles.label, GUILayout.Width(15) , GUILayout.Height(15));
+            GUILayout.Label("Lua", GUILayout.Width(40));
+            GUILayout.Label(m_TreeView.GetLuaMemory());
+            EditorGUILayout.EndHorizontal();
+
+            GUILayout.Space(5);
+            EditorGUILayout.BeginHorizontal();
+            t = isShowFpsChart ? fpsChart : disableChart;
+            isShowFpsChart = GUILayout.Toggle(isShowFpsChart, t, EditorStyles.label, GUILayout.Width(15), GUILayout.Height(15));
+            GUILayout.Label("Fps", GUILayout.Width(40));
+            GUILayout.Label(m_TreeView.GetFPS());
+            EditorGUILayout.EndHorizontal();
+
+            GUILayout.Space(1);
+            GUILayout.FlexibleSpace();
+            #endregion
+
+            EditorGUILayout.EndVertical();
+        }
+
         void DoChart()
         {
             EditorGUILayout.BeginVertical(new GUILayoutOption[0]);
@@ -346,7 +406,6 @@ namespace MikuLuaProfiler
             Rect controlRect2 = EditorGUILayout.GetControlRect(false, this._mainRectsOption);
             GUILayout.Space(5f);
             EditorGUILayout.EndVertical();
-
             EditorGUILayout.EndVertical();
             EditorGUILayout.EndHorizontal();
 
@@ -446,29 +505,35 @@ namespace MikuLuaProfiler
             Handles.DrawAAPolyLine(2.5f, CachedVec);
             if (m_TreeView.historyCurve == null) return;
 
+            if (isShowPssChart)
+            {
+                Handles.color = Color.red;
+                DrawPssCurve(m_TreeView.historyCurve, rect);
+            }
+
+            if (isShowMonoChart)
+            {
+                Handles.color = new Color32(154, 255, 154, 255);
+                DrawMonoCurve(m_TreeView.historyCurve, rect);
+            }
+
             if (isShowLuaChart)
             {
                 Handles.color = new Color(0.4f, 0.7f, 0.9f, 1.0f);
                 DrawLuaCurve(m_TreeView.historyCurve, rect);
             }
 
-            if (isShowMonoChart)
-            {
-                Handles.color = new Color32(154, 255, 154, 255) * GUI.skin.label.normal.textColor;
-                DrawMonoCurve(m_TreeView.historyCurve, rect);
-            }
-
             if (isShowFpsChart)
             {
-                Handles.color = new Color32(255, 193, 37, 255) * GUI.skin.label.normal.textColor;
+                Handles.color = new Color32(255, 193, 37, 255);
                 DrawFpsCurve(m_TreeView.historyCurve, rect);
                 DrawYAxis(rect);
             }
 
-            if (isShowPssChart)
+            if (isShowPowerChart)
             {
-                Handles.color = Color.red;
-                DrawPssCurve(m_TreeView.historyCurve, rect);
+                Handles.color = new Color32(255, 127, 39, 255);
+                DrawPowerCurve(m_TreeView.historyCurve, rect);
             }
 
             var intance = LuaDeepProfilerSetting.Instance;
@@ -485,7 +550,7 @@ namespace MikuLuaProfiler
             float intervalDistance = ((xRect.yMax - xRect.yMin) / 6);
             Rect rect = new Rect(xRect.x, xRect.yMax, xRect.width, xRect.yMin);
             Color c = GUI.color;
-            GUI.color = new Color32(255, 193, 37, 255) * GUI.skin.label.normal.textColor;
+            GUI.color = new Color32(255, 193, 37, 255);
             for (int f = 0; f <= 90; f += intervalCount)
             {
                 rect.y -= intervalDistance;
@@ -497,6 +562,7 @@ namespace MikuLuaProfiler
         private void DrawLuaCurve(HistoryCurve curve, Rect rect)
         {
             if (curve.IsLuaEmpty()) return;
+            rect.yMin = 1.2f * rect.yMin;
             float split = 1;
             int count = curve.GetLuaRecordCount(out split);
             float minValue = curve.minLuaValue;
@@ -539,6 +605,7 @@ namespace MikuLuaProfiler
         private void DrawMonoCurve(HistoryCurve curve, Rect rect)
         {
             if (curve.IsMonoEmpty()) return;
+            rect.yMin = 1.1f * rect.yMin;
             float split = 1;
             int count = curve.GetMonoRecordCount(out split);
             float minValue = curve.minMonoValue;
@@ -565,6 +632,48 @@ namespace MikuLuaProfiler
                     float currentMetric = 0;
                     int index = (int)(i * split);
                     if (!curve.TryGetMonoMemory(index, out currentMetric))
+                    {
+                        continue;
+                    }
+                    Vector3 currentPos = PointFromRect(0, len, i, minValue, maxValue, currentMetric, rect);
+                    Vector3 lastPos = PointFromRect(0, len, i - 1, minValue, maxValue, lastPoint, rect);
+                    lastPoint = currentMetric;
+                    CachedVec[0].Set(lastPos.x, lastPos.y, 0);
+                    CachedVec[1].Set(currentPos.x, currentPos.y, 0f);
+                    Handles.DrawAAPolyLine(2.5f, CachedVec);
+                }
+            }
+        }
+
+        private void DrawPowerCurve(HistoryCurve curve, Rect rect)
+        {
+            if (curve.IsPowerEmpty()) return;
+            rect.yMin = 1.3f * rect.yMin;
+            float split = 1;
+            int count = curve.GetPowerRecordCount(out split);
+            float minValue = curve.minPowerValue;
+            float maxValue = curve.maxPowerValue;
+            float lastPoint = 0;
+            curve.TryGetPowerMemory(0, out lastPoint);
+            if (count > 1)
+            {
+                int len = 0;
+                var setting = LuaDeepProfilerSetting.Instance;
+
+                if (setting.isRecord && !setting.isStartRecord)
+                {
+                    len = count - 1;
+                }
+                else
+                {
+                    len = HistoryCurve.RECORD_FRAME_COUNT - 1;
+                }
+
+                for (int i = 1; i < count; i++)
+                {
+                    float currentMetric = 0;
+                    int index = (int)(i * split);
+                    if (!curve.TryGetPowerMemory(index, out currentMetric))
                     {
                         continue;
                     }
@@ -664,6 +773,9 @@ namespace MikuLuaProfiler
 
         private Vector3 PointFromRect(float minH, float maxH, float h, float minV, float maxV, float v, Rect rect)
         {
+            minV = 0;
+            maxV = maxV - minV;
+            v = v - minV;
             v = Mathf.Max(minV, v);
             Vector3 v3 = new Vector3();
             float dh = maxH - minH;
@@ -671,8 +783,14 @@ namespace MikuLuaProfiler
             v3.x = (rect.xMax - rect.xMin) * (h - minH) / dh + rect.xMin;
             //v3.y = (rect.yMax - rect.yMin) * (v - minV) / (maxV - minV) + rect.yMin;
             float dv = minV - maxV;
-            dv = (dv == 0) ? 1 : dv;
-            v3.y = (rect.yMax - rect.yMin) * (v - maxV) / dv + rect.yMin;
+            if (dv != 0)
+            {
+                v3.y = (rect.yMax - rect.yMin) * (v - maxV) / dv + rect.yMin;
+            }
+            else
+            {
+                v3.y = rect.yMin;
+            }
             return v3;
         }
 

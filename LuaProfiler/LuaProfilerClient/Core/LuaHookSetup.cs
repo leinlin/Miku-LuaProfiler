@@ -14,10 +14,6 @@ using System.Text;
 using UnityEngine;
 using System.Runtime;
 
-#if UNITY_5_6_OR_NEWER
-using UnityEngine.Profiling;
-#endif
-
 #if XLUA
 using XLua;
 using LuaDLL = XLua.LuaDLL.Lua;
@@ -39,13 +35,18 @@ namespace MikuLuaProfiler
     public class HookLuaSetup : MonoBehaviour
     {
         #region field
-        private static AndroidJavaClass m_debugClass;
         private static IntPtr m_debug;
         private static IntPtr m_pssFun;
         public static float fps { private set; get; }
         public static int frameCount { private set; get; }
         public static int pss { private set; get; }
-        public const float DELTA_TIME = 1.0f;
+        public static float power { private set; get; }
+
+        public float showTime = 1f;
+        private int count = 0;
+        private float deltaTime = 0f;
+
+        public const float DELTA_TIME = 0.1f;
         public float currentTime = 0;
         #endregion
 
@@ -77,27 +78,27 @@ namespace MikuLuaProfiler
 
         private void Awake()
         {
-#if UNITY_ANDROID && !UNITY_EDITOR
-            m_debugClass = new AndroidJavaClass("com.miku.profiler.Profiler");
-            m_debugClass.CallStatic("run");
-#endif
+            NativeHelper.RunAyncPass();
             var inx = LuaDeepProfilerSetting.Instance;
-        }
-
-        public void SetPss(string value)
-        {
-            pss = int.Parse(value);
         }
 
         private void LateUpdate()
         {
             frameCount = Time.frameCount;
-            fps = 1.0f / Time.unscaledDeltaTime;
-
-#if UNITY_ANDROID && !UNITY_EDITOR
-#else
-            pss = (int)Profiler.GetTotalAllocatedMemoryLong();
-#endif
+            count++;
+            deltaTime += Time.unscaledDeltaTime;
+            if (deltaTime >= showTime)
+            {
+                fps = count / deltaTime;
+                count = 0;
+                deltaTime = 0f;
+            }
+            if (Time.unscaledTime - currentTime > DELTA_TIME)
+            {
+                pss = NativeHelper.GetPass();
+                power = NativeHelper.GetBatteryLevel();
+                currentTime = Time.unscaledTime;
+            }
         }
 
         private void OnApplicationQuit()

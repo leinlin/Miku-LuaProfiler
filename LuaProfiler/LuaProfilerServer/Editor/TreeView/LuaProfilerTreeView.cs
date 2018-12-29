@@ -276,6 +276,7 @@ namespace MikuLuaProfiler
 
         #region field
         private static Color m_luaColor = new Color(0.4f, 0.7f, 0.9f, 1.0f);
+        private static Color m_monoColor = new Color32(154, 255, 154, 255);
         private List<int> m_expandIds = new List<int>();
         private readonly LuaProfilerTreeViewItem m_root;
         private readonly List<TreeViewItem> m_treeViewItems = new List<TreeViewItem>();
@@ -285,6 +286,8 @@ namespace MikuLuaProfiler
         private long m_luaMemory = 0;
         private long m_monoMemory = 0;
         private long m_pssMemory = 0;
+        private float m_fps = 0;
+        private float m_power = 0;
 
         public bool needRebuild = true;
         public readonly HistoryCurve historyCurve = new HistoryCurve(1024);
@@ -541,6 +544,8 @@ namespace MikuLuaProfiler
             m_luaMemory = 0;
             m_monoMemory = 0;
             m_pssMemory = 0;
+            m_fps = 0;
+            m_power = 0;
             needRebuild = true;
         }
 
@@ -635,6 +640,7 @@ namespace MikuLuaProfiler
                 historyCurve.SlotMonoMemory(sample.currentMonoMemory);
                 historyCurve.SlotFpsMemory(sample.fps);
                 historyCurve.SlotPssMemory(sample.pss);
+                historyCurve.SlotPowerMemory(sample.power);
             }
         }
 
@@ -712,6 +718,17 @@ namespace MikuLuaProfiler
         {
             return GetMemoryString(m_pssMemory);
         }
+
+        public string GetFPS()
+        {
+            return m_fps.ToString("0.00");
+        }
+
+        public string GetPower()
+        {
+            return m_power.ToString("0.00") + "%";
+        }
+
         private void LoadHistoryRootSample(Sample sample)
         {
             lock (this)
@@ -796,6 +813,8 @@ namespace MikuLuaProfiler
             m_luaMemory = sample.currentLuaMemory;
             m_monoMemory = sample.currentMonoMemory;
             m_pssMemory = sample.pss;
+            m_fps = sample.fps;
+            m_power = sample.power;
 
             if (!(instance.isRecord && !instance.isStartRecord))
             {
@@ -803,6 +822,7 @@ namespace MikuLuaProfiler
                 historyCurve.SlotMonoMemory(sample.currentMonoMemory);
                 historyCurve.SlotFpsMemory(sample.fps);
                 historyCurve.SlotPssMemory(sample.pss);
+                historyCurve.SlotPowerMemory(sample.power);
             }
 
             if (string.IsNullOrEmpty(sample.name))
@@ -927,14 +947,14 @@ namespace MikuLuaProfiler
                 m_gs = new GUIStyle(GUI.skin.label);
                 m_gs.alignment = TextAnchor.MiddleCenter;
             }
-            Color color = m_gs.normal.textColor;
+            var color = m_gs.normal.textColor;
             if (item.line != -1)
             {
-                m_gs.normal.textColor = m_luaColor * color;
+                m_gs.normal.textColor = m_luaColor;
             }
             else
             {
-                m_gs.normal.textColor = color * Color.green;
+                m_gs.normal.textColor = m_monoColor;
             }
             Rect r = args.GetCellRect(0);
             args.rowRect = r;
