@@ -31,12 +31,6 @@ namespace MikuLuaProfiler
             GUILayout.ExpandWidth(true),
             GUILayout.Height(130f)
         };
-        private readonly GUILayoutOption[] _chartLineOption = new GUILayoutOption[]
-        {
-            GUILayout.ExpandHeight(false),
-            GUILayout.ExpandWidth(true),
-            GUILayout.Height(148f)
-        };
 
         private static readonly Vector3[] CachedVec = new Vector3[2];
         private readonly SplitterState _minmaxSlider = new SplitterState(new int[]

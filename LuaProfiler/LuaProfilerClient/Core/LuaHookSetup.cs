@@ -18,15 +18,17 @@ using System.Runtime;
 using XLua;
 using LuaDLL = XLua.LuaDLL.Lua;
 using LuaCSFunction = XLua.LuaDLL.lua_CSFunction;
-using System.Threading;
+using StrLen = System.IntPtr;
 #elif TOLUA
 using LuaInterface;
 using LuaDLL = LuaInterface.LuaDLL;
 using LuaCSFunction = LuaInterface.LuaCSFunction;
+using StrLen = System.Int32;
 #elif SLUA
 using SLua;
 using LuaDLL = SLua.LuaDLL;
 using LuaCSFunction = SLua.LuaCSFunction;
+using StrLen = System.Int32;
 #endif
 
 namespace MikuLuaProfiler
@@ -82,12 +84,73 @@ namespace MikuLuaProfiler
         private void Awake()
         {
             NativeHelper.RunAyncPass();
-            var inx = LuaDeepProfilerSetting.Instance;
+            setting = LuaDeepProfilerSetting.Instance;
+        }
+
+        private void LateUpdate()
+        {
+            frameCount = Time.frameCount;
+            count++;
+            deltaTime += Time.unscaledDeltaTime;
+            if (deltaTime >= showTime)
+            {
+                fps = count / deltaTime;
+                count = 0;
+                deltaTime = 0f;
+            }
+            if (Time.unscaledTime - currentTime > DELTA_TIME)
+            {
+                pss = NativeHelper.GetPass();
+                power = NativeHelper.GetBatteryLevel();
+                currentTime = Time.unscaledTime;
+            }
+            if ((Input.touchCount == 4 && Input.touches[0].phase == TouchPhase.Began) || Input.GetKeyDown(KeyCode.Escape))
+            {
+                needShowMenu = !needShowMenu;
+                if (needShowMenu)
+                {
+                    Menu.EnableMenu(gameObject);
+                }
+                else
+                {
+                    Menu.DisableMenu();
+                }
+            }
+        }
+
+        private void OnApplicationQuit()
+        {
+            NetWorkClient.Close();
+            Destroy(gameObject);
+        }
+
+    }
+
+    public class Menu : MonoBehaviour
+    {
+        private static Menu m_menu;
+        public static void EnableMenu(GameObject go)
+        {
+            if (m_menu == null)
+            {
+                m_menu = go.AddComponent<Menu>();
+            }
+            m_menu.enabled = true;
+        }
+
+        public static void DisableMenu()
+        {
+            if (m_menu == null)
+            {
+                return;
+            }
+            m_menu.enabled = false;
         }
 
         private void OnGUI()
         {
-            if (!needShowMenu) return;
+            var setting = HookLuaSetup.setting;
+
             if (GUI.Button(new Rect(0, 0, 200, 100), "Connect"))
             {
                 NetWorkClient.ConnectServer(setting.ip, setting.port);
@@ -113,38 +176,7 @@ namespace MikuLuaProfiler
                     setting.discardInvalid = true;
                 }
             }
-
         }
-
-        private void LateUpdate()
-        {
-            frameCount = Time.frameCount;
-            count++;
-            deltaTime += Time.unscaledDeltaTime;
-            if (deltaTime >= showTime)
-            {
-                fps = count / deltaTime;
-                count = 0;
-                deltaTime = 0f;
-            }
-            if (Time.unscaledTime - currentTime > DELTA_TIME)
-            {
-                pss = NativeHelper.GetPass();
-                power = NativeHelper.GetBatteryLevel();
-                currentTime = Time.unscaledTime;
-            }
-            if (Input.touches.Length == 4 && Input.touches[0].phase == TouchPhase.Began)
-            {
-                needShowMenu = !needShowMenu;
-            }
-        }
-
-        private void OnApplicationQuit()
-        {
-            NetWorkClient.Close();
-            Destroy(gameObject);
-        }
-
     }
 
     public class LuaHook
@@ -179,7 +211,7 @@ namespace MikuLuaProfiler
             return buff;
         }
 
-        #region luastring
+#region luastring
         public static readonly Dictionary<long, string> stringDict = new Dictionary<long, string>();
         public static bool TryGetLuaString(IntPtr p, out string result)
         {
@@ -196,7 +228,7 @@ namespace MikuLuaProfiler
             stringDict[(long)strPoint] = s;
 #endif
         }
-        #endregion
+#endregion
     }
 
     public class LuaLib
@@ -266,6 +298,17 @@ namespace MikuLuaProfiler
             LuaDLL.lua_setglobal(L, name);
 #elif SLUA
             LuaDLL.lua_setglobal(L, name);
+#endif
+        }
+
+        public static IntPtr lua_tostringptr(IntPtr L, int index, out StrLen len)
+        {
+#if XLUA
+            return LuaDLL.lua_tolstring(L, index, out len);
+#elif TOLUA
+            return LuaDLL.tolua_tolstring(L, index, out len);
+#elif SLUA
+            return LuaDLL.luaS_tolstring32(L, index, out len);
 #endif
         }
 
@@ -371,8 +414,19 @@ end
         [MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]
         static int BeginSample(IntPtr L)
         {
-            string _name = LuaDLL.lua_tostring(L, 1);
-            MikuLuaProfiler.LuaProfiler.BeginSample(L, _name);
+            StrLen len;
+            IntPtr intPtr = LuaLib.lua_tostringptr(L, 1, out len);
+            string text;
+            if (!LuaHook.TryGetLuaString(intPtr, out text))
+            {
+                text = LuaDLL.lua_tostring(L, 1);
+                if (!string.IsNullOrEmpty(text))
+                {
+                    text = string.Intern(text);
+                }
+                LuaHook.RefString(intPtr, 1, text, L);
+            }
+            MikuLuaProfiler.LuaProfiler.BeginSample(L, text);
             return 0;
         }
 

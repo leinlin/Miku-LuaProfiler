@@ -122,32 +122,23 @@ namespace MikuLuaProfiler
         private static MethodDefinition m_getMainL;
         private static MethodDefinition m_registerLua;
         private static MethodDefinition m_hookloadbuffer;
-        private static MethodDefinition m_tolstring;
-        private static MethodDefinition m_trygetluastring;
-        private static MethodDefinition m_refstring;
         public delegate void InjectMethodAction(MethodDefinition method, ModuleDefinition module, MethodDefinition newMethod);
 
 #if XLUA
         private const string LUA_FULL_NAME = "XLua.LuaDLL.Lua";
         private const string LUA_NEW_STATE = "luaL_newstate";
         private const string LUA_CLOSE = "lua_close";
-        private const string LUA_TOSTRING = "lua_tostring";
         private const string LUA_LOAD_BUFFER = "xluaL_loadbuffer";
-        private const string LUA_NATIVE_TOSTRING = "lua_tolstring";
 #elif SLUA
         private const string LUA_FULL_NAME = "SLua.LuaDLL";
         private const string LUA_NEW_STATE = "luaL_newstate";
         private const string LUA_CLOSE = "lua_close";
-        private const string LUA_TOSTRING = "lua_tostring";
         private const string LUA_LOAD_BUFFER = "luaLS_loadbuffer";
-        private const string LUA_NATIVE_TOSTRING = "luaS_tolstring32";
 #elif TOLUA
         private const string LUA_FULL_NAME = "LuaInterface.LuaDLL";
         private const string LUA_NEW_STATE = "luaL_newstate";
         private const string LUA_CLOSE = "lua_close";
-        private const string LUA_TOSTRING = "lua_tostring";
         private const string LUA_LOAD_BUFFER = "tolua_loadbuffer";
-        private const string LUA_NATIVE_TOSTRING = "tolua_tolstring";
 #endif
 
         #region try finally
@@ -588,10 +579,6 @@ namespace MikuLuaProfiler
                 {
                     return;
                 }
-                if (m.Name == LUA_NATIVE_TOSTRING)
-                {
-                    m_tolstring = m;
-                }
             }
             #endregion
 
@@ -615,14 +602,6 @@ namespace MikuLuaProfiler
                 if (m.Name == "Hookloadbuffer")
                 {
                     m_hookloadbuffer = m;
-                }
-                else if (m.Name == "TryGetLuaString")
-                {
-                    m_trygetluastring = m;
-                }
-                else if (m.Name == "RefString")
-                {
-                    m_refstring = m;
                 }
             }
 
@@ -694,13 +673,13 @@ namespace MikuLuaProfiler
                         action(m, assembly.MainModule, method);
                     }
                 }
-                else if (m.Name == LUA_TOSTRING)
-                {
-                    var method = new MethodDefinition(m.Name + "_profiler", m.Attributes, m.ReturnType);
-                    profilerType.Methods.Add(method);
-                    CopyMethod(m, method);
-                    ModifyTostring(m, assembly.MainModule, method);
-                }
+                //else if (m.Name == LUA_TOSTRING)
+                //{
+                //    var method = new MethodDefinition(m.Name + "_profiler", m.Attributes, m.ReturnType);
+                //    profilerType.Methods.Add(method);
+                //    CopyMethod(m, method);
+                //    ModifyTostring(m, assembly.MainModule, method);
+                //}
             }
 #endif
         }
@@ -820,82 +799,13 @@ namespace MikuLuaProfiler
             }
         }
 
-        private static void ModifyTostring(MethodDefinition tostring, ModuleDefinition module, MethodDefinition newMethod)
-        {
-            if (tostring.Body == null) return;
-            VariableDefinition injection = null;
-            tostring.Body.Variables.Clear();
-#if XLUA
-            injection = new VariableDefinition(module.TypeSystem.IntPtr);
-#elif SLUA
-            injection = new VariableDefinition(module.TypeSystem.Int32);
-#elif TOLUA
-            injection = new VariableDefinition(module.TypeSystem.Int32);
-#endif
-            tostring.Body.Variables.Add(injection);
-            injection = new VariableDefinition(module.TypeSystem.IntPtr);
-            tostring.Body.Variables.Add(injection);
-            injection = new VariableDefinition(module.TypeSystem.String);
-            tostring.Body.Variables.Add(injection);
-            injection = new VariableDefinition(module.TypeSystem.String);
-            tostring.Body.Variables.Add(injection);
-
-            var isNullMethod = typeof(string).GetMethod("IsNullOrEmpty");
-            var intern = typeof(string).GetMethod("Intern");
-
-            var ils = tostring.Body.Instructions;
-            ils.Clear();
-            var il = tostring.Body.GetILProcessor();
-
-            var il8 = il.Create(OpCodes.Call, module.ImportReference(m_trygetluastring));
-            var il16 = il.Create(OpCodes.Call, module.ImportReference(isNullMethod));
-            var il23 = il.Create(OpCodes.Ldloc_1);
-            var il29 = il.Create(OpCodes.Ldloc_2);
-            var il30 = il.Create(OpCodes.Stloc_3);
-            var il32 = il.Create(OpCodes.Ldloc_3);
-
-            il.Append(il.Create(OpCodes.Nop));                                                  //0
-            il.Append(il.Create(OpCodes.Ldarg_0));                                              //1
-            il.Append(il.Create(OpCodes.Ldarg_1));                                              //2
-            il.Append(il.Create(OpCodes.Ldloca_S, tostring.Body.Variables[0]));                 //3
-            il.Append(il.Create(OpCodes.Call, module.ImportReference(m_tolstring)));            //4
-            il.Append(il.Create(OpCodes.Stloc_1));                                              //5
-            il.Append(il.Create(OpCodes.Ldloc_1));                                              //6
-            il.Append(il.Create(OpCodes.Ldloca_S, tostring.Body.Variables[2]));                 //7
-            il.Append(il8);                                                                     //8
-            il.InsertAfter(il8, il.Create(OpCodes.Brtrue, il29));                               //9
-            il.Append(il.Create(OpCodes.Nop));                                                  //10
-            il.Append(il.Create(OpCodes.Ldarg_0));                                              //11
-            il.Append(il.Create(OpCodes.Ldarg_1));                                              //12
-            il.Append(il.Create(OpCodes.Call, module.ImportReference(newMethod)));              //13
-            il.Append(il.Create(OpCodes.Stloc_2));                                              //14
-            il.Append(il.Create(OpCodes.Ldloc_2));                                              //15
-            il.Append(il16);                                                                    //16
-            il.InsertAfter(il16, il.Create(OpCodes.Brtrue, il23));                              //17
-            il.Append(il.Create(OpCodes.Nop));                                                  //18
-            il.Append(il.Create(OpCodes.Ldloc_2));                                              //19
-            il.Append(il.Create(OpCodes.Call, module.ImportReference(intern)));                 //20
-            il.Append(il.Create(OpCodes.Stloc_2));                                              //21
-            il.Append(il.Create(OpCodes.Nop));                                                  //22
-            il.Append(il23);                                                                    //23
-            il.Append(il.Create(OpCodes.Ldarg_1));                                              //24
-            il.Append(il.Create(OpCodes.Ldloc_2));                                              //25
-            il.Append(il.Create(OpCodes.Ldarg_0));                                              //26
-            il.Append(il.Create(OpCodes.Call, module.ImportReference(m_refstring)));            //27
-            il.Append(il.Create(OpCodes.Nop));                                                  //28
-            il.Append(il29);                                                                    //29
-            il.Append(il30);                                                                    //30
-            il.InsertAfter(il30, il.Create(OpCodes.Br, il32));                                  //31
-            il.Append(il32);                                                                    //32
-            il.Append(il.Create(OpCodes.Ret));                                                  //33
-
-        }
         #endregion
 
 #if USE_LUA_PROFILER
         [UnityEditor.Callbacks.PostProcessScene]
         private static void OnPostprocessScene()
         {
+#if XLUA || TOLUA || SLUA
             var luaPath = (typeof(LuaDLL).Assembly).ManifestModule.FullyQualifiedName;
             var projectPath = System.Reflection.Assembly.Load("Assembly-CSharp").ManifestModule.FullyQualifiedName;
             var profilerPath = (typeof(LuaProfiler).Assembly).ManifestModule.FullyQualifiedName;
@@ -907,6 +817,7 @@ namespace MikuLuaProfiler
             {
                 InjectAllMethods(projectPath, profilerPath, false);
             }
+#endif
         }
 #endif
     }
