@@ -49,6 +49,12 @@ namespace MikuLuaProfiler
                 InjectMethods.Recompile();
             }
 
+            flag = GUILayout.Toggle(setting.discardInvalid, "Discard Invalid");
+            if (flag != setting.discardInvalid)
+            {
+                setting.discardInvalid = flag;
+            }
+
             EditorGUILayout.EndHorizontal();
 
             //GUILayout.Space(5);

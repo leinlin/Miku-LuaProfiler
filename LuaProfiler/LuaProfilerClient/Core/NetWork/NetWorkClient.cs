@@ -131,7 +131,7 @@ namespace MikuLuaProfiler
                     else if(m_frameCount != HookLuaSetup.frameCount)
                     {
                         bw.Write(PACK_HEAD);
-                        Sample s = Sample.Create(0, 0, "");
+                        Sample s = Sample.Create(0, (int)LuaLib.GetLuaMemory(LuaProfiler.mainL), "");
                         Serialize(s, bw);
                         s.Restore();
                     }

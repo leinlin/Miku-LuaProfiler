@@ -131,6 +131,21 @@ namespace MikuLuaProfiler
             }
         }
 
+        public bool discardInvalid
+        {
+            get
+            {
+                return m_discardInvalid;
+            }
+            set
+            {
+                if (m_discardInvalid != value)
+                {
+                    m_discardInvalid = value;
+                    this.Save();
+                }
+            }
+        }
 
         public int captureMonoGC
         {
@@ -198,6 +213,7 @@ namespace MikuLuaProfiler
 
         public void Save()
         {
+#if UNITY_EDITOR
             string text = "Assets/Resources/LuaDeepProfilerSettings.bytes";
 
             if (!Directory.Exists("Assets/Resources"))
@@ -222,9 +238,11 @@ namespace MikuLuaProfiler
             binaryWriter.Write(bytes.Length);
             binaryWriter.Write(bytes);
             binaryWriter.Write(this.m_port);
+            binaryWriter.Write(m_discardInvalid);
 
             output.Flush();
             binaryWriter.Close();
+#endif
         }
 
         // Token: 0x060000C9 RID: 201 RVA: 0x00006674 File Offset: 0x00004A74
@@ -271,6 +289,7 @@ namespace MikuLuaProfiler
                     count = binaryReader.ReadInt32();
                     luaDeepProfilerSetting.m_ip = Encoding.UTF8.GetString(binaryReader.ReadBytes(count));
                     luaDeepProfilerSetting.m_port = binaryReader.ReadInt32();
+                    luaDeepProfilerSetting.m_discardInvalid = binaryReader.ReadBoolean();
                     binaryReader.Close();
                 }
                 catch
@@ -305,6 +324,7 @@ namespace MikuLuaProfiler
         private bool m_isDeepLuaProfiler = false;
         private int m_captureLuaGC = 51200;
         private bool m_isNeedCapture = false;
+        private bool m_discardInvalid = true;
         private string m_assMd5 = "";
         private bool m_isInited = false;
         private int m_captureMonoGC = 51200;

@@ -38,9 +38,15 @@ namespace MikuLuaProfiler
         public bool CheckSampleValid()
         {
             bool result = false;
-
             do
             {
+                var setting = LuaDeepProfilerSetting.Instance;
+                if (setting != null && !setting.discardInvalid)
+                {
+                    result = true;
+                    break;
+                }
+
                 if (costLuaGC > 0)
                 {
                     result = true;

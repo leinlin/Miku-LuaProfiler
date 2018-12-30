@@ -42,6 +42,9 @@ namespace MikuLuaProfiler
         public static int pss { private set; get; }
         public static float power { private set; get; }
 
+        public static LuaDeepProfilerSetting setting { private set; get; }
+
+        private bool needShowMenu = false;
         public float showTime = 1f;
         private int count = 0;
         private float deltaTime = 0f;
@@ -55,7 +58,7 @@ namespace MikuLuaProfiler
 #endif
         public static void OnStartGame()
         {
-            var setting = LuaDeepProfilerSetting.MakeInstance();
+            setting = LuaDeepProfilerSetting.MakeInstance();
             LuaProfiler.mainThreadId = System.Threading.Thread.CurrentThread.ManagedThreadId;
             if (setting.isNeedCapture)
             {
@@ -82,6 +85,37 @@ namespace MikuLuaProfiler
             var inx = LuaDeepProfilerSetting.Instance;
         }
 
+        private void OnGUI()
+        {
+            if (!needShowMenu) return;
+            if (GUI.Button(new Rect(0, 0, 200, 100), "Connect"))
+            {
+                NetWorkClient.ConnectServer(setting.ip, setting.port);
+            }
+
+            setting.ip = GUI.TextField(new Rect(210, 20, 200, 60), setting.ip);
+
+            if (GUI.Button(new Rect(0, 110, 200, 100), "Disconnect"))
+            {
+                NetWorkClient.Close();
+            }
+            if (setting.discardInvalid)
+            {
+                if (GUI.Button(new Rect(0, 220, 200, 100), "ShowAll"))
+                {
+                    setting.discardInvalid = false;
+                }
+            }
+            else
+            {
+                if (GUI.Button(new Rect(0, 220, 200, 100), "HideUseless"))
+                {
+                    setting.discardInvalid = true;
+                }
+            }
+
+        }
+
         private void LateUpdate()
         {
             frameCount = Time.frameCount;
@@ -99,11 +133,16 @@ namespace MikuLuaProfiler
                 power = NativeHelper.GetBatteryLevel();
                 currentTime = Time.unscaledTime;
             }
+            if (Input.touches.Length == 4 && Input.touches[0].phase == TouchPhase.Began)
+            {
+                needShowMenu = !needShowMenu;
+            }
         }
 
         private void OnApplicationQuit()
         {
             NetWorkClient.Close();
+            Destroy(gameObject);
         }
 
     }
