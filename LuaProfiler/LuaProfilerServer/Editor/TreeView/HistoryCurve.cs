@@ -732,17 +732,17 @@ namespace MikuLuaProfiler
             addFpsCount = 0;
             addPssCount = 0;
 
-            m_maxLuaValue = 0;
-            m_minLuaValue = 0;
+            m_maxLuaValue = -1;
+            m_minLuaValue = -1;
 
-            m_maxMonoValue = 0;
-            m_minMonoValue = 0;
+            m_maxMonoValue = -1;
+            m_minMonoValue = -1;
 
             m_minFpsValue = 0;
             m_maxFpsValue = 90;
 
-            m_minPssValue = 0;
-            m_maxPssValue = 0;
+            m_minPssValue = -1;
+            m_maxPssValue = -1;
 
             m_minPowerValue = 0;
             m_maxPowerValue = 0;

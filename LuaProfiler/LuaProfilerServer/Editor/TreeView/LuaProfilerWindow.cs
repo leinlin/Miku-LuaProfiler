@@ -773,10 +773,6 @@ namespace MikuLuaProfiler
 
         private Vector3 PointFromRect(float minH, float maxH, float h, float minV, float maxV, float v, Rect rect)
         {
-            minV = 0;
-            maxV = maxV - minV;
-            v = v - minV;
-            v = Mathf.Max(minV, v);
             Vector3 v3 = new Vector3();
             float dh = maxH - minH;
             dh = (dh == 0) ? 1 : dh;
