@@ -218,12 +218,16 @@ namespace MikuLuaProfiler
 
         public static void HookRef(IntPtr L)
         {
+#if XLUA || TOLUA || SLUA
             LuaLib.DoRefLuaFun(L, "lua_miku_add_ref_fun_info");
+#endif
         }
 
         public static void HookUnRef(IntPtr L)
         {
+#if XLUA || TOLUA || SLUA
             LuaLib.DoRefLuaFun(L, "lua_miku_remove_ref_fun_info");
+#endif
         }
 
         #region luastring
@@ -245,7 +249,7 @@ namespace MikuLuaProfiler
             stringDict[(long)strPoint] = s;
 #endif
         }
-        #endregion
+#endregion
     }
 
     public class LuaLib

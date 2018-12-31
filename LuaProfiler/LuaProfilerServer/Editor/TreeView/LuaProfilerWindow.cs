@@ -6,10 +6,11 @@
 * Purpose:  
 * ==============================================================================
 */
-using UnityEngine;
-using UnityEditor.IMGUI.Controls;
+
+
 using UnityEditor;
-using System;
+using UnityEditor.IMGUI.Controls;
+using UnityEngine;
 using System.IO;
 using System.Collections.Generic;
 
@@ -85,10 +86,12 @@ namespace MikuLuaProfiler
         #endregion
 
         void OnEnable()
-        {EditorUtility.UnloadUnusedAssetsImmediate();
+        {
             if (m_TreeViewState == null)
                 m_TreeViewState = new TreeViewState();
 
+            m_SearchField = new SearchField();
+            
             LuaProfilerTreeView.m_nodeDict.Clear();
             startFrame = 0;
             endFrame = 0;
@@ -101,20 +104,19 @@ namespace MikuLuaProfiler
             oldEndUrl = null;
             Destory(oldStartT);
             Destory(oldEndT);
+            disableChart = null;
             Destory(disableChart);
+            luaChart = null;
             Destory(luaChart);
+            monoChart = null;
             Destory(monoChart);
+            fpsChart = null;
             Destory(fpsChart);
+            pssChart = null;
             Destory(pssChart);
+            powrChart = null;
             Destory(powrChart);
-            m_SearchField = new SearchField();
             m_SearchField.downOrUpArrowKeyPressed += m_TreeView.SetFocusAndEnsureSelectedItem;
-            disableChart = AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/LuaProfilerServer/Editor/Skin/disable.png");
-            luaChart = AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/LuaProfilerServer/Editor/Skin/lua.png");
-            monoChart = AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/LuaProfilerServer/Editor/Skin/mono.png");
-            fpsChart = AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/LuaProfilerServer/Editor/Skin/fps.png");
-            pssChart = AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/LuaProfilerServer/Editor/Skin/pss.png");
-            powrChart = AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/LuaProfilerServer/Editor/Skin/power.png");
 
             EditorApplication.update -= DequeueLuaInfo;
             EditorApplication.update += DequeueLuaInfo;
@@ -123,11 +125,17 @@ namespace MikuLuaProfiler
         private void OnDisable()
         {
             Destory(disableChart);
+            disableChart = null;
             Destory(luaChart);
+            luaChart = null;
             Destory(monoChart);
+            monoChart = null;
             Destory(fpsChart);
+            fpsChart = null;
             Destory(pssChart);
+            pssChart = null;
             Destory(powrChart);
+            powrChart = null;
             EditorApplication.update -= DequeueLuaInfo;
         }
 
@@ -146,6 +154,7 @@ namespace MikuLuaProfiler
 
         void OnGUI()
         {
+            EditorGUILayout.BeginHorizontal();
             EditorGUILayout.BeginVertical();
             DoToolbar();
             GUILayout.Space(10);
@@ -154,13 +163,47 @@ namespace MikuLuaProfiler
             EditorGUILayout.BeginHorizontal();
             DoChartToggle();
             DoChart();
-            DoRefScroll();
             EditorGUILayout.EndHorizontal();
 
             //DoCapture();
             DoTreeView();
 
             EditorGUILayout.EndVertical();
+
+            EditorGUILayout.BeginVertical();
+            EditorGUILayout.LabelField("lua fun ref");
+            DoRefScroll();
+            EditorGUILayout.EndVertical();
+
+            EditorGUILayout.EndHorizontal();
+        }
+
+        private void LoadChartTexture()
+        {
+            if (disableChart == null)
+            {
+                disableChart = AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/LuaProfilerServer/Editor/Skin/disable.png");
+            }
+            if (luaChart == null)
+            {
+                luaChart = AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/LuaProfilerServer/Editor/Skin/lua.png");
+            }
+            if(monoChart == null)
+            {
+                monoChart = AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/LuaProfilerServer/Editor/Skin/mono.png");
+            }
+            if (fpsChart == null)
+            {
+                fpsChart = AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/LuaProfilerServer/Editor/Skin/fps.png");
+            }
+            if (pssChart == null)
+            {
+                pssChart = AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/LuaProfilerServer/Editor/Skin/pss.png");
+            }
+            if (powrChart == null)
+            {
+                powrChart = AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/LuaProfilerServer/Editor/Skin/power.png");
+            }
         }
 
         void DoToolbar()
@@ -237,7 +280,11 @@ namespace MikuLuaProfiler
             GUILayout.FlexibleSpace();
             #endregion
 
-            m_TreeView.searchString = m_SearchField.OnToolbarGUI(m_TreeView.searchString);
+            if (m_TreeView != null)
+            {
+                m_TreeView.searchString = m_SearchField.OnToolbarGUI(m_TreeView.searchString);
+            }
+
 
             EditorGUILayout.EndHorizontal();
         }
@@ -360,6 +407,7 @@ namespace MikuLuaProfiler
 
         void DoChartToggle()
         {
+            LoadChartTexture();
             EditorGUILayout.BeginVertical(EditorStyles.helpBox, GUILayout.Width(130));
             Texture2D t = null;
             #region chart
@@ -390,7 +438,7 @@ namespace MikuLuaProfiler
             GUILayout.Space(5);
             EditorGUILayout.BeginHorizontal();
             t = isShowLuaChart ? luaChart : disableChart;
-            isShowLuaChart = GUILayout.Toggle(isShowLuaChart, t, EditorStyles.label, GUILayout.Width(15) , GUILayout.Height(15));
+            isShowLuaChart = GUILayout.Toggle(isShowLuaChart, t, EditorStyles.label, GUILayout.Width(15), GUILayout.Height(15));
             GUILayout.Label("Lua", GUILayout.Width(40));
             GUILayout.Label(m_TreeView.GetLuaMemory());
             EditorGUILayout.EndHorizontal();
@@ -503,6 +551,7 @@ namespace MikuLuaProfiler
         }
         void DoTreeView()
         {
+            if (m_TreeView == null) return;
             Rect rect = GUILayoutUtility.GetRect(0, 100000, 0, 100000);
             m_TreeView.Reload();
             m_TreeView.OnGUI(rect);
@@ -514,7 +563,7 @@ namespace MikuLuaProfiler
         }
         void DoRefScroll()
         {
-            scrollPosition = GUILayout.BeginScrollView(scrollPosition, GUILayout.Width(200));
+            scrollPosition = GUILayout.BeginScrollView(scrollPosition, EditorStyles.helpBox, GUILayout.Width(200));
             foreach (var item in m_refDict)
             {
                 GUILayout.BeginHorizontal();
@@ -529,6 +578,7 @@ namespace MikuLuaProfiler
         #region chart
         private void DrawChart(Rect rect)
         {
+            if (m_TreeView == null) return;
             Handles.color = new Color(1f, 1f, 1f, 0.2f);
             CachedVec[0].Set(rect.xMin, rect.y + 0.33f * rect.height, 0f);
             CachedVec[1].Set(rect.xMax, rect.y + 0.33f * rect.height, 0f);
