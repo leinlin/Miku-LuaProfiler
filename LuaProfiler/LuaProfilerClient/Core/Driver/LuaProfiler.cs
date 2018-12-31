@@ -243,6 +243,20 @@ namespace MikuLuaProfiler
             }
         }
         #endregion
+
+        #region ref
+        public static void AddRefFun(string funName, string funAddr)
+        {
+            LuaRefInfo refInfo = LuaRefInfo.Create(1, funName, funAddr);
+            NetWorkClient.SendMessage(refInfo);
+        }
+        public static void RemoveRefFun(string funName, string funAddr)
+        {
+            LuaRefInfo refInfo = LuaRefInfo.Create(0, funName, funAddr);
+            NetWorkClient.SendMessage(refInfo);
+        }
+        #endregion
+
     }
 }
 #endif

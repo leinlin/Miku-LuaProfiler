@@ -181,8 +181,13 @@ namespace MikuLuaProfiler
 
     public class LuaHook
     {
+        public static bool isHook = true;
         public static byte[] Hookloadbuffer(IntPtr L, byte[] buff, string name)
         {
+            if (!isHook)
+            {
+                return buff;
+            }
             if (buff[0] == 0x1b && buff[1] == 0x4c)
             {
                 return buff;
@@ -211,7 +216,17 @@ namespace MikuLuaProfiler
             return buff;
         }
 
-#region luastring
+        public static void HookRef(IntPtr L)
+        {
+            LuaLib.DoRefLuaFun(L, "lua_miku_add_ref_fun_info");
+        }
+
+        public static void HookUnRef(IntPtr L)
+        {
+            LuaLib.DoRefLuaFun(L, "lua_miku_remove_ref_fun_info");
+        }
+
+        #region luastring
         public static readonly Dictionary<long, string> stringDict = new Dictionary<long, string>();
         public static bool TryGetLuaString(IntPtr p, out string result)
         {
@@ -221,14 +236,16 @@ namespace MikuLuaProfiler
         {
 #if XLUA || TOLUA || SLUA
             int oldTop = LuaDLL.lua_gettop(L);
-            LuaDLL.lua_pushvalue(L, index);
             //把字符串ref了之后就不GC了
-            LuaDLL.luaL_ref(L, LuaIndexes.LUA_REGISTRYINDEX);
+            LuaLib.lua_getglobal(L, "MikuLuaProfilerStrTb");
+            LuaDLL.lua_pushvalue(L, index);
+            LuaDLL.lua_insert(L, -2);
+
             LuaDLL.lua_settop(L, oldTop);
             stringDict[(long)strPoint] = s;
 #endif
         }
-#endregion
+        #endregion
     }
 
     public class LuaLib
@@ -312,6 +329,17 @@ namespace MikuLuaProfiler
 #endif
         }
 
+        public static int luaL_loadbuffer(IntPtr L, byte[] buff, int size, string name)
+        {
+#if XLUA
+            return LuaDLL.xluaL_loadbuffer(L, buff, size, name);
+#elif TOLUA
+            return LuaDLL.tolua_loadbuffer(L, buff, size, name);
+#elif SLUA
+            return SLua.LuaDLLWrapper.luaLS_loadbuffer(L, buff, size, name);
+#endif
+        }
+
         public static void lua_getglobal(IntPtr L, string name)
         {
 #if XLUA
@@ -322,13 +350,78 @@ namespace MikuLuaProfiler
             LuaDLL.lua_getglobal(L, name);
 #endif
         }
+
+        public static void DoString(IntPtr L, string script)
+        {
+            LuaHook.isHook = false;
+            byte[] chunk = Encoding.UTF8.GetBytes(script);
+            int oldTop = LuaDLL.lua_gettop(L);
+#if XLUA
+            int errFunc = LuaDLL.load_error_func(L, -1);
+
+            if (LuaLib.luaL_loadbuffer(L, chunk, chunk.Length, "chunk") == 0)
+            {
+                if (LuaDLL.lua_pcall(L, 0, -1, errFunc) == 0)
+                {
+                    LuaDLL.lua_remove(L, errFunc);
+                }
+            }
+            else
+            {
+                Debug.Log(script);
+            }
+#elif TOLUA
+            if (LuaLib.luaL_loadbuffer(L, chunk, chunk.Length, "chunk") == 0)
+            {
+                LuaDLL.lua_call(L, 0, -1);
+            }
+#elif SLUA
+            if (LuaLib.luaL_loadbuffer(L, chunk, chunk.Length, "chunk") == 0)
+            {
+                LuaDLL.lua_call(L, 0, -1);
+            }
 #endif
-    }
+            LuaHook.isHook = true;
+            LuaDLL.lua_settop(L, oldTop);
+        }
+
+        public static void DoRefLuaFun(IntPtr L, string funName)
+        {
+            int oldTop = LuaDLL.lua_gettop(L);
+
+            do
+            {
+#if XLUA
+                int errFunc = LuaDLL.load_error_func(L, -1);
+                LuaLib.lua_getglobal(L, funName);
+                if (!LuaDLL.lua_isfunction(L, -1)) break;
+                LuaDLL.lua_pushvalue(L, -3);
+                if (LuaDLL.lua_pcall(L, 1, 0, errFunc) == 0)
+                {
+                    LuaDLL.lua_remove(L, errFunc);
+                }
+#elif TOLUA
+                LuaLib.lua_getglobal(L, funName);
+                if (!LuaDLL.lua_isfunction(L, -1)) break;
+                LuaDLL.lua_pushvalue(L, -2);
+                LuaDLL.lua_call(L, 1, 0);
+#elif SLUA
+                LuaLib.lua_getglobal(L, funName);
+                if (!LuaDLL.lua_isfunction(L, -1)) break;
+                LuaDLL.lua_pushvalue(L, -2);
+                LuaDLL.lua_call(L, 1, 0);
+#endif
+            } while (false);
+
+            LuaDLL.lua_settop(L, oldTop);
+        }
+#endif
+        }
 
 #if XLUA || TOLUA || SLUA
-#region bind
+        #region bind
 
-    public class MikuLuaProfilerLuaProfilerWrap
+        public class MikuLuaProfilerLuaProfilerWrap
     {
         public static void __Register(IntPtr L)
         {
@@ -351,14 +444,20 @@ namespace MikuLuaProfiler
             LuaLib.lua_pushstdcallcfunction(L, UnpackReturnValue);
             LuaLib.lua_setglobal(L, "miku_unpack_return_value");
 
+            LuaLib.lua_pushstdcallcfunction(L, AddRefFunInfo);
+            LuaLib.lua_setglobal(L, "miku_add_ref_fun_info");
+
+            LuaLib.lua_pushstdcallcfunction(L, RemoveRefFunInfo);
+            LuaLib.lua_setglobal(L, "miku_remove_ref_fun_info");
+
+            LuaDLL.lua_newtable(L);
+            LuaLib.lua_setglobal(L, "MikuLuaProfilerStrTb");
 #if XLUA
-            DoString(L);
+            LuaLib.DoString(L, env_script);
 #endif
+            LuaLib.DoString(L, get_ref_string);
         }
-#if XLUA
-        private static void DoString(IntPtr L)
-        {
-            const string script = @"
+        const string env_script = @"
 local function getfunction(level)
     local info = debug.getinfo(level + 1, 'f')
     return info and info.func
@@ -398,54 +497,90 @@ function getfenv(fn)
     end
 end
 ";
-            int oldTop = LuaDLL.lua_gettop(L);
-            int errFunc = LuaDLL.load_error_func(L, -1);
-            byte[] chunk = Encoding.UTF8.GetBytes(script);
-            if (LuaDLL.xluaL_loadbuffer(L, chunk, chunk.Length, "env") == 0)
-            {
-                if (LuaDLL.lua_pcall(L, 0, -1, errFunc) == 0)
-                {
-                    LuaDLL.lua_remove(L, errFunc);
-                }
-            }
-            LuaDLL.lua_settop(L, oldTop);
-        }
-#endif
-        [MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]
-        static int BeginSample(IntPtr L)
+        const string get_ref_string = @"
+local infoTb = {}
+local funAddrTb = {}
+
+local function get_fun_info(fun)
+    local result = infoTb[fun]
+    local addr = funAddrTb[fun]
+    if not result then
+        local info = debug.getinfo(fun, 'Sl')
+        result = string.format('%s&line:%d', info.source, info.linedefined)
+        addr = string.sub(tostring(fun), 11)
+        infoTb[fun] = result
+        funAddrTb[fun] = addr
+    end
+    return result,addr
+end
+
+function lua_miku_add_ref_fun_info(fun)
+    local result,addr = get_fun_info(fun)
+    miku_add_ref_fun_info(result, addr)
+end
+
+function lua_miku_remove_ref_fun_info(fun)
+    local result,addr = get_fun_info(fun)
+    miku_remove_ref_fun_info(result, addr)
+end
+";
+        public static string GetRefString(IntPtr L, int index)
         {
             StrLen len;
-            IntPtr intPtr = LuaLib.lua_tostringptr(L, 1, out len);
+            IntPtr intPtr = LuaLib.lua_tostringptr(L, index, out len);
             string text;
             if (!LuaHook.TryGetLuaString(intPtr, out text))
             {
-                text = LuaDLL.lua_tostring(L, 1);
+                text = LuaDLL.lua_tostring(L, index);
                 if (!string.IsNullOrEmpty(text))
                 {
                     text = string.Intern(text);
                 }
-                LuaHook.RefString(intPtr, 1, text, L);
+                LuaHook.RefString(intPtr, index, text, L);
             }
-            MikuLuaProfiler.LuaProfiler.BeginSample(L, text);
+            return text;
+        }
+
+        [MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]
+        static int BeginSample(IntPtr L)
+        {
+            LuaProfiler.BeginSample(L, GetRefString(L, 1));
             return 0;
         }
 
         [MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]
         static int UnpackReturnValue(IntPtr L)
         {
-            MikuLuaProfiler.LuaProfiler.EndSample(L);
+            LuaProfiler.EndSample(L);
             return LuaDLL.lua_gettop(L);
+        }
+
+        [MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]
+        static int AddRefFunInfo(IntPtr L)
+        {
+            string funName = GetRefString(L, 1);
+            string funAddr = GetRefString(L, 2);
+            LuaProfiler.AddRefFun(funName, funAddr);
+            return 0;
+        }
+
+        [MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]
+        static int RemoveRefFunInfo(IntPtr L)
+        {
+            string funName = GetRefString(L, 1);
+            string funAddr = GetRefString(L, 2);
+            LuaProfiler.RemoveRefFun(funName, funAddr);
+            return 0;
         }
 
         [MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]
         static int EndSample(IntPtr L)
         {
-            MikuLuaProfiler.LuaProfiler.EndSample(L);
+            LuaProfiler.EndSample(L);
             return 0;
         }
     }
-#endregion
-#endif
+    #endregion
+    #endif
 }
-
 #endif

@@ -15,7 +15,38 @@ using UnityEngine;
 
 namespace MikuLuaProfiler
 {
-    public class Sample
+    public abstract class NetBase
+    {
+        public abstract void Restore();
+    }
+
+    public class LuaRefInfo : NetBase
+    {
+        #region field
+        public byte cmd; //1添加、0移除
+        public string name;
+        public string addr;
+        #endregion
+
+        #region pool
+        private static ObjectPool<LuaRefInfo> m_pool = new ObjectPool<LuaRefInfo>(32);
+        public static LuaRefInfo Create(byte cmd, string name, string addr)
+        {
+            LuaRefInfo r = m_pool.GetObject();
+            r.cmd = cmd;
+            r.name = name;
+            r.addr = addr;
+            return r;
+        }
+
+        public override void Restore()
+        {
+            m_pool.Store(this);
+        }
+        #endregion
+    }
+
+    public class Sample : NetBase
     {
         public int currentLuaMemory;
         public int currentMonoMemory;
@@ -132,7 +163,7 @@ namespace MikuLuaProfiler
             return s;
         }
 
-        public void Restore()
+        public override void Restore()
         {
             lock (this)
             {

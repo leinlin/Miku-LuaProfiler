@@ -21,13 +21,12 @@ namespace MikuLuaProfiler
     {
         private static TcpClient m_client = null;
         private static Thread m_sendThread;
-        private static Queue<Sample> m_sampleQueue = new Queue<Sample>(256);
+        private static Queue<NetBase> m_sampleQueue = new Queue<NetBase>(256);
         private const int PACK_HEAD = 0x23333333;
         private static SocketError errorCode;
         private static NetworkStream ns;
         private static MBinaryWriter bw;
         private static int m_frameCount = 0;
-
         #region public
         public static void ConnectServer(string host, int port)
         {
@@ -90,13 +89,12 @@ namespace MikuLuaProfiler
 
         //private static Dictionary<string, Sample> m_sampleDict = new Dictionary<string, Sample>(256);
 
-        public static void SendMessage(Sample sample)
+        public static void SendMessage(NetBase sample)
         {
             if (m_client == null) return;
             lock (m_sampleQueue)
             {
                 m_sampleQueue.Enqueue(sample);
-
             }
         }
         #endregion
@@ -118,12 +116,13 @@ namespace MikuLuaProfiler
                     {
                         while (m_sampleQueue.Count > 0)
                         {
-                            Sample s = null;
-                            bw.Write(PACK_HEAD);
+                            NetBase s = null;
                             lock (m_sampleQueue)
                             {
                                 s = m_sampleQueue.Dequeue();
                             }
+
+                            bw.Write(PACK_HEAD);
                             Serialize(s, bw);
                             s.Restore();
                         }
@@ -152,14 +151,11 @@ namespace MikuLuaProfiler
             }
 
         }
-
         private static int m_key = 0;
-
         public static int GetUniqueKey()
         {
             return m_key++;
         }
-
         private static Dictionary<string, KeyValuePair<int, byte[]>> m_strDict = new Dictionary<string, KeyValuePair<int, byte[]>>(8192);
         private static bool GetBytes(string s, out byte[] result, out int index)
         {
@@ -181,39 +177,74 @@ namespace MikuLuaProfiler
 
             return ret;
         }
-        private static void Serialize(Sample s, BinaryWriter bw)
+        private static void Serialize(NetBase o, BinaryWriter bw)
         {
-            bw.Write(s.calls);
-            bw.Write(s.frameCount);
-            bw.Write(s.fps);
-            bw.Write(s.pss);
-            bw.Write(s.power);
-            bw.Write(s.costLuaGC);
-            bw.Write(s.costMonoGC);
-            byte[] datas;
-            int index = 0;
-            bool isRef = GetBytes(s.name, out datas, out index);
-            bw.Write(isRef);
-            bw.Write(index);
-            if (!isRef)
+            if (o is Sample)
             {
-                bw.Write(datas.Length);
-                bw.Write(datas);
+                Sample s = (Sample)o;
+                //写入message 头编号
+                bw.Write((int)0);
+
+                bw.Write(s.calls);
+                bw.Write(s.frameCount);
+                bw.Write(s.fps);
+                bw.Write(s.pss);
+                bw.Write(s.power);
+                bw.Write(s.costLuaGC);
+                bw.Write(s.costMonoGC);
+                byte[] datas;
+                int index = 0;
+                bool isRef = GetBytes(s.name, out datas, out index);
+                bw.Write(isRef);
+                bw.Write(index);
+                if (!isRef)
+                {
+                    bw.Write(datas.Length);
+                    bw.Write(datas);
+                }
+
+                bw.Write(s.costTime);
+                bw.Write(s.currentLuaMemory);
+                bw.Write(s.currentMonoMemory);
+                bw.Write((ushort)s.childs.Count);
+
+                Thread.Sleep(0);
+
+                var childs = s.childs;
+                for (int i = 0; i < childs.Count; i++)
+                {
+                    Serialize(childs[i], bw);
+                }
             }
-
-            bw.Write(s.costTime);
-            bw.Write(s.currentLuaMemory);
-            bw.Write(s.currentMonoMemory);
-            bw.Write((ushort)s.childs.Count);
-
-            Thread.Sleep(0);
-
-            var childs = s.childs;
-            for (int i = 0; i < childs.Count; i++)
+            else if (o is LuaRefInfo)
             {
-                Serialize(childs[i], bw);
-            }
+                LuaRefInfo r = (LuaRefInfo)o;
+                //写入message 头编号
+                bw.Write((int)1);
 
+                bw.Write(r.cmd);
+
+                byte[] datas;
+                int index = 0;
+                bool isRef = GetBytes(r.name, out datas, out index);
+                bw.Write(isRef);
+                bw.Write(index);
+                if (!isRef)
+                {
+                    bw.Write(datas.Length);
+                    bw.Write(datas);
+                }
+
+                isRef = GetBytes(r.addr, out datas, out index);
+                bw.Write(isRef);
+                bw.Write(index);
+                if (!isRef)
+                {
+                    bw.Write(datas.Length);
+                    bw.Write(datas);
+                }
+                Thread.Sleep(0);
+            }
         }
         #endregion
 

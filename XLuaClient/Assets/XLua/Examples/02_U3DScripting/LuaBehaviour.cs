@@ -79,12 +79,12 @@ public class LuaBehaviour : MonoBehaviour {
         {
             luaUpdate();
         }
-        //if (Time.time - LuaBehaviour.lastGCTime > GCInterval)
-        //{
-        //    luaEnv.Tick();
-        //    LuaBehaviour.lastGCTime = Time.time;
-        //}
-	}
+        if (Time.time - LuaBehaviour.lastGCTime > GCInterval)
+        {
+            luaEnv.Tick();
+            LuaBehaviour.lastGCTime = Time.time;
+        }
+    }
 
     void OnDestroy()
     {

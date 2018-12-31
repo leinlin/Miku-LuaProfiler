@@ -18,6 +18,7 @@ namespace MikuLuaProfiler
 #if UNITY_5_6_OR_NEWER
     public class LuaProfilerWindow : EditorWindow
     {
+        #region field
         [SerializeField] TreeViewState m_TreeViewState;
         private readonly GUILayoutOption[] _frameInfoRectsOption = new GUILayoutOption[]
         {
@@ -78,9 +79,13 @@ namespace MikuLuaProfiler
         private Texture2D oldStartT = null;
         private Texture2D oldEndT = null;
 
+        private Dictionary<string, HashSet<string>> m_refDict = new Dictionary<string, HashSet<string>>(4096);
+        private Queue<LuaRefInfo> m_refQueue = new Queue<LuaRefInfo>(256);
+        private Vector2 scrollPosition;
+        #endregion
+
         void OnEnable()
-        {
-            EditorUtility.UnloadUnusedAssetsImmediate();
+        {EditorUtility.UnloadUnusedAssetsImmediate();
             if (m_TreeViewState == null)
                 m_TreeViewState = new TreeViewState();
 
@@ -96,6 +101,12 @@ namespace MikuLuaProfiler
             oldEndUrl = null;
             Destory(oldStartT);
             Destory(oldEndT);
+            Destory(disableChart);
+            Destory(luaChart);
+            Destory(monoChart);
+            Destory(fpsChart);
+            Destory(pssChart);
+            Destory(powrChart);
             m_SearchField = new SearchField();
             m_SearchField.downOrUpArrowKeyPressed += m_TreeView.SetFocusAndEnsureSelectedItem;
             disableChart = AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/LuaProfilerServer/Editor/Skin/disable.png");
@@ -104,6 +115,20 @@ namespace MikuLuaProfiler
             fpsChart = AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/LuaProfilerServer/Editor/Skin/fps.png");
             pssChart = AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/LuaProfilerServer/Editor/Skin/pss.png");
             powrChart = AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/LuaProfilerServer/Editor/Skin/power.png");
+
+            EditorApplication.update -= DequeueLuaInfo;
+            EditorApplication.update += DequeueLuaInfo;
+        }
+
+        private void OnDisable()
+        {
+            Destory(disableChart);
+            Destory(luaChart);
+            Destory(monoChart);
+            Destory(fpsChart);
+            Destory(pssChart);
+            Destory(powrChart);
+            EditorApplication.update -= DequeueLuaInfo;
         }
 
         void Destory(UnityEngine.Object o)
@@ -115,7 +140,7 @@ namespace MikuLuaProfiler
             }
             else
             {
-                GameObject.DestroyImmediate(o);
+                GameObject.DestroyImmediate(o, true);
             }
         }
 
@@ -125,15 +150,16 @@ namespace MikuLuaProfiler
             DoToolbar();
             GUILayout.Space(10);
             DoRecord();
-            if (isShowLuaChart || isShowMonoChart || isShowFpsChart || isShowPssChart || isShowPowerChart)
-            {
-                EditorGUILayout.BeginHorizontal();
-                DoChartToggle();
-                DoChart();
-                EditorGUILayout.EndHorizontal();
-            }
+
+            EditorGUILayout.BeginHorizontal();
+            DoChartToggle();
+            DoChart();
+            DoRefScroll();
+            EditorGUILayout.EndHorizontal();
+
             //DoCapture();
             DoTreeView();
+
             EditorGUILayout.EndVertical();
         }
 
@@ -147,6 +173,7 @@ namespace MikuLuaProfiler
             {
                 currentFrameIndex = 0;
                 m_TreeView.Clear(true);
+                ClearRefInfo();
             }
             GUILayout.Space(5);
             #endregion
@@ -167,7 +194,8 @@ namespace MikuLuaProfiler
                 NetWorkServer.Close();
                 currentFrameIndex = 0;
                 m_TreeView.Clear(true);
-                NetWorkServer.RegisterOnReceive(m_TreeView.LoadRootSample);
+                NetWorkServer.RegisterOnReceiveSample(m_TreeView.LoadRootSample);
+                NetWorkServer.RegisterOnReceiveRefInfo(DelRefInfo);
                 NetWorkServer.BeginListen("0.0.0.0", port);
             }
             GUILayout.Label("port:", GUILayout.Height(30), GUILayout.Width(35));
@@ -381,7 +409,6 @@ namespace MikuLuaProfiler
 
             EditorGUILayout.EndVertical();
         }
-
         void DoChart()
         {
             EditorGUILayout.BeginVertical(new GUILayoutOption[0]);
@@ -485,7 +512,19 @@ namespace MikuLuaProfiler
                 isAscending = m_TreeView.multiColumnHeader.IsSortedAscending(sortColIndex);
             }
         }
-
+        void DoRefScroll()
+        {
+            scrollPosition = GUILayout.BeginScrollView(scrollPosition, GUILayout.Width(200));
+            foreach (var item in m_refDict)
+            {
+                GUILayout.BeginHorizontal();
+                GUILayout.Label(item.Key);
+                int count = item.Value.Count;
+                GUILayout.Label(count.ToString());
+                GUILayout.EndHorizontal();
+            }
+            GUILayout.EndScrollView();
+        }
 
         #region chart
         private void DrawChart(Rect rect)
@@ -838,6 +877,75 @@ namespace MikuLuaProfiler
         }
         #endregion
 
+        #region ref
+        private void DelRefInfo(LuaRefInfo info)
+        {
+            lock (this)
+            {
+                m_refQueue.Enqueue(info);
+            }
+        }
+
+        private void DequeueLuaInfo()
+        {
+            lock (this)
+            {
+                while (m_refQueue.Count > 0)
+                {
+                    LuaRefInfo r = null;
+                    lock (this)
+                    {
+                        r = m_refQueue.Dequeue();
+                        if (r.cmd == 1)
+                        {
+                            AddRefFun(r.name, r.addr);
+                        }
+                        else if (r.cmd == 0)
+                        {
+                            RemoveRefFun(r.name, r.addr);
+                        }
+                        r.Restore();
+                    }
+                }
+            }
+        }
+
+        private void ClearRefInfo()
+        {
+            m_refDict.Clear();
+        }
+
+        private void AddRefFun(string funName, string funAddr)
+        {
+            HashSet<string> addrList;
+            if (!m_refDict.TryGetValue(funName, out addrList))
+            {
+                addrList = new HashSet<string>();
+                m_refDict.Add(funName, addrList);
+            }
+            if (!addrList.Contains(funAddr))
+            {
+                addrList.Add(funAddr);
+            }
+        }
+        private void RemoveRefFun(string funName, string funAddr)
+        {
+            HashSet<string> addrList;
+            if (!m_refDict.TryGetValue(funName, out addrList))
+            {
+                return;
+            }
+            if (!addrList.Contains(funAddr))
+            {
+                return;
+            }
+            addrList.Remove(funAddr);
+            if (addrList.Count == 0)
+            {
+                m_refDict.Remove(funName);
+            }
+        }
+        #endregion
         // Add menu named "My Window" to the Window menu
         [MenuItem("Window/Lua Profiler Window")]
         static public void ShowWindow()

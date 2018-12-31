@@ -56,17 +56,22 @@ namespace MikuLuaProfiler
         private static Thread acceptThread;
 
         private const int PACK_HEAD = 0x23333333;
-        private static Action<Sample> m_onReceive;
-
+        private static Action<Sample> m_onReceiveSample;
+        private static Action<LuaRefInfo> m_onReceiveRef;
 
         public static bool CheckIsReceiving()
         {
             return tcpClient != null;
         }
 
-        public static void RegisterOnReceive(Action<Sample> onReceive)
+        public static void RegisterOnReceiveSample(Action<Sample> onReceive)
         {
-            m_onReceive = onReceive;
+            m_onReceiveSample = onReceive;
+        }
+
+        public static void RegisterOnReceiveRefInfo(Action<LuaRefInfo> onReceive)
+        {
+            m_onReceiveRef = onReceive;
         }
 
         public static void BeginListen(string ip, int port)
@@ -117,11 +122,29 @@ namespace MikuLuaProfiler
                             //处理粘包
                             while (br.ReadInt32() == PACK_HEAD)
                             {
-                                Sample s = Deserialize(br);
-                                if (m_onReceive != null)
+                                int messageId = br.ReadInt32();
+                                switch (messageId)
                                 {
-                                    m_onReceive(s);
+                                    case 0:
+                                        {
+                                            Sample s = Deserialize(br);
+                                            if (m_onReceiveSample != null)
+                                            {
+                                                m_onReceiveSample(s);
+                                            }
+                                        }
+                                        break;
+                                    case 1:
+                                        {
+                                            var r = DeserializeRef(br);
+                                            if (m_onReceiveRef != null)
+                                            {
+                                                m_onReceiveRef(r);
+                                            }
+                                        }
+                                        break;
                                 }
+
                             }
                         }
 #pragma warning disable 0168
@@ -208,6 +231,41 @@ namespace MikuLuaProfiler
             return s;
         }
 
+        public static LuaRefInfo DeserializeRef(BinaryReader br)
+        {
+            LuaRefInfo refInfo = LuaRefInfo.Create();
+            refInfo.cmd = br.ReadByte();
+
+            bool isRef = br.ReadBoolean();
+            int index = br.ReadInt32();
+            if (!isRef)
+            {
+                int len = br.ReadInt32();
+                byte[] datas = br.ReadBytes(len);
+                refInfo.name = string.Intern(Encoding.UTF8.GetString(datas));
+                m_strCacheDict[index] = refInfo.name;
+            }
+            else
+            {
+                refInfo.name = m_strCacheDict[index];
+            }
+
+            isRef = br.ReadBoolean();
+            index = br.ReadInt32();
+            if (!isRef)
+            {
+                int len = br.ReadInt32();
+                byte[] datas = br.ReadBytes(len);
+                refInfo.addr = string.Intern(Encoding.UTF8.GetString(datas));
+                m_strCacheDict[index] = refInfo.addr;
+            }
+            else
+            {
+                refInfo.addr = m_strCacheDict[index];
+            }
+
+            return refInfo;
+        }
     }
 
 }
