@@ -176,11 +176,7 @@ namespace XLua.LuaDLL
 
         public static int luaL_ref(IntPtr L)//[-1, +0, m]
         {
-            if (lua_isfunction(L, -1))
-            {
-                MikuLuaProfiler.LuaHook.HookRef(L);
-            }
-            return luaL_ref(L,LuaIndexes.LUA_REGISTRYINDEX);
+			return luaL_ref(L,LuaIndexes.LUA_REGISTRYINDEX);
 		}
 
 		[DllImport(LUADLL,CallingConvention=CallingConvention.Cdecl)]
@@ -202,13 +198,7 @@ namespace XLua.LuaDLL
 
 		public static void lua_unref(IntPtr L, int reference)
 		{
-            lua_getref(L, reference);
-            if (lua_isfunction(L, -1))
-            {
-                MikuLuaProfiler.LuaHook.HookUnRef(L);
-            }
-            lua_pop(L, 1);
-            luaL_unref(L,LuaIndexes.LUA_REGISTRYINDEX,reference);
+			luaL_unref(L,LuaIndexes.LUA_REGISTRYINDEX,reference);
 		}
 
 		[DllImport(LUADLL,CallingConvention=CallingConvention.Cdecl)]
