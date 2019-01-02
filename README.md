@@ -92,7 +92,7 @@ This tool will provide real-time detection of the registry to help locate memory
 
 ![](doc/register.gif)<br/>
 
-And the `add`、`remove` history
+And the `add`、`remove` history<br/>
 ![](doc/reg_history.png)<br/>
 
 You can set index '__name' to the lua table,monitor will replace the table code by the value of this index
