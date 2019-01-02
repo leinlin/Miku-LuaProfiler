@@ -69,11 +69,43 @@ Also open windows by **"Window->Lua Profiler Window"**, then click **OpenService
 ![](doc/profiler.gif)
 ## 
 
+#### Monitor registry
+Programmers tend to forget to release Lua objects that are cached by C#.For example, when XLua calls LuaEnv.Dispose, it throws the exception "try to dispose a LuaEnv with C# callback!"<br/>
+
+The reason is often caused by the following code
+```
+LuaTable tb = ...
+Action action = tb.rawget<Action>("action");
+a();
+tb.Dispose(); //This line of code tends to forget to call
+a= null;      //This line of code tends to forget to call
+```
+in lua
+```
+// The lua table tends to forget to call dispose
+CS.UIBehaviour.luauiTable = {}
+// The callback tends to Unregister
+CS.UIButton.OnClick = function() print("test") end
+```
+They can be released by C#'s destructor, but because in C# is just an index, the memory footprint is small then C# will not be GC immediately, but the memory usage on Lua is very large.
+This tool will provide real-time detection of the registry to help locate memory leaks quickly.<br/>
+
+![](doc/register.gif)<br/>
+
+And the `add`、`remove` history
+![](doc/reg_history.png)<br/>
+
+You can set index '__name' to the lua table,monitor will replace the table code by the value of this index
+```
+CS.UIBehaviour.loginUI = { __name = "LoginUI" }
+```
+
 #### Charts
 - Toggle `LuaChart` to open lua memory chart,line color is blue.
 - Toggle `MonoChart` to open mono memory chart,line color is green.
 - Toggle `FpsChart` to open fps chart,line color is orange.
-
+- Toggle `PssChart` to open fps chart,line color is red.
+- Toggle `PowerChart` to open fps chart,line color is brown.
 
 #### Record mode
 Click **Record** button, when game connect to server, toggle **StartRecord** to start or stop record.
