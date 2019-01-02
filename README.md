@@ -69,6 +69,11 @@ Also open windows by **"Window->Lua Profiler Window"**, then click **OpenService
 ![](doc/profiler.gif)
 ## 
 
+#### Menu in Game
+In press `ESC` or touch `four fingers` in screen to show this menu,you can change ip to connect and show more details of profiler info</br>
+![](doc/menu.png)</br>
+
+
 #### Monitor registry
 Programmers tend to forget to release Lua objects that are cached by C#.For example, when XLua calls LuaEnv.Dispose, it throws the exception "try to dispose a LuaEnv with C# callback!"<br/>
 
