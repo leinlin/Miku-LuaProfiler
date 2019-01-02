@@ -70,6 +70,8 @@ public class LuaBehaviour : MonoBehaviour {
         {
             luaStart();
         }
+        luaStart = null;
+        GC.Collect();
 	}
 	
 	// Update is called once per frame
@@ -97,5 +99,6 @@ public class LuaBehaviour : MonoBehaviour {
         luaStart = null;
         scriptEnv.Dispose();
         injections = null;
+        luaEnv.Dispose();
     }
 }
