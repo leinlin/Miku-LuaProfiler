@@ -528,7 +528,7 @@ local function get_fun_info(fun)
     return result,addr
 end
 
-local function serialize(obj,isFirst)
+local function serialize(obj)
     if obj == _G then
         return '_G'
     end
@@ -538,11 +538,14 @@ local function serialize(obj,isFirst)
     for k, v in pairs(obj) do
         lua = lua .. '[' .. tostring(k) .. ']=' .. tostring(v) .. ',\n'
         count = count + 1
-        if count > 10 then
+        if count > 5 then
             break
         end
     end
     lua = lua .. '}'
+    if lua == '{\n}' then
+        lua = tostring(obj)
+    end
     return lua
 end
 
@@ -555,7 +558,7 @@ local function get_table_info(tb)
         if result then
             result = 'table:'..result
         else
-            result = 'table:'..serialize(tb, true)
+            result = 'table:'..serialize(tb)
         end
 
         addr = string.sub(addStr, 7)
@@ -582,7 +585,7 @@ end
 
 function lua_miku_remove_ref_fun_info(data)
     local result = infoTb[data]
-    local addr = funAddrTb[tb]
+    local addr = funAddrTb[data]
     local typeStr = type(data)
     if typeStr == 'function' then
         t = 1

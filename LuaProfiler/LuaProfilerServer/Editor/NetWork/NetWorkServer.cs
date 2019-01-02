@@ -121,6 +121,7 @@ namespace MikuLuaProfiler
             receiveThread = new Thread(DoReceiveMessage);
             receiveThread.Start();
 
+            SendCmd(0);
             // 启动一个线程来发送请求
             sendThread = new Thread(DoSendMessage);
             sendThread.Start();

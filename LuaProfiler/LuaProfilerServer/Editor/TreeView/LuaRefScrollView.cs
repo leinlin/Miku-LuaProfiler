@@ -10,7 +10,7 @@ namespace MikuLuaProfiler
     using RefDict = System.Collections.Generic.Dictionary<string, System.Collections.Generic.HashSet<string>>;
     public class LuaRefScrollView
     {
-        private Dictionary<byte, RefDict> m_refDict = new Dictionary<byte, RefDict>(4);
+        private List<RefDict> m_refDict = new List<RefDict> { null, null, null };
         private List<LuaRefInfo> m_luaRefHistory = new List<LuaRefInfo>(4096);
         private Queue<LuaRefInfo> m_refQueue = new Queue<LuaRefInfo>(256);
         private Vector2 scrollPosition;
@@ -18,32 +18,33 @@ namespace MikuLuaProfiler
         private Vector2 scrollPositionTb;
         public void DoRefScroll()
         {
-            if (Event.current.type == EventType.MouseDrag || Event.current.type == EventType.MouseUp || Event.current.type == EventType.KeyDown)
+            if (Event.current.type == EventType.MouseUp || Event.current.type == EventType.KeyDown)
             {
                 return;
             }
 
-            scrollPosition = GUILayout.BeginScrollView(scrollPosition, EditorStyles.helpBox, GUILayout.Width(350));
+            scrollPosition = GUILayout.BeginScrollView(scrollPosition, EditorStyles.helpBox, GUILayout.Width(400));
             EditorGUILayout.LabelField("lua refs");
-            foreach (var dictItem in m_refDict)
+            for (byte i = 1, imax = 2; i <= imax; i++)
             {
-                if (dictItem.Key == 1)
+                RefDict dictItem = m_refDict[i];
+                if (dictItem == null) continue;
+                if (i == 1)
                 {
-                    EditorGUILayout.LabelField("function ref: " + dictItem.Value.Count);
-                    scrollPositionFun = GUILayout.BeginScrollView(scrollPositionFun);
+                    EditorGUILayout.LabelField("function ref: " + dictItem.Count);
+                    scrollPositionFun = GUILayout.BeginScrollView(scrollPositionFun, EditorStyles.helpBox);
                 }
                 else
                 {
-                    EditorGUILayout.LabelField("table ref: " + dictItem.Value.Count);
-                    scrollPositionTb = GUILayout.BeginScrollView(scrollPositionTb);
+                    EditorGUILayout.LabelField("table ref: " + dictItem.Count);
+                    scrollPositionTb = GUILayout.BeginScrollView(scrollPositionTb, EditorStyles.helpBox);
                 }
                 GUILayout.BeginVertical();
-                foreach (var item in dictItem.Value)
+                foreach (var item in dictItem)
                 {
                     GUILayout.BeginHorizontal();
-                    GUILayout.Label(item.Key);
                     int count = item.Value.Count;
-                    GUILayout.Label("count:" + count);
+                    GUILayout.Label(item.Key + " count:" + count);
                     GUILayout.EndHorizontal();
                 }
                 GUILayout.EndVertical();
@@ -117,7 +118,7 @@ namespace MikuLuaProfiler
         }
         public void ClearRefInfo(bool includeHistory)
         {
-            m_refDict.Clear();
+            m_refDict = new List<RefDict> { null, null, null };
             m_refQueue.Clear();
             if (includeHistory)
             {
@@ -129,12 +130,11 @@ namespace MikuLuaProfiler
             string refName = info.name;
             string addr = info.addr;
             byte type = info.type;
-            RefDict refDict;
-
-            if (!m_refDict.TryGetValue(type, out refDict))
+            RefDict refDict = m_refDict[type];
+            if (refDict == null)
             {
                 refDict = new RefDict(2048);
-                m_refDict.Add(type, refDict);
+                m_refDict[type] = refDict;
             }
 
             HashSet<string> addrList;
@@ -154,9 +154,9 @@ namespace MikuLuaProfiler
             string refName = info.name;
             string refAddr = info.addr;
             byte type = info.type;
-            RefDict refDict;
+            RefDict refDict = m_refDict[type];
 
-            if (!m_refDict.TryGetValue(type, out refDict))
+            if (refDict == null)
             {
                 return;
             }
