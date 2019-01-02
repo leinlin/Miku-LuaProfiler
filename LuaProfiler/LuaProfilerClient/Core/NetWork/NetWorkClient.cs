@@ -21,12 +21,15 @@ namespace MikuLuaProfiler
     {
         private static TcpClient m_client = null;
         private static Thread m_sendThread;
+        private static Thread m_receiveThread;
         private static Queue<NetBase> m_sampleQueue = new Queue<NetBase>(256);
         private const int PACK_HEAD = 0x23333333;
         private static SocketError errorCode;
         private static NetworkStream ns;
         private static MBinaryWriter bw;
+        private static BinaryReader br;
         private static int m_frameCount = 0;
+
         #region public
         public static void ConnectServer(string host, int port)
         {
@@ -45,9 +48,12 @@ namespace MikuLuaProfiler
                 m_key = 0;
                 ns = m_client.GetStream();
                 bw = new MBinaryWriter(ns);
+                br = new BinaryReader(ns);
 
                 m_sendThread = new Thread(new ThreadStart(DoSendMessage));
                 m_sendThread.Start();
+                m_receiveThread = new Thread(new ThreadStart(DoRecieveMessage));
+                m_receiveThread.Start();
             }
             catch (Exception e)
             {
@@ -77,6 +83,13 @@ namespace MikuLuaProfiler
             finally
             {
                 m_strDict.Clear();
+            }
+
+            if (m_receiveThread != null)
+            {
+                var tmp = m_receiveThread;
+                m_receiveThread = null;
+                tmp.Abort();
             }
 
             if (m_sendThread != null)
@@ -111,7 +124,6 @@ namespace MikuLuaProfiler
                         UnityEngine.Debug.LogError("<color=#ff0000>m_sendThread null</color>");
                         return;
                     }
-
                     if (m_sampleQueue.Count > 0)
                     {
                         while (m_sampleQueue.Count > 0)
@@ -121,27 +133,33 @@ namespace MikuLuaProfiler
                             {
                                 s = m_sampleQueue.Dequeue();
                             }
-
                             bw.Write(PACK_HEAD);
+                            if (s is Sample)
+                            {
+                                bw.Write((int)0);
+                            }
+                            else if (s is LuaRefInfo)
+                            {
+                                bw.Write((int)1);
+                            }
                             Serialize(s, bw);
                             s.Restore();
                         }
                     }
-                    else if(m_frameCount != HookLuaSetup.frameCount)
+                    else if (m_frameCount != HookLuaSetup.frameCount)
                     {
                         bw.Write(PACK_HEAD);
+                        //写入message 头编号
+                        bw.Write((int)0);
                         Sample s = Sample.Create(0, (int)LuaLib.GetLuaMemory(LuaProfiler.mainL), "");
                         Serialize(s, bw);
                         s.Restore();
+                        m_frameCount = HookLuaSetup.frameCount;
                     }
-
-                    m_frameCount = HookLuaSetup.frameCount;
                     Thread.Sleep(10);
                 }
 #pragma warning disable 0168
-                catch (ThreadAbortException e)
-                {
-                }
+                catch (ThreadAbortException e) { }
                 catch (Exception e)
                 {
                     UnityEngine.Debug.Log(e);
@@ -151,6 +169,44 @@ namespace MikuLuaProfiler
             }
 
         }
+
+        private static void DoRecieveMessage()
+        {
+            while (true)
+            {
+                try
+                {
+                    if (m_receiveThread == null)
+                    {
+                        UnityEngine.Debug.LogError("<color=#ff0000>m_receiveThread null</color>");
+                        return;
+                    }
+                    if (ns.CanRead && ns.DataAvailable)
+                    {
+                        int head = br.ReadInt32();
+                        //处理粘包
+                        while (head == PACK_HEAD)
+                        {
+                            int messageId = br.ReadInt32();
+                            switch (messageId)
+                            {
+                                case 0:
+                                    {
+                                        LuaProfiler.SendAllRef();
+                                    }
+                                    break;
+                            }
+                        }
+                    }
+                }
+                catch (Exception e)
+                {
+                    UnityEngine.Debug.Log(e);
+                }
+                Thread.Sleep(10);
+            }
+        }
+
         private static int m_key = 0;
         public static int GetUniqueKey()
         {
@@ -182,8 +238,6 @@ namespace MikuLuaProfiler
             if (o is Sample)
             {
                 Sample s = (Sample)o;
-                //写入message 头编号
-                bw.Write((int)0);
 
                 bw.Write(s.calls);
                 bw.Write(s.frameCount);
@@ -192,16 +246,7 @@ namespace MikuLuaProfiler
                 bw.Write(s.power);
                 bw.Write(s.costLuaGC);
                 bw.Write(s.costMonoGC);
-                byte[] datas;
-                int index = 0;
-                bool isRef = GetBytes(s.name, out datas, out index);
-                bw.Write(isRef);
-                bw.Write(index);
-                if (!isRef)
-                {
-                    bw.Write(datas.Length);
-                    bw.Write(datas);
-                }
+                WriteString(bw, s.name);
 
                 bw.Write(s.costTime);
                 bw.Write(s.currentLuaMemory);
@@ -219,33 +264,30 @@ namespace MikuLuaProfiler
             else if (o is LuaRefInfo)
             {
                 LuaRefInfo r = (LuaRefInfo)o;
-                //写入message 头编号
-                bw.Write((int)1);
 
                 bw.Write(r.cmd);
-
-                byte[] datas;
-                int index = 0;
-                bool isRef = GetBytes(r.name, out datas, out index);
-                bw.Write(isRef);
-                bw.Write(index);
-                if (!isRef)
-                {
-                    bw.Write(datas.Length);
-                    bw.Write(datas);
-                }
-
-                isRef = GetBytes(r.addr, out datas, out index);
-                bw.Write(isRef);
-                bw.Write(index);
-                if (!isRef)
-                {
-                    bw.Write(datas.Length);
-                    bw.Write(datas);
-                }
+                bw.Write(HookLuaSetup.frameCount);
+                WriteString(bw, r.name);
+                WriteString(bw, r.addr);
+                bw.Write(r.type);
                 Thread.Sleep(0);
             }
         }
+
+        private static void WriteString(BinaryWriter bw, string name)
+        {
+            byte[] datas;
+            int index = 0;
+            bool isRef = GetBytes(name, out datas, out index);
+            bw.Write(isRef);
+            bw.Write(index);
+            if (!isRef)
+            {
+                bw.Write(datas.Length);
+                bw.Write(datas);
+            }
+        }
+
         #endregion
 
     }

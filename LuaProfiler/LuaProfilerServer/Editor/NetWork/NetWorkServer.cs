@@ -53,11 +53,17 @@ namespace MikuLuaProfiler
     {
         private static TcpListener tcpLister;
         private static TcpClient tcpClient = null;
+        private static Thread receiveThread;
+        private static Thread sendThread;
         private static Thread acceptThread;
+        private static NetworkStream ns;
+        private static BinaryReader br;
+        private static BinaryWriter bw;
 
         private const int PACK_HEAD = 0x23333333;
         private static Action<Sample> m_onReceiveSample;
         private static Action<LuaRefInfo> m_onReceiveRef;
+        private static Queue<int> m_cmdQueue = new Queue<int>(32);
 
         public static bool CheckIsReceiving()
         {
@@ -77,33 +83,63 @@ namespace MikuLuaProfiler
         public static void BeginListen(string ip, int port)
         {
             if (tcpLister != null) return;
+
             m_strCacheDict.Clear();
+
             IPAddress myIP = IPAddress.Parse(ip);
             tcpLister = new TcpListener(myIP, port);
             tcpLister.Start();
-            // 启动一个线程来接受请求
-            acceptThread = new Thread(acceptClientConnect);
+            acceptThread = new Thread(AcceptThread);
             acceptThread.Start();
         }
 
-        // 接受请求
-        private static void acceptClientConnect()
+        private static void AcceptThread()
         {
-            UnityEngine.Debug.Log("begin to listener");
+            UnityEngine.Debug.Log("<color=#00ff00>begin listerner</color>");
+            tcpClient = null;
             try
             {
-                tcpClient = tcpLister.AcceptTcpClient();
-                UnityEngine.Debug.Log("link start");
-                tcpClient.ReceiveTimeout = 1000000;
-            }
+                if (tcpClient == null)
+                {
+                    tcpClient = tcpLister.AcceptTcpClient();
+                }
+             }
             catch
             {
-                UnityEngine.Debug.Log("stop listener");
-                Thread.Sleep(1000);
+                UnityEngine.Debug.Log("<color=#ff0000>start fail</color>");
+                Close();
             }
-            NetworkStream ns = tcpClient.GetStream();
-            BinaryReader br = new BinaryReader(ns);
+
+            UnityEngine.Debug.Log("<color=#00ff00>link start</color>");
+            tcpClient.ReceiveTimeout = 1000000;
+            ns = tcpClient.GetStream();
+            br = new BinaryReader(ns);
+            bw = new BinaryWriter(ns);
             ns.ReadTimeout = 600000;
+
+            // 启动一个线程来接受请求
+            receiveThread = new Thread(DoReceiveMessage);
+            receiveThread.Start();
+
+            // 启动一个线程来发送请求
+            sendThread = new Thread(DoSendMessage);
+            sendThread.Start();
+            acceptThread = null;
+        }
+
+        public static void SendCmd(int cmd)
+        {
+            lock (m_cmdQueue)
+            {
+                m_cmdQueue.Enqueue(cmd);
+            }
+        }
+
+        // 接受请求
+        private static void DoReceiveMessage()
+        {
+            UnityEngine.Debug.Log("<color=#00ff00>begin to listener</color>");
+
             //sign为true 循环接受数据
             while (true)
             {
@@ -119,8 +155,9 @@ namespace MikuLuaProfiler
                     {
                         try
                         {
+                            int head = br.ReadInt32();
                             //处理粘包
-                            while (br.ReadInt32() == PACK_HEAD)
+                            while (head == PACK_HEAD)
                             {
                                 int messageId = br.ReadInt32();
                                 switch (messageId)
@@ -155,8 +192,42 @@ namespace MikuLuaProfiler
                         }
 #pragma warning restore 0168
                     }
+
                 }
 #pragma warning disable 0168
+                catch (ThreadAbortException e) { }
+                catch (Exception e)
+                {
+                    UnityEngine.Debug.Log(e);
+                    Close();
+                }
+#pragma warning restore 0168
+                Thread.Sleep(10);
+            }
+        }
+
+        private static void DoSendMessage()
+        {
+            while (true)
+            {
+                try
+                {
+                    if (ns.CanWrite)
+                    {
+                        while (m_cmdQueue.Count > 0)
+                        {
+                            int msgId = -1;
+                            lock (m_cmdQueue)
+                            {
+                                msgId = m_cmdQueue.Dequeue();
+                            }
+                            bw.Write(PACK_HEAD);
+                            bw.Write(msgId);
+                        }
+                    }
+                }
+#pragma warning disable 0168
+                catch (ThreadAbortException e) { }
                 catch (Exception e)
                 {
                     UnityEngine.Debug.Log(e);
@@ -173,7 +244,6 @@ namespace MikuLuaProfiler
             {
                 if (tcpLister != null)
                 {
-                    UnityEngine.Debug.Log("stop");
                     tcpLister.Stop();
                     tcpLister = null;
                 }
@@ -182,6 +252,8 @@ namespace MikuLuaProfiler
             {
                 UnityEngine.Debug.Log(e);
             }
+            UnityEngine.Debug.Log("<color=#ff0000>disconnect</color>");
+
             if (acceptThread != null)
             {
                 try
@@ -189,7 +261,26 @@ namespace MikuLuaProfiler
                     acceptThread.Abort();
                 }
                 catch { }
-                acceptThread = null;
+                receiveThread = null;
+            }
+
+            if (receiveThread != null)
+            {
+                try
+                {
+                    receiveThread.Abort();
+                }
+                catch { }
+                receiveThread = null;
+            }
+            if (sendThread != null)
+            {
+                try
+                {
+                    sendThread.Abort();
+                }
+                catch { }
+                sendThread = null;
             }
         }
 
@@ -205,20 +296,7 @@ namespace MikuLuaProfiler
             s.power = br.ReadSingle();
             s.costLuaGC = br.ReadInt32();
             s.costMonoGC = br.ReadInt32();
-
-            bool isRef = br.ReadBoolean();
-            int index = br.ReadInt32();
-            if (!isRef)
-            {
-                int len = br.ReadInt32();
-                byte[] datas = br.ReadBytes(len);
-                s.name = string.Intern(Encoding.UTF8.GetString(datas));
-                m_strCacheDict[index] = s.name;
-            }
-            else
-            {
-                s.name = m_strCacheDict[index];
-            }
+            s.name = ReadString(br);
 
             s.costTime = br.ReadInt32();
             s.currentLuaMemory = br.ReadInt32();
@@ -235,6 +313,17 @@ namespace MikuLuaProfiler
         {
             LuaRefInfo refInfo = LuaRefInfo.Create();
             refInfo.cmd = br.ReadByte();
+            refInfo.frameCount = br.ReadInt32();
+            refInfo.name = ReadString(br);
+            refInfo.addr = ReadString(br);
+            refInfo.type = br.ReadByte();
+
+            return refInfo;
+        }
+
+        private static string ReadString(BinaryReader br)
+        {
+            string result = null;
 
             bool isRef = br.ReadBoolean();
             int index = br.ReadInt32();
@@ -242,29 +331,15 @@ namespace MikuLuaProfiler
             {
                 int len = br.ReadInt32();
                 byte[] datas = br.ReadBytes(len);
-                refInfo.name = string.Intern(Encoding.UTF8.GetString(datas));
-                m_strCacheDict[index] = refInfo.name;
+                result = string.Intern(Encoding.UTF8.GetString(datas));
+                m_strCacheDict[index] = result;
             }
             else
             {
-                refInfo.name = m_strCacheDict[index];
+                result = m_strCacheDict[index];
             }
 
-            isRef = br.ReadBoolean();
-            index = br.ReadInt32();
-            if (!isRef)
-            {
-                int len = br.ReadInt32();
-                byte[] datas = br.ReadBytes(len);
-                refInfo.addr = string.Intern(Encoding.UTF8.GetString(datas));
-                m_strCacheDict[index] = refInfo.addr;
-            }
-            else
-            {
-                refInfo.addr = m_strCacheDict[index];
-            }
-
-            return refInfo;
+            return result;
         }
     }
 

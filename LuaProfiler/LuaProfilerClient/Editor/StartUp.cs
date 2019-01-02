@@ -122,6 +122,8 @@ namespace MikuLuaProfiler
         private static MethodDefinition m_getMainL;
         private static MethodDefinition m_registerLua;
         private static MethodDefinition m_hookloadbuffer;
+        private static MethodDefinition m_hookRef;
+        private static MethodDefinition m_hookUnref;
         public delegate void InjectMethodAction(MethodDefinition method, ModuleDefinition module, MethodDefinition newMethod);
 
 #if XLUA
@@ -129,16 +131,22 @@ namespace MikuLuaProfiler
         private const string LUA_NEW_STATE = "luaL_newstate";
         private const string LUA_CLOSE = "lua_close";
         private const string LUA_LOAD_BUFFER = "xluaL_loadbuffer";
+        private const string LUA_REF = "luaL_ref";
+        private const string LUA_UNREF = "luaL_unref";
 #elif SLUA
         private const string LUA_FULL_NAME = "SLua.LuaDLL";
         private const string LUA_NEW_STATE = "luaL_newstate";
         private const string LUA_CLOSE = "lua_close";
         private const string LUA_LOAD_BUFFER = "luaLS_loadbuffer";
+        private const string LUA_REF = "luaL_ref";
+        private const string LUA_UNREF = "luaL_unref";
 #elif TOLUA
         private const string LUA_FULL_NAME = "LuaInterface.LuaDLL";
         private const string LUA_NEW_STATE = "luaL_newstate";
         private const string LUA_CLOSE = "lua_close";
         private const string LUA_LOAD_BUFFER = "tolua_loadbuffer";
+        private const string LUA_REF = "luaL_ref";
+        private const string LUA_UNREF = "luaL_unref";
 #endif
 
         #region try finally
@@ -603,6 +611,14 @@ namespace MikuLuaProfiler
                 {
                     m_hookloadbuffer = m;
                 }
+                else if (m.Name == "HookRef")
+                {
+                    m_hookRef = m;
+                }
+                else if (m.Name == "HookUnRef")
+                {
+                    m_hookUnref = m;
+                }
             }
 
             var luaRegister = profilerAssembly.MainModule.GetType("MikuLuaProfiler.MikuLuaProfilerLuaProfilerWrap");
@@ -620,7 +636,9 @@ namespace MikuLuaProfiler
             {
                 { LUA_NEW_STATE, InjectNewStateMethod},
                 { LUA_CLOSE, InjectCloseMethod },
-                { LUA_LOAD_BUFFER, InjectLoaderMethod }
+                { LUA_LOAD_BUFFER, InjectLoaderMethod },
+                { LUA_REF, InjectRefMethod },
+                { LUA_UNREF, InjectUnrefMethod },
             };
 
             HookDllFun(profilerType, hookExternfunDict, luaAssembly);
@@ -642,6 +660,7 @@ namespace MikuLuaProfiler
                 InjectMethodAction action;
                 if (hookExternfunDict.TryGetValue(m.Name, out action))
                 {
+                    if (!m.IsPInvokeImpl) continue;
                     MethodAttributes attr = MethodAttributes.Public;
                     PInvokeInfo pInfo = null;
                     attr = m.Attributes;
@@ -771,6 +790,46 @@ namespace MikuLuaProfiler
             il.Append(il.Create(OpCodes.Ret));
 
             il.InsertBefore(ldloc1, il.Create(OpCodes.Br, ldloc1));
+        }
+
+        private static void InjectRefMethod(MethodDefinition method, ModuleDefinition module, MethodDefinition newMethod)
+        {
+            if (method.Body == null) return;
+            VariableDefinition injection = null;
+            method.Body.Variables.Clear();
+            injection = new VariableDefinition(module.TypeSystem.Int32);
+            method.Body.Variables.Add(injection);
+
+            var il = method.Body.GetILProcessor();
+            il.Append(il.Create(OpCodes.Nop));
+            il.Append(il.Create(OpCodes.Ldarg_0));
+            il.Append(il.Create(OpCodes.Call, m_hookRef));
+            il.Append(il.Create(OpCodes.Ldarg_0));
+            il.Append(il.Create(OpCodes.Ldarg_1));
+            il.Append(il.Create(OpCodes.Call, module.ImportReference(newMethod)));
+            il.Append(il.Create(OpCodes.Stloc_0));
+            var ldloc0 = il.Create(OpCodes.Ldloc_0);
+            il.Append(ldloc0);
+            il.Append(il.Create(OpCodes.Ret));
+
+            //BR
+            il.InsertBefore(ldloc0, il.Create(OpCodes.Br, ldloc0));
+        }
+
+        private static void InjectUnrefMethod(MethodDefinition method, ModuleDefinition module, MethodDefinition newMethod)
+        {
+            if (method.Body == null) return;
+
+            var il = method.Body.GetILProcessor();
+            il.Append(il.Create(OpCodes.Nop));
+            il.Append(il.Create(OpCodes.Ldarg_0));
+            il.Append(il.Create(OpCodes.Ldarg_2));
+            il.Append(il.Create(OpCodes.Call, m_hookUnref));
+            il.Append(il.Create(OpCodes.Ldarg_0));
+            il.Append(il.Create(OpCodes.Ldarg_1));
+            il.Append(il.Create(OpCodes.Ldarg_2));
+            il.Append(il.Create(OpCodes.Call, module.ImportReference(newMethod)));
+            il.Append(il.Create(OpCodes.Ret));
         }
 
         private static void CopyMethod(MethodDefinition method, MethodDefinition newMethod)

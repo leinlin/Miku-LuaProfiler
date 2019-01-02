@@ -12,7 +12,6 @@ namespace MikuLuaProfiler
 #if UNITY_5_6_OR_NEWER
     using System;
     using System.Collections.Generic;
-    using System.IO;
     using System.Text.RegularExpressions;
     using UnityEditor;
     using UnityEditor.IMGUI.Controls;
@@ -89,15 +88,16 @@ namespace MikuLuaProfiler
         public long currentTime { private set; get; }
         public int totalCallTime { private set; get; }
 
-        private int m_line = -1;
-        public int line {
+        private bool m_isLua = false;
+        public bool isLua
+        {
             private set
             {
-                m_line = value;
+                m_isLua = value;
             }
             get
             {
-                return m_line;
+                return m_isLua;
             }
         }
         public string filePath { private set; get; }
@@ -122,15 +122,7 @@ namespace MikuLuaProfiler
             if (sample != null)
             {
                 filePath = sample.name.Split(splitDot, 2)[0].Trim();
-                int tmpLine = -1;
-                if (int.TryParse(Regex.Match(sample.name, @"(?<=(line:))\d*(?=(&))").Value, out tmpLine))
-                {
-                    line = tmpLine;
-                }
-                else
-                {
-                    line = -1;
-                }
+                m_isLua = sample.name.Substring(0, 6) == "[lua]:";
 
                 _showMonoGC = sample.costMonoGC;
                 _showLuaGC = sample.costLuaGC;
@@ -313,7 +305,7 @@ namespace MikuLuaProfiler
             Reload();
         }
 
-        private void DequeueSample()
+        public void DequeueSample()
         {
             lock (this)
             {
@@ -607,6 +599,13 @@ namespace MikuLuaProfiler
         }
 
         public static Dictionary<string, LuaProfilerTreeViewItem> m_nodeDict = new Dictionary<string, LuaProfilerTreeViewItem>();
+
+        public int GetFrameCount(int frame)
+        {
+            if (frame >= history.Count) return 0;
+            return history[frame].frameCount;
+        }
+
         public void ReLoadSamples(int start, int end)
         {
             if (history.Count == 0) return;
@@ -948,7 +947,7 @@ namespace MikuLuaProfiler
                 m_gs.alignment = TextAnchor.MiddleCenter;
             }
             var color = m_gs.normal.textColor;
-            if (item.line != -1)
+            if (item.isLua)
             {
                 m_gs.normal.textColor = m_luaColor;
             }
@@ -973,10 +972,10 @@ namespace MikuLuaProfiler
             GUI.Label(r, GetMemoryString(item.selfMonoMemory), m_gs);
 
             r = args.GetCellRect(5);
-            GUI.Label(r, ((float)item.currentTime / 10000000).ToString("f6") + "s", m_gs);
+            GUI.Label(r, ((float)item.currentTime / 10000).ToString("f2") + "ms", m_gs);
 
             r = args.GetCellRect(6);
-            GUI.Label(r, ((float)item.averageTime / 10000000).ToString("f6") + "s", m_gs);
+            GUI.Label(r, ((float)item.averageTime / 10000).ToString("f2") + "ms", m_gs);
 
             r = args.GetCellRect(7);
             GUI.Label(r, ((float)item.totalTime / 10000000).ToString("f6") + "s", m_gs);

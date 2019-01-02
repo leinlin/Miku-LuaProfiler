@@ -137,10 +137,10 @@ namespace MikuLuaProfiler
                             {
                                 if (string.IsNullOrEmpty(funName))
                                 {
-                                    funName = l.Source + ",line " + l.LineNumber;
+                                    funName = "";
                                 }
-                                l.InsertString(nextPos - 1, " BeginMikuSample(\"" + l.Source 
-                                    + ",line:" + l.LineNumber + "&[lua]:" + funName + "\") ");
+                                string profilerStr = string.Format(" BeginMikuSample(\"[lua]:{0} {1}&line:{2}\") ", funName, l.Source, l.LineNumber);
+                                l.InsertString(nextPos - 1, profilerStr);
                                 nextPos = l.pos;
                                 break;
                             }

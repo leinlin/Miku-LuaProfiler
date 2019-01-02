@@ -149,11 +149,11 @@ namespace MikuLuaProfiler
         public void SlotLuaMemory(int value)
         {
             addLuaCount++;
-            if (value < m_minLuaValue && value != 0)
+            if (value < m_minLuaValue || m_minLuaValue < 0)
             {
                 m_minLuaValue = value;
             }
-            if (value > m_maxLuaValue)
+            if (value > m_maxLuaValue || m_maxLuaValue < 0)
             {
                 m_maxLuaValue = value;
             }
@@ -285,11 +285,11 @@ namespace MikuLuaProfiler
         public void SlotMonoMemory(int value)
         {
             addMonoCount++;
-            if (value < m_minMonoValue && value != 0)
+            if (value < m_minMonoValue || m_minMonoValue < 0)
             {
                 m_minMonoValue = value;
             }
-            if (value > m_maxMonoValue)
+            if (value > m_maxMonoValue || m_maxMonoValue < 0)
             {
                 m_maxMonoValue = value;
             }
@@ -557,11 +557,11 @@ namespace MikuLuaProfiler
         public void SlotPssMemory(int value)
         {
             addPssCount++;
-            if (value < m_minPssValue && value != 0)
+            if (value < m_minPssValue || m_minPssValue < 0)
             {
                 m_minPssValue = value;
             }
-            if (value > m_maxPssValue)
+            if (value > m_maxPssValue || m_maxPssValue < 0)
             {
                 m_maxPssValue = value;
             }
@@ -602,7 +602,7 @@ namespace MikuLuaProfiler
                 return m_minPowerValue;
             }
         }
-        private float m_maxPowerValue = 90;
+        private float m_maxPowerValue = 100;
         private float FindMinPowerValue()
         {
             float result = float.MaxValue;
@@ -698,7 +698,7 @@ namespace MikuLuaProfiler
         public void SlotPowerMemory(float value)
         {
             addPowerCount++;
-            value = Mathf.Min(90, value);
+            value = Mathf.Min(100, value);
             if (setting.isRecord && !setting.isStartRecord)
             {
                 m_powerHistory.Add(value);
@@ -731,6 +731,7 @@ namespace MikuLuaProfiler
             addMonoCount = 0;
             addFpsCount = 0;
             addPssCount = 0;
+            addPowerCount = 0;
 
             m_maxLuaValue = -1;
             m_minLuaValue = -1;
@@ -745,7 +746,7 @@ namespace MikuLuaProfiler
             m_maxPssValue = -1;
 
             m_minPowerValue = 0;
-            m_maxPowerValue = 0;
+            m_maxPowerValue = 100;
         }
 
     }

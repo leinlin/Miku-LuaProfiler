@@ -11,6 +11,7 @@
 using System;
 using System.Collections.Generic;
 using System.Reflection;
+using RefDict = System.Collections.Generic.Dictionary<string, System.Collections.Generic.HashSet<string>>;
 
 namespace MikuLuaProfiler
 {
@@ -245,15 +246,77 @@ namespace MikuLuaProfiler
         #endregion
 
         #region ref
-        public static void AddRefFun(string funName, string funAddr)
+        private static Dictionary<byte, RefDict> m_refDict = new Dictionary<byte, RefDict>(4);
+
+        public static void AddRef(string refName, string refAddr, byte type)
         {
-            LuaRefInfo refInfo = LuaRefInfo.Create(1, funName, funAddr);
+            RefDict refDict;
+            if (!m_refDict.TryGetValue(type, out refDict))
+            {
+                refDict = new RefDict(2048);
+                m_refDict.Add(type, refDict);
+            }
+
+            HashSet<string> addrList;
+            if (!refDict.TryGetValue(refName, out addrList))
+            {
+                addrList = new HashSet<string>();
+                refDict.Add(refName, addrList);
+            }
+            if (!addrList.Contains(refAddr))
+            {
+                addrList.Add(refAddr);
+            }
+            SendAddRef(refName, refAddr, type);
+        }
+        public static void SendAddRef(string funName, string funAddr, byte type)
+        {
+            LuaRefInfo refInfo = LuaRefInfo.Create(1, funName, funAddr, type);
             NetWorkClient.SendMessage(refInfo);
         }
-        public static void RemoveRefFun(string funName, string funAddr)
+        public static void RemoveRef(string refName, string refAddr, byte type)
         {
-            LuaRefInfo refInfo = LuaRefInfo.Create(0, funName, funAddr);
+            if (string.IsNullOrEmpty(refName)) return;
+            RefDict refDict;
+
+            if (!m_refDict.TryGetValue(type, out refDict))
+            {
+                return;
+            }
+
+            HashSet<string> addrList;
+            if (!refDict.TryGetValue(refName, out addrList))
+            {
+                return;
+            }
+            if (!addrList.Contains(refAddr))
+            {
+                return;
+            }
+            addrList.Remove(refAddr);
+            if (addrList.Count == 0)
+            {
+                refDict.Remove(refName);
+            }
+            SendRemoveRef(refName, refAddr, type);
+        }
+        public static void SendRemoveRef(string funName, string funAddr, byte type)
+        {
+            LuaRefInfo refInfo = LuaRefInfo.Create(0, funName, funAddr, type);
             NetWorkClient.SendMessage(refInfo);
+        }
+        public static void SendAllRef()
+        {
+            foreach (var dictItem in m_refDict)
+            {
+                foreach (var hashList in dictItem.Value)
+                {
+                    foreach (var item in hashList.Value)
+                    {
+                        SendAddRef(hashList.Key, item, dictItem.Key);
+                    }
+                }
+            }
         }
         #endregion
 

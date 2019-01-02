@@ -26,16 +26,18 @@ namespace MikuLuaProfiler
         public byte cmd; //1添加、0移除
         public string name;
         public string addr;
+        public byte type; //1 function 2 table
         #endregion
 
         #region pool
         private static ObjectPool<LuaRefInfo> m_pool = new ObjectPool<LuaRefInfo>(32);
-        public static LuaRefInfo Create(byte cmd, string name, string addr)
+        public static LuaRefInfo Create(byte cmd, string name, string addr, byte type)
         {
             LuaRefInfo r = m_pool.GetObject();
             r.cmd = cmd;
             r.name = name;
             r.addr = addr;
+            r.type = type;
             return r;
         }
 

@@ -25,8 +25,10 @@ namespace MikuLuaProfiler
     {
         #region field
         public byte cmd; //1添加、0移除
+        public int frameCount;
         public string name;
         public string addr;
+        public byte type; //1 function 2 table
         #endregion
 
         #region pool
@@ -40,6 +42,19 @@ namespace MikuLuaProfiler
         public override void Restore()
         {
             m_pool.Store(this);
+        }
+
+        public LuaRefInfo Clone()
+        {
+            LuaRefInfo result = new LuaRefInfo();
+
+            result.cmd = this.cmd;
+            result.frameCount = this.frameCount;
+            result.name = this.name;
+            result.addr = this.addr;
+            result.type = this.type;
+
+            return result;
         }
         #endregion
     }
@@ -94,6 +109,7 @@ namespace MikuLuaProfiler
                 return result;
             }
         }
+
         #region property
         public string fullName
         {

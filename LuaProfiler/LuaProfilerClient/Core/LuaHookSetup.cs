@@ -13,6 +13,7 @@ using System.Collections.Generic;
 using System.Text;
 using UnityEngine;
 using System.Runtime;
+using System.Collections;
 
 #if XLUA
 using XLua;
@@ -120,10 +121,17 @@ namespace MikuLuaProfiler
 
         private void OnApplicationQuit()
         {
-            NetWorkClient.Close();
+#if UNITY_EDITOR
             Destroy(gameObject);
+#else
+            NetWorkClient.Close();
+#endif
         }
 
+        private void OnDestroy()
+        {
+            NetWorkClient.Close();
+        }
     }
 
     public class Menu : MonoBehaviour
@@ -223,10 +231,12 @@ namespace MikuLuaProfiler
 #endif
         }
 
-        public static void HookUnRef(IntPtr L)
+        public static void HookUnRef(IntPtr L, int reference)
         {
 #if XLUA || TOLUA || SLUA
+            LuaDLL.lua_getref(L, reference);
             LuaLib.DoRefLuaFun(L, "lua_miku_remove_ref_fun_info");
+            LuaDLL.lua_pop(L, 1);
 #endif
         }
 
@@ -425,7 +435,7 @@ namespace MikuLuaProfiler
 #if XLUA || TOLUA || SLUA
         #region bind
 
-        public class MikuLuaProfilerLuaProfilerWrap
+    public class MikuLuaProfilerLuaProfilerWrap
     {
         public static void __Register(IntPtr L)
         {
@@ -510,7 +520,7 @@ local function get_fun_info(fun)
     local addr = funAddrTb[fun]
     if not result then
         local info = debug.getinfo(fun, 'Sl')
-        result = string.format('%s&line:%d', info.source, info.linedefined)
+        result = string.format('function:%s&line:%d', info.source, info.linedefined)
         addr = string.sub(tostring(fun), 11)
         infoTb[fun] = result
         funAddrTb[fun] = addr
@@ -518,14 +528,69 @@ local function get_fun_info(fun)
     return result,addr
 end
 
-function lua_miku_add_ref_fun_info(fun)
-    local result,addr = get_fun_info(fun)
-    miku_add_ref_fun_info(result, addr)
+local function serialize(obj,isFirst)
+    if obj == _G then
+        return '_G'
+    end
+    local lua = ''
+    lua = lua .. '{\n'
+    local count = 0
+    for k, v in pairs(obj) do
+        lua = lua .. '[' .. tostring(k) .. ']=' .. tostring(v) .. ',\n'
+        count = count + 1
+        if count > 10 then
+            break
+        end
+    end
+    lua = lua .. '}'
+    return lua
 end
 
-function lua_miku_remove_ref_fun_info(fun)
-    local result,addr = get_fun_info(fun)
-    miku_remove_ref_fun_info(result, addr)
+local function get_table_info(tb)
+    local result = infoTb[tb]
+    local addr = funAddrTb[tb]
+    if not result then
+        local addStr = tostring(tb)
+        result = tb['__name'] or tb['__cname']
+        if result then
+            result = 'table:'..result
+        else
+            result = 'table:'..serialize(tb, true)
+        end
+
+        addr = string.sub(addStr, 7)
+        infoTb[tb] = result
+        funAddrTb[tb] = addr
+    end
+    return result,addr
+end
+
+function lua_miku_add_ref_fun_info(data)
+    local result = ''
+    local addr = ''
+    local t = 1
+    local typeStr = type(data)
+    if typeStr == 'function' then
+        result,addr = get_fun_info(data)
+        t = 1
+    elseif typeStr == 'table' then
+        result,addr = get_table_info(data)
+        t = 2
+    end
+    miku_add_ref_fun_info(result, addr, t)
+end
+
+function lua_miku_remove_ref_fun_info(data)
+    local result = infoTb[data]
+    local addr = funAddrTb[tb]
+    local typeStr = type(data)
+    if typeStr == 'function' then
+        t = 1
+    elseif typeStr == 'table' then
+        t = 2
+    end
+
+    miku_remove_ref_fun_info(result, addr, t)
 end
 ";
         public static string GetRefString(IntPtr L, int index)
@@ -564,7 +629,8 @@ end
         {
             string funName = GetRefString(L, 1);
             string funAddr = GetRefString(L, 2);
-            LuaProfiler.AddRefFun(funName, funAddr);
+            byte type = (byte)LuaDLL.lua_tonumber(L, 3);
+            LuaProfiler.AddRef(funName, funAddr, type);
             return 0;
         }
 
@@ -573,7 +639,8 @@ end
         {
             string funName = GetRefString(L, 1);
             string funAddr = GetRefString(L, 2);
-            LuaProfiler.RemoveRefFun(funName, funAddr);
+            byte type = (byte)LuaDLL.lua_tonumber(L, 3);
+            LuaProfiler.RemoveRef(funName, funAddr, type);
             return 0;
         }
 
@@ -584,7 +651,7 @@ end
             return 0;
         }
     }
-    #endregion
-    #endif
+        #endregion
+#endif
 }
 #endif
