@@ -64,8 +64,8 @@ namespace MikuLuaProfiler
         private bool isShowLuaChart = true;
         private bool isShowMonoChart = true;
         private bool isShowFpsChart = true;
-        private bool isShowPssChart = true;
-        private bool isShowPowerChart = true;
+        private bool isShowPssChart = false;
+        private bool isShowPowerChart = false;
         private int currentFrameIndex = 0;
 
         private Texture2D disableChart;
