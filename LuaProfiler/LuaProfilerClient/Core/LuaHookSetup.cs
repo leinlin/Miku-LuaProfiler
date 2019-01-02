@@ -122,16 +122,26 @@ namespace MikuLuaProfiler
         private void OnApplicationQuit()
         {
 #if UNITY_EDITOR
+            desotryCount = 0;
             Destroy(gameObject);
+            UnityEditor.EditorApplication.update += WaitDestory;
 #else
             NetWorkClient.Close();
 #endif
         }
 
-        private void OnDestroy()
+        int desotryCount = 0;
+        private void WaitDestory()
         {
-            NetWorkClient.Close();
+            desotryCount++;
+            if (desotryCount > 10)
+            {
+                UnityEditor.EditorApplication.update -= WaitDestory;
+                NetWorkClient.Close();
+                desotryCount = 0;
+            }
         }
+
     }
 
     public class Menu : MonoBehaviour
@@ -555,10 +565,8 @@ local function get_table_info(tb)
     if not result then
         local addStr = tostring(tb)
         result = tb['__name'] or tb['__cname']
-        if result then
-            result = 'table:'..result
-        else
-            result = 'table:'..serialize(tb)
+        if not result then
+            result = serialize(tb)
         end
 
         addr = string.sub(addStr, 7)

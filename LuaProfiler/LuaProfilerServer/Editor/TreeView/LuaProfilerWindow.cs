@@ -177,6 +177,16 @@ namespace MikuLuaProfiler
             EditorGUILayout.EndVertical();
 
             EditorGUILayout.BeginVertical();
+            if (LuaDeepProfilerSetting.Instance.isRecord)
+            {
+                if (GUILayout.Button("log history"))
+                {
+                    int startGameFrame = m_TreeView.GetFrameCount(startFrame);
+                    int endGameFrame = m_TreeView.GetFrameCount(endFrame);
+                    m_luaRefScrollView.LogRefHistory(startGameFrame, endGameFrame);
+                }
+            }
+
             m_luaRefScrollView.DoRefScroll();
             EditorGUILayout.EndVertical();
 

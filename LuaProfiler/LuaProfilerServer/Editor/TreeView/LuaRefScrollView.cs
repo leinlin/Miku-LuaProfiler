@@ -22,8 +22,8 @@ namespace MikuLuaProfiler
             {
                 return;
             }
-
             scrollPosition = GUILayout.BeginScrollView(scrollPosition, EditorStyles.helpBox, GUILayout.Width(400));
+
             EditorGUILayout.LabelField("lua refs");
             for (byte i = 1, imax = 2; i <= imax; i++)
             {
@@ -79,6 +79,28 @@ namespace MikuLuaProfiler
                 }
             }
         }
+        public void LogRefHistory(int startFrame, int endFrame)
+        {
+            for (int i = 0, imax = m_luaRefHistory.Count; i < imax; i++)
+            {
+                var r = m_luaRefHistory[i];
+                if (r.frameCount <= endFrame && r.frameCount >= startFrame)
+                {
+                    if (r.cmd == 1)
+                    {
+                        Debug.Log("<color=#00ff00>add " + r.name + "</color>");
+                    }
+                    else if (r.cmd == 0)
+                    {
+                        Debug.Log("<color=#ff0000>rm " + r.name + "</color>");
+                    }
+                }
+                if (r.frameCount > endFrame)
+                {
+                    break;
+                }
+            }
+        }
 
         public void DelRefInfo(LuaRefInfo info)
         {
@@ -87,8 +109,16 @@ namespace MikuLuaProfiler
             {
                 m_refQueue.Enqueue(info);
             }
-            if (instance.isRecord && !instance.isStartRecord)
+            if (!instance.isRecord || (instance.isRecord && !instance.isStartRecord))
             {
+                if (info.cmd == 1)
+                {
+                    Debug.Log(DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") + ":<color=#00ff00>add " + info.name + "</color>");
+                }
+                else if (info.cmd == 0)
+                {
+                    Debug.Log(DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") + ":<color=#ff0000>rm " + info.name + "</color>");
+                }
                 return;
             }
             m_luaRefHistory.Add(info.Clone());
@@ -147,7 +177,6 @@ namespace MikuLuaProfiler
             {
                 addrList.Add(addr);
             }
-
         }
         private void RemoveRef(LuaRefInfo info)
         {
