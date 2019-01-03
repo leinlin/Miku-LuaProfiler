@@ -70,7 +70,7 @@ Also open windows by **"Window->Lua Profiler Window"**, then click **OpenService
 ## 
 
 #### Menu in Game
-In press `ESC` or touch `four fingers` in screen to show this menu,you can change ip to connect and show more details of profiler info</br>
+Press `ESC` or touch `four fingers` in screen to show this menu,you can change ip to connect and show more details of profiler info</br>
 ![](doc/menu.png)</br>
 
 
@@ -96,6 +96,9 @@ They can be released by C#'s destructor, but because in C# is just an index, the
 This tool will provide real-time detection of the registry to help locate memory leaks quickly.<br/>
 
 ![](doc/register.gif)<br/>
+
+You can search history in record line<br/>
+![](doc/register_record.gif)<br/>
 
 And the `add`、`remove` history<br/>
 ![](doc/reg_history.png)<br/>
