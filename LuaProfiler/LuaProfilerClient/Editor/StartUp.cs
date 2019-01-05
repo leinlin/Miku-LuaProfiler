@@ -161,7 +161,7 @@ namespace MikuLuaProfiler
             var projectPath = System.Reflection.Assembly.Load("Assembly-CSharp").ManifestModule.FullyQualifiedName;
             var profilerPath = (typeof(LuaProfiler).Assembly).ManifestModule.FullyQualifiedName;
 
-            InjectAllMethods(projectPath, profilerPath, true);
+            InjectAllMethods(projectPath, profilerPath, false);
         }
 
         private static void InjectAllMethods(string injectPath, string profilerPath, bool needMdb)

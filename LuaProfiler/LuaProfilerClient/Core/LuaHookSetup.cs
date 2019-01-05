@@ -76,10 +76,6 @@ namespace MikuLuaProfiler
                 go.AddComponent<HookLuaSetup>();
                 NetWorkClient.ConnectServer(setting.ip, setting.port);
             }
-            if (setting.isDeepMonoProfiler)
-            {
-                GCSettings.LatencyMode = GCLatencyMode.LowLatency;
-            }
         }
 
         private void Awake()
@@ -129,7 +125,7 @@ namespace MikuLuaProfiler
             NetWorkClient.Close();
 #endif
         }
-
+#if UNITY_EDITOR
         int desotryCount = 0;
         private void WaitDestory()
         {
@@ -141,7 +137,7 @@ namespace MikuLuaProfiler
                 desotryCount = 0;
             }
         }
-
+#endif
     }
 
     public class Menu : MonoBehaviour
