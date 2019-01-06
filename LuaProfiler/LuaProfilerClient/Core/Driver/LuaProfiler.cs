@@ -19,7 +19,7 @@ namespace MikuLuaProfiler
     {
         #region member
         private static IntPtr _mainL = IntPtr.Zero;
-        private static readonly List<Sample> beginSampleMemoryStack = new List<Sample>();
+        private static readonly Stack<Sample> beginSampleMemoryStack = new Stack<Sample>();
         private static int m_currentFrame = 0;
         private static Dictionary<MethodBase, string> m_methodNameDict = new Dictionary<MethodBase, string>(4096);
         public static int mainThreadId = -100;
@@ -166,13 +166,13 @@ namespace MikuLuaProfiler
             }
             long memoryCount = LuaLib.GetLuaMemory(luaState);
             Sample sample = Sample.Create(getcurrentTime, (int)memoryCount, name);
-            beginSampleMemoryStack.Add(sample);
+            beginSampleMemoryStack.Push(sample);
         }
         public static void PopAllSampleWhenLateUpdate()
         {
-            for (int i = 0, imax = beginSampleMemoryStack.Count; i < imax; i++)
+            while(beginSampleMemoryStack.Count > 0)
             {
-                var item = beginSampleMemoryStack[i];
+                var item = beginSampleMemoryStack.Pop();
                 if (item.fahter == null)
                 {
                     NetWorkClient.SendMessage(item);
@@ -197,8 +197,7 @@ namespace MikuLuaProfiler
             }
             long nowMemoryCount = LuaLib.GetLuaMemory(luaState);
             long nowMonoCount = GC.GetTotalMemory(false);
-            Sample sample = beginSampleMemoryStack[beginSampleMemoryStack.Count - 1];
-            beginSampleMemoryStack.RemoveAt(beginSampleMemoryStack.Count - 1);
+            Sample sample = beginSampleMemoryStack.Pop();
 
             sample.costTime = (int)(getcurrentTime - sample.currentTime);
             var monoGC = nowMonoCount - sample.currentMonoMemory;
@@ -211,7 +210,7 @@ namespace MikuLuaProfiler
                 sample.Restore();
                 return;
             }
-            sample.fahter = beginSampleMemoryStack.Count > 0 ? beginSampleMemoryStack[beginSampleMemoryStack.Count - 1] : null;
+            sample.fahter = beginSampleMemoryStack.Count > 0 ? beginSampleMemoryStack.Peek() : null;
             //UnityEngine.Debug.Log(sample.name);
             if (beginSampleMemoryStack.Count == 0)
             {
