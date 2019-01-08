@@ -576,6 +576,7 @@ function lua_miku_remove_ref_fun_info(data)
     local result = infoTb[data]
     local addr = funAddrTb[data]
     local typeStr = type(data)
+    local t = 1
     if typeStr == 'function' then
         t = 1
     elseif typeStr == 'table' then
