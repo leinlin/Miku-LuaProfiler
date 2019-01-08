@@ -129,18 +129,25 @@ namespace MikuLuaProfiler
         int desotryCount = 0;
         private void WaitDestory()
         {
+#if XLUA || TOLUA || SLUA
             desotryCount++;
             if (desotryCount > 10)
             {
                 UnityEditor.EditorApplication.update -= WaitDestory;
+                if (LuaProfiler.mainL != IntPtr.Zero)
+                {
+                    LuaDLL.lua_close(LuaProfiler.mainL);
+                }
+                LuaProfiler.mainL = IntPtr.Zero;
                 NetWorkClient.Close();
                 desotryCount = 0;
             }
+#endif
         }
 #endif
-    }
+        }
 
-    public class Menu : MonoBehaviour
+        public class Menu : MonoBehaviour
     {
         private static Menu m_menu;
         public static void EnableMenu(GameObject go)
@@ -376,31 +383,18 @@ namespace MikuLuaProfiler
             LuaHook.isHook = false;
             byte[] chunk = Encoding.UTF8.GetBytes(script);
             int oldTop = LuaDLL.lua_gettop(L);
-#if XLUA
-            int errFunc = LuaDLL.load_error_func(L, -1);
-
+            lua_getglobal(L, "miku_handle_error");
             if (LuaLib.luaL_loadbuffer(L, chunk, chunk.Length, "chunk") == 0)
             {
-                if (LuaDLL.lua_pcall(L, 0, -1, errFunc) == 0)
+                if (LuaDLL.lua_pcall(L, 0, -1, oldTop + 1) == 0)
                 {
-                    LuaDLL.lua_remove(L, errFunc);
+                    LuaDLL.lua_remove(L, oldTop + 1);
                 }
             }
             else
             {
                 Debug.Log(script);
             }
-#elif TOLUA
-            if (LuaLib.luaL_loadbuffer(L, chunk, chunk.Length, "chunk") == 0)
-            {
-                LuaDLL.lua_call(L, 0, -1);
-            }
-#elif SLUA
-            if (LuaLib.luaL_loadbuffer(L, chunk, chunk.Length, "chunk") == 0)
-            {
-                LuaDLL.lua_call(L, 0, -1);
-            }
-#endif
             LuaHook.isHook = true;
             LuaDLL.lua_settop(L, oldTop);
         }
@@ -408,29 +402,17 @@ namespace MikuLuaProfiler
         public static void DoRefLuaFun(IntPtr L, string funName)
         {
             int oldTop = LuaDLL.lua_gettop(L);
-
+            lua_getglobal(L, "miku_handle_error");
             do
             {
-#if XLUA
-                int errFunc = LuaDLL.load_error_func(L, -1);
                 LuaLib.lua_getglobal(L, funName);
                 if (!LuaDLL.lua_isfunction(L, -1)) break;
-                LuaDLL.lua_pushvalue(L, -3);
-                if (LuaDLL.lua_pcall(L, 1, 0, errFunc) == 0)
+                LuaDLL.lua_pushvalue(L, oldTop);
+                if (LuaDLL.lua_pcall(L, 1, 0, oldTop + 1) == 0)
                 {
-                    LuaDLL.lua_remove(L, errFunc);
+                    LuaDLL.lua_remove(L, oldTop + 1);
                 }
-#elif TOLUA
-                LuaLib.lua_getglobal(L, funName);
-                if (!LuaDLL.lua_isfunction(L, -1)) break;
-                LuaDLL.lua_pushvalue(L, -2);
-                LuaDLL.lua_call(L, 1, 0);
-#elif SLUA
-                LuaLib.lua_getglobal(L, funName);
-                if (!LuaDLL.lua_isfunction(L, -1)) break;
-                LuaDLL.lua_pushvalue(L, -2);
-                LuaDLL.lua_call(L, 1, 0);
-#endif
+
             } while (false);
 
             LuaDLL.lua_settop(L, oldTop);
@@ -469,6 +451,9 @@ namespace MikuLuaProfiler
 
             LuaLib.lua_pushstdcallcfunction(L, RemoveRefFunInfo);
             LuaLib.lua_setglobal(L, "miku_remove_ref_fun_info");
+
+            LuaLib.lua_pushstdcallcfunction(L, HandleError);
+            LuaLib.lua_setglobal(L, "miku_handle_error");
 
             LuaDLL.lua_newtable(L);
             LuaLib.lua_setglobal(L, "MikuLuaProfilerStrTb");
@@ -648,6 +633,14 @@ end
             string funAddr = GetRefString(L, 2);
             byte type = (byte)LuaDLL.lua_tonumber(L, 3);
             LuaProfiler.RemoveRef(funName, funAddr, type);
+            return 0;
+        }
+
+        [MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]
+        static int HandleError(IntPtr L)
+        {
+            string error = GetRefString(L, 1);
+            Debug.LogError(error);
             return 0;
         }
 
