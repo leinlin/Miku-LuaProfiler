@@ -1,4 +1,30 @@
 /*
+               #########                       
+              ############                     
+              #############                    
+             ##  ###########                   
+            ###  ###### #####                  
+            ### #######   ####                 
+           ###  ########## ####                
+          ####  ########### ####               
+         ####   ###########  #####             
+        #####   ### ########   #####           
+       #####   ###   ########   ######         
+      ######   ###  ###########   ######       
+     ######   #### ##############  ######      
+    #######  #####################  ######     
+    #######  ######################  ######    
+   #######  ###### #################  ######   
+   #######  ###### ###### #########   ######   
+   #######    ##  ######   ######     ######   
+   #######        ######    #####     #####    
+    ######        #####     #####     ####     
+     #####        ####      #####     ###      
+      #####       ###        ###      #        
+        ###       ###        ###               
+         ##       ###        ###               
+__________#_______####_______####______________
+                我们的未来没有BUG                
 * ==============================================================================
 * Filename: LuaHookSetup
 * Created:  2018/7/2 11:36:16
@@ -452,6 +478,9 @@ namespace MikuLuaProfiler
             LuaLib.lua_pushstdcallcfunction(L, RemoveRefFunInfo);
             LuaLib.lua_setglobal(L, "miku_remove_ref_fun_info");
 
+            LuaLib.lua_pushstdcallcfunction(L, CheckType);
+            LuaLib.lua_setglobal(L, "miku_check_type");
+
             LuaLib.lua_pushstdcallcfunction(L, HandleError);
             LuaLib.lua_setglobal(L, "miku_handle_error");
 
@@ -561,11 +590,11 @@ function lua_miku_add_ref_fun_info(data)
     local result = ''
     local addr = ''
     local t = 1
-    local typeStr = type(data)
-    if typeStr == 'function' then
+    local typeStr = miku_check_type(data)
+    if typeStr == 1 then
         result,addr = get_fun_info(data)
         t = 1
-    elseif typeStr == 'table' then
+    elseif typeStr == 2 then
         result,addr = get_table_info(data)
         t = 2
     end
@@ -575,11 +604,11 @@ end
 function lua_miku_remove_ref_fun_info(data)
     local result = infoTb[data]
     local addr = funAddrTb[data]
-    local typeStr = type(data)
+    local typeStr = miku_check_type(data)
     local t = 1
-    if typeStr == 'function' then
+    if typeStr == 1 then
         t = 1
-    elseif typeStr == 'table' then
+    elseif typeStr == 2 then
         t = 2
     end
 
@@ -615,6 +644,24 @@ end
         {
             LuaProfiler.EndSample(L);
             return LuaDLL.lua_gettop(L);
+        }
+
+        [MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]
+        static int CheckType(IntPtr L)
+        {
+            if (LuaDLL.lua_isfunction(L, 1))
+            {
+                LuaDLL.lua_pushnumber(L, 1);
+            }
+            else if (LuaDLL.lua_istable(L, 1))
+            {
+                LuaDLL.lua_pushnumber(L, 2);
+            }
+            else
+            {
+                LuaDLL.lua_pushnumber(L, 0);
+            }
+            return 1;
         }
 
         [MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]
