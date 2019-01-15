@@ -18,35 +18,68 @@ public class ScriptsFromFile : MonoBehaviour
         Application.RegisterLogCallback(Log);
 #endif         
         lua = new LuaState();                
-        lua.Start();        
+        lua.Start();
+		LuaBinder.Bind(lua);
         //如果移动了ToLua目录，自己手动修复吧，只是例子就不做配置了
         string fullPath = Application.dataPath + "\\ToLua/Examples/02_ScriptsFromFile";
-        lua.AddSearchPath(fullPath);        
+        lua.AddSearchPath(fullPath);
+		lua.DoString(@"
+local GameObject = UnityEngine.GameObject
+
+fk1 = 
+{
+    k1 = 
+    {
+        kk1 = GameObject('go')
+    },
+    k2 = {}
+}
+
+kk = {}
+
+local x = fk1.k2
+function test() 
+    return xZ
+end
+
+function freex()
+    x = nil
+end
+
+go = GameObject('go')
+");
     }
 
+    [ContextMenu("destory")]
+    void Free()
+    {
+        MikuLuaProfiler.LuaHook.Record();
+        lua.DoString(@"
+local GameObject = UnityEngine.GameObject
+kk = nil
+freex()
+fk1.k2 = nil
+GameObject.Destroy(fk1.k1.kk1)
+GameObject.Destroy(go)
+go = nil
+ab = {}
+ab.ab1 = GameObject('go')
+");
+        MikuLuaProfiler.LuaHook.Diff();
+    }
+
+    [ContextMenu("diff")]
+    void Diff()
+    {
+        lua.DoString(@"
+collectgarbage('collect')
+");
+        MikuLuaProfiler.LuaHook.Diff();
+    }
     void Log(string msg, string stackTrace, LogType type)
     {
         strLog += msg;
         strLog += "\r\n";
-    }
-
-    void OnGUI()
-    {
-        GUI.Label(new Rect(100, Screen.height / 2 - 100, 600, 400), strLog);
-
-        if (GUI.Button(new Rect(50, 50, 120, 45), "DoFile"))
-        {
-            strLog = "";
-            lua.DoFile("ScriptsFromFile.lua");                        
-        }
-        else if (GUI.Button(new Rect(50, 150, 120, 45), "Require"))
-        {
-            strLog = "";            
-            lua.Require("ScriptsFromFile");            
-        }
-
-        lua.Collect();
-        lua.CheckTop();
     }
 
     void OnApplicationQuit()

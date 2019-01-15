@@ -259,6 +259,7 @@ namespace MikuLuaProfiler
 
             return ret;
         }
+        static int m_sleep_count = 0;
         private static void Serialize(NetBase o, BinaryWriter bw)
         {
             if (o is Sample)
@@ -278,8 +279,13 @@ namespace MikuLuaProfiler
                 bw.Write(s.currentLuaMemory);
                 bw.Write(s.currentMonoMemory);
                 bw.Write((ushort)s.childs.Count);
+                m_sleep_count++;
+                if (m_sleep_count >= 8)
+                {
+                    Thread.Sleep(0);
+                    m_sleep_count = 0;
+                }
 
-                Thread.Sleep(0);
 
                 var childs = s.childs;
                 for (int i = 0; i < childs.Count; i++)
@@ -298,6 +304,7 @@ namespace MikuLuaProfiler
                 bw.Write(r.type);
                 Thread.Sleep(0);
             }
+            m_sleep_count = 0;
         }
 
         private static void WriteString(BinaryWriter bw, string name)

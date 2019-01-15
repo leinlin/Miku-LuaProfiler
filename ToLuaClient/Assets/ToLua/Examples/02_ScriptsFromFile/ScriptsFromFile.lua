@@ -1,2 +1,18 @@
-print("This is a script from a utf8 file")
-print("tolua: 你好! こんにちは! 안녕하세요!")
+local GameObject = UnityEngine.GameObject
+
+fk1 = 
+{
+	k1 = 
+	{
+		kk1 = GameObject('go')
+	},
+	k2 = {}
+}
+
+local x = {}
+function test() 
+	return x
+end
+
+go = GameObject('go')
+

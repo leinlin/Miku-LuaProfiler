@@ -733,9 +733,9 @@ namespace MikuLuaProfiler
         {
             if (method.Body == null) return;
             VariableDefinition injection = null;
-            injection = new VariableDefinition(newMethod.ReturnType);
+            injection = new VariableDefinition(module.ImportReference(newMethod.ReturnType));
             method.Body.Variables.Add(injection);
-            injection = new VariableDefinition(newMethod.ReturnType);
+            injection = new VariableDefinition(module.ImportReference(newMethod.ReturnType));
             method.Body.Variables.Add(injection);
 
             var il = method.Body.GetILProcessor();
@@ -784,9 +784,9 @@ namespace MikuLuaProfiler
             if (method.Body == null) return;
             VariableDefinition injection = null;
             method.Body.Variables.Clear();
-            injection = new VariableDefinition(module.TypeSystem.Int32);
+            injection = new VariableDefinition(module.ImportReference(module.TypeSystem.Int32));
             method.Body.Variables.Add(injection);
-            injection = new VariableDefinition(module.TypeSystem.Int32);
+            injection = new VariableDefinition(module.ImportReference(module.TypeSystem.Int32));
             method.Body.Variables.Add(injection);
 
             var bufParam = method.Parameters.FirstOrDefault(p => p.Name == "buff");
@@ -823,13 +823,13 @@ namespace MikuLuaProfiler
             if (method.Body == null) return;
             VariableDefinition injection = null;
             method.Body.Variables.Clear();
-            injection = new VariableDefinition(module.TypeSystem.Int32);
+            injection = new VariableDefinition(module.ImportReference(module.TypeSystem.Int32));
             method.Body.Variables.Add(injection);
 
             var il = method.Body.GetILProcessor();
             il.Append(il.Create(OpCodes.Nop));
             il.Append(il.Create(OpCodes.Ldarg_0));
-            il.Append(il.Create(OpCodes.Call, m_hookRef));
+            il.Append(il.Create(OpCodes.Call, module.ImportReference(m_hookRef)));
             il.Append(il.Create(OpCodes.Ldarg_0));
             il.Append(il.Create(OpCodes.Ldarg_1));
             il.Append(il.Create(OpCodes.Call, module.ImportReference(newMethod)));
@@ -850,7 +850,7 @@ namespace MikuLuaProfiler
             il.Append(il.Create(OpCodes.Nop));
             il.Append(il.Create(OpCodes.Ldarg_0));
             il.Append(il.Create(OpCodes.Ldarg_2));
-            il.Append(il.Create(OpCodes.Call, m_hookUnref));
+            il.Append(il.Create(OpCodes.Call, module.ImportReference(m_hookUnref)));
             il.Append(il.Create(OpCodes.Ldarg_0));
             il.Append(il.Create(OpCodes.Ldarg_1));
             il.Append(il.Create(OpCodes.Ldarg_2));

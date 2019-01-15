@@ -168,8 +168,6 @@ namespace MikuLuaProfiler
                 if (m_luaMemoryHistory.Count >= 2 * RECORD_FRAME_COUNT)
                 {
                     m_luaMemoryHistory.RemoveRange(0, RECORD_FRAME_COUNT - 1);
-                    m_minLuaValue = -1;
-                    m_maxLuaValue = -1;
                 }
             }
         }
@@ -304,8 +302,6 @@ namespace MikuLuaProfiler
                 if (m_monoMemoryHistory.Count >= 2 * RECORD_FRAME_COUNT)
                 {
                     m_monoMemoryHistory.RemoveRange(0, RECORD_FRAME_COUNT - 1);
-                    m_minMonoValue = -1;
-                    m_maxMonoValue = -1;
                 }
             }
         }
@@ -576,8 +572,6 @@ namespace MikuLuaProfiler
                 if (m_pssHistory.Count >= 2 * RECORD_FRAME_COUNT)
                 {
                     m_pssHistory.RemoveRange(0, RECORD_FRAME_COUNT - 1);
-                    m_minPssValue = -1;
-                    m_maxPssValue = -1;
                 }
             }
         }
