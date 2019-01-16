@@ -577,12 +577,35 @@ namespace MikuLuaProfiler
         }
         #endregion
 
-#if XLUA || TOLUA || SLUA
-
         public static void lua_openLib(IntPtr L)
         {
+#if XLUA || TOLUA || SLUA
             LuaDLL.luaL_openlibs(L);
+#endif
         }
+        public static void DoString(IntPtr L, string script)
+        {
+#if XLUA || TOLUA || SLUA
+            LuaHook.isHook = false;
+            byte[] chunk = Encoding.UTF8.GetBytes(script);
+            int oldTop = LuaDLL.lua_gettop(L);
+            lua_getglobal(L, "miku_handle_error");
+            if (LuaLib.luaL_loadbuffer(L, chunk, chunk.Length, "chunk") == 0)
+            {
+                if (LuaDLL.lua_pcall(L, 0, -1, oldTop + 1) == 0)
+                {
+                    LuaDLL.lua_remove(L, oldTop + 1);
+                }
+            }
+            else
+            {
+                Debug.Log(script);
+            }
+            LuaHook.isHook = true;
+            LuaDLL.lua_settop(L, oldTop);
+#endif
+        }
+#if XLUA || TOLUA || SLUA
 
         public static void lua_pushstdcallcfunction(IntPtr L, LuaCSFunction fun)
         {
@@ -639,27 +662,6 @@ namespace MikuLuaProfiler
 #endif
         }
 
-        public static void DoString(IntPtr L, string script)
-        {
-            LuaHook.isHook = false;
-            byte[] chunk = Encoding.UTF8.GetBytes(script);
-            int oldTop = LuaDLL.lua_gettop(L);
-            lua_getglobal(L, "miku_handle_error");
-            if (LuaLib.luaL_loadbuffer(L, chunk, chunk.Length, "chunk") == 0)
-            {
-                if (LuaDLL.lua_pcall(L, 0, -1, oldTop + 1) == 0)
-                {
-                    LuaDLL.lua_remove(L, oldTop + 1);
-                }
-            }
-            else
-            {
-                Debug.Log(script);
-            }
-            LuaHook.isHook = true;
-            LuaDLL.lua_settop(L, oldTop);
-        }
-
         public static void DoRefLuaFun(IntPtr L, string funName)
         {
             int oldTop = LuaDLL.lua_gettop(L);
@@ -682,7 +684,7 @@ namespace MikuLuaProfiler
     }
 
 #if XLUA || TOLUA || SLUA
-    #region bind
+#region bind
 
     public class MikuLuaProfilerLuaProfilerWrap
     {
@@ -1024,7 +1026,7 @@ end";
             return 0;
         }
     }
-    #endregion
+#endregion
 #endif
 }
 #endif
