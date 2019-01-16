@@ -68,6 +68,7 @@ namespace MikuLuaProfiler
                 InjectMethods.Recompile();
             }
             GUILayout.Space(5);
+
             GUILayout.EndVertical();
             #endregion
 

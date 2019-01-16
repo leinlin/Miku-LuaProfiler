@@ -64,6 +64,10 @@ namespace MikuLuaProfiler
             }
             set
             {
+                if (value != IntPtr.Zero)
+                {
+                    LuaLib.lua_openLib(value);
+                }
                 _mainL = value;
             }
         }

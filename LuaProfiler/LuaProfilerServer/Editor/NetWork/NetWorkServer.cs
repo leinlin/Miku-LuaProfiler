@@ -63,6 +63,7 @@ namespace MikuLuaProfiler
         private const int PACK_HEAD = 0x23333333;
         private static Action<Sample> m_onReceiveSample;
         private static Action<LuaRefInfo> m_onReceiveRef;
+        private static Action<LuaDiffInfo> m_onReceiveDiff;
         private static Queue<int> m_cmdQueue = new Queue<int>(32);
 
         public static bool CheckIsReceiving()
@@ -78,6 +79,11 @@ namespace MikuLuaProfiler
         public static void RegisterOnReceiveRefInfo(Action<LuaRefInfo> onReceive)
         {
             m_onReceiveRef = onReceive;
+        }
+
+        public static void RegisterOnReceiveDiffInfo(Action<LuaDiffInfo> onReceive)
+        {
+            m_onReceiveDiff = onReceive;
         }
 
         public static void BeginListen(string ip, int port)
@@ -128,6 +134,7 @@ namespace MikuLuaProfiler
             acceptThread = null;
         }
 
+        // 0获取ref表，1 记录下当前全局表状态，2 diff 当前状态与历史记录
         public static void SendCmd(int cmd)
         {
             lock (m_cmdQueue)
@@ -178,6 +185,15 @@ namespace MikuLuaProfiler
                                             if (m_onReceiveRef != null)
                                             {
                                                 m_onReceiveRef(r);
+                                            }
+                                        }
+                                        break;
+                                    case 2:
+                                        {
+                                            var r = DeserializeDiff(br);
+                                            if (m_onReceiveDiff != null)
+                                            {
+                                                m_onReceiveDiff(r);
                                             }
                                         }
                                         break;
@@ -309,7 +325,6 @@ namespace MikuLuaProfiler
             }
             return s;
         }
-
         public static LuaRefInfo DeserializeRef(BinaryReader br)
         {
             LuaRefInfo refInfo = LuaRefInfo.Create();
@@ -321,7 +336,29 @@ namespace MikuLuaProfiler
 
             return refInfo;
         }
+        public static LuaDiffInfo DeserializeDiff(BinaryReader br)
+        {
+            LuaDiffInfo diffInfo = LuaDiffInfo.Create();
+            int addCount = br.ReadInt32();
+            for (int i = 0; i < addCount; i++)
+            {
+                diffInfo.PushAddRef(ReadString(br), br.ReadInt32());
+            }
 
+            int rmCount = br.ReadInt32();
+            for (int i = 0; i < rmCount; i++)
+            {
+                diffInfo.PushRmRef(ReadString(br), br.ReadInt32());
+            }
+
+            int nullCount = br.ReadInt32();
+            for (int i = 0; i < nullCount; i++)
+            {
+                diffInfo.PushNullRef(ReadString(br));
+            }
+
+            return diffInfo;
+        }
         private static string ReadString(BinaryReader br)
         {
             string result = null;

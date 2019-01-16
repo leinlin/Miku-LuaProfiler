@@ -74,6 +74,48 @@ namespace MikuLuaProfiler
         #endregion
     }
 
+    public class LuaDiffInfo : NetBase
+    {
+        #region field
+        public Dictionary<string, int> addRef = new Dictionary<string, int>(); //1添加、0移除
+        public Dictionary<string, int> rmRef = new Dictionary<string, int>();
+        public List<string> nullRef = new List<string>();
+        #endregion
+
+        #region api
+        public void PushAddRef(string addKey, int addType)
+        {
+            addRef.Add(addKey, addType);
+        }
+
+        public void PushRmRef(string addKey, int addType)
+        {
+            rmRef.Add(addKey, addType);
+        }
+
+        public void PushNullRef(string value)
+        {
+            nullRef.Add(value);
+        }
+        #endregion
+
+        #region pool
+        private static ObjectPool<LuaDiffInfo> m_pool = new ObjectPool<LuaDiffInfo>(32);
+        public static LuaDiffInfo Create()
+        {
+            LuaDiffInfo r = m_pool.GetObject();
+            r.addRef.Clear();
+            r.rmRef.Clear();
+            r.nullRef.Clear();
+            return r;
+        }
+        public override void Restore()
+        {
+            m_pool.Store(this);
+        }
+        #endregion
+    }
+
     public class Sample : NetBase
     {
         public int currentLuaMemory;

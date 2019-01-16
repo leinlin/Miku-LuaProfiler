@@ -1,4 +1,3 @@
-#define XLUA
 /*
                #########                       
               ############                     
@@ -39,8 +38,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using UnityEngine;
-using System.Runtime;
-using System.Collections;
+using System.IO;
 
 #if XLUA
 using XLua;
@@ -81,6 +79,15 @@ namespace MikuLuaProfiler
 
         public const float DELTA_TIME = 0.1f;
         public float currentTime = 0;
+
+        private static Queue<Action> actionQueue = new Queue<Action>();
+        public static void RegisterAction(Action a)
+        {
+            lock (actionQueue)
+            {
+                actionQueue.Enqueue(a);
+            }
+        }
         #endregion
 
 #if UNITY_5 || UNITY_2017_1_OR_NEWER
@@ -113,6 +120,16 @@ namespace MikuLuaProfiler
 
         private void LateUpdate()
         {
+            if (actionQueue.Count > 0)
+            {
+                lock (actionQueue)
+                {
+                    while (actionQueue.Count > 0)
+                    {
+                        actionQueue.Dequeue()();
+                    }
+                }
+            }
             frameCount = Time.frameCount;
             count++;
             deltaTime += Time.unscaledDeltaTime;
@@ -172,7 +189,7 @@ namespace MikuLuaProfiler
 #endif
         }
 #endif
-        }
+    }
 
     public class Menu : MonoBehaviour
     {
@@ -342,7 +359,7 @@ namespace MikuLuaProfiler
             isHook = true;
 #endif
         }
-        public static void ClearRecord()
+        private static void ClearRecord()
         {
 #if XLUA || TOLUA || SLUA
             IntPtr L = LuaProfiler.mainL;
@@ -357,14 +374,16 @@ namespace MikuLuaProfiler
             }
 #endif
         }
-        public static void LogTable(int refIndex, string prefix)
+        private static void SetAddOrRm(int refIndex, Dictionary<string, int> dict)
         {
 #if XLUA || TOLUA || SLUA
+
             IntPtr L = LuaProfiler.mainL;
             if (L == IntPtr.Zero)
             {
                 return;
             }
+            dict.Clear();
             int oldTop = LuaDLL.lua_gettop(L);
 
             LuaDLL.lua_getref(L, refIndex);
@@ -378,17 +397,14 @@ namespace MikuLuaProfiler
             while (LuaDLL.lua_next(L, t) != 0)
             {
                 /* 用一下 'key' （在索引 -2 处） 和 'value' （在索引 -1 处） */
-                Debug.Log("key " + prefix + LuaHook.GetRefString(L, -1));
-                Debug.Log("value " + prefix + LuaDLL.lua_type(L, -2));
+                dict[LuaHook.GetRefString(L, -1)] = (int)LuaDLL.lua_type(L, -2);
                 /* 移除 'value' ；保留 'key' 做下一次迭代 */
                 LuaDLL.lua_pop(L, 1);
             }
-
             LuaDLL.lua_settop(L, oldTop);
 #endif
         }
-
-        public static void LogNullObject(int nullObjectRef)
+        private static void SetNullObject(int nullObjectRef, List<string> list)
         {
 #if XLUA || TOLUA || SLUA
             IntPtr L = LuaProfiler.mainL;
@@ -396,14 +412,13 @@ namespace MikuLuaProfiler
             {
                 return;
             }
+            list.Clear();
             int oldTop = LuaDLL.lua_gettop(L);
 
             LuaDLL.lua_getref(L, nullObjectRef);
             if (LuaDLL.lua_type(L, -1) != LuaTypes.LUA_TTABLE)
             {
                 LuaDLL.lua_pop(L, 1);
-                Debug.LogError(LuaDLL.lua_type(L, -1));
-                Debug.Log("111");
                 return;
             }
             int t = oldTop + 1;
@@ -411,11 +426,10 @@ namespace MikuLuaProfiler
             while (LuaDLL.lua_next(L, t) != 0)
             {
                 /* 用一下 'key' （在索引 -2 处） 和 'value' （在索引 -1 处） */
-                Debug.Log("nullkey :" + LuaHook.GetRefString(L, -2));
+                list.Add(LuaHook.GetRefString(L, -2));
                 /* 移除 'value' ；保留 'key' 做下一次迭代 */
                 LuaDLL.lua_pop(L, 1);
             }
-
             LuaDLL.lua_settop(L, oldTop);
 #endif
         }
@@ -456,9 +470,12 @@ namespace MikuLuaProfiler
             int nullObjectRef = LuaDLL.luaL_ref(L, LuaIndexes.LUA_REGISTRYINDEX);
             int rmRef = LuaDLL.luaL_ref(L, LuaIndexes.LUA_REGISTRYINDEX);
             int addRef = LuaDLL.luaL_ref(L, LuaIndexes.LUA_REGISTRYINDEX);
-            LogTable(addRef, "add: ");
-            LogTable(rmRef, "rm: ");
-            LogNullObject(nullObjectRef);
+            LuaDiffInfo ld = LuaDiffInfo.Create();
+            SetNullObject(nullObjectRef, ld.nullRef);
+            SetAddOrRm(rmRef, ld.rmRef);
+            SetAddOrRm(addRef, ld.addRef);
+
+            NetWorkClient.SendMessage(ld);
 
             LuaDLL.lua_unref(L, nullObjectRef);
             LuaDLL.lua_unref(L, rmRef);
@@ -515,7 +532,7 @@ namespace MikuLuaProfiler
 
     public class LuaLib
     {
-#region memory
+        #region memory
         public static void RunGC()
         {
 #if XLUA || TOLUA || SLUA
@@ -558,9 +575,15 @@ namespace MikuLuaProfiler
 #endif
             return result;
         }
-#endregion
+        #endregion
 
 #if XLUA || TOLUA || SLUA
+
+        public static void lua_openLib(IntPtr L)
+        {
+            LuaDLL.luaL_openlibs(L);
+        }
+
         public static void lua_pushstdcallcfunction(IntPtr L, LuaCSFunction fun)
         {
 #if XLUA
@@ -656,10 +679,10 @@ namespace MikuLuaProfiler
             LuaDLL.lua_settop(L, oldTop);
         }
 #endif
-        }
+    }
 
 #if XLUA || TOLUA || SLUA
-#region bind
+    #region bind
 
     public class MikuLuaProfilerLuaProfilerWrap
     {
@@ -702,6 +725,7 @@ namespace MikuLuaProfiler
             LuaLib.DoString(L, env_script);
 #endif
             LuaLib.DoString(L, get_ref_string);
+            LuaLib.DoString(L, null_script);
             LuaLib.DoString(L, diff_script);
         }
         const string env_script = @"
@@ -745,8 +769,11 @@ function getfenv(fn)
 end
 ";
         const string get_ref_string = @"
+local weak_meta_table = {__mode = 'kv'}
 local infoTb = {}
 local funAddrTb = {}
+setmetatable(infoTb, weak_meta_table)
+setmetatable(funAddrTb, weak_meta_table)
 
 local function get_fun_info(fun)
     local result = infoTb[fun]
@@ -828,6 +855,19 @@ function lua_miku_remove_ref_fun_info(data)
     miku_remove_ref_fun_info(result, addr, t)
 end
 ";
+        const string null_script = @"
+function miku_is_null(val)
+    if val.Equals then
+        local status,retval = pcall(val.Equals, val, nil)
+        if status then
+            return retval
+        else
+            return true
+        end
+    end
+    return false
+end
+";
         const string diff_script = @"
 local weak_meta_table = {__mode = 'kv'}
 function miku_do_record(val, prefix, key, record, history, null_list)
@@ -858,7 +898,7 @@ function miku_do_record(val, prefix, key, record, history, null_list)
     if null_list then
         if typeStr == 'userdata' then
             local metaTable = getmetatable(val)
-            if metaTable and val.Equals and val:Equals(nil) then
+            if metaTable and miku_is_null(val) then
                 null_list[tmp_prefix] = val
             end
         end
@@ -875,17 +915,18 @@ function miku_do_record(val, prefix, key, record, history, null_list)
         end
 
     elseif typeStr == 'function' then
-        local i = 1
-        while true do
-            local k, v = debug.getupvalue(val, i)
-            if not k then
-                break
+        if val ~= lua_miku_add_ref_fun_info and val ~= lua_miku_rm_ref_fun_info then
+            local i = 1
+            while true do
+                local k, v = debug.getupvalue(val, i)
+                if not k then
+                    break
+                end
+                if v then
+                    miku_do_record(v, tmp_prefix, k, record, history, null_list)
+                end
+                i = i + 1
             end
-            if v then
-                miku_do_record(v, tmp_prefix, k, record, history, null_list)
-            end
-            i = i + 1
-
         end
     end
 
@@ -983,7 +1024,7 @@ end";
             return 0;
         }
     }
-#endregion
+    #endregion
 #endif
 }
 #endif

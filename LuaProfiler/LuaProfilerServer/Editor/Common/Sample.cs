@@ -16,6 +16,19 @@ using UnityEngine;
 
 namespace MikuLuaProfiler
 {
+    public enum LuaTypes
+    {
+        LUA_TNONE = -1,
+        LUA_TNIL = 0,
+        LUA_TNUMBER = 3,
+        LUA_TSTRING = 4,
+        LUA_TBOOLEAN = 1,
+        LUA_TTABLE = 5,
+        LUA_TFUNCTION = 6,
+        LUA_TUSERDATA = 7,
+        LUA_TTHREAD = 8,
+        LUA_TLIGHTUSERDATA = 2
+    }
     public abstract class NetBase
     {
         public abstract void Restore();
@@ -55,6 +68,48 @@ namespace MikuLuaProfiler
             result.type = this.type;
 
             return result;
+        }
+        #endregion
+    }
+
+    public class LuaDiffInfo : NetBase
+    {
+        #region field
+        public Dictionary<string, LuaTypes> addRef = new Dictionary<string, LuaTypes>(); //1添加、0移除
+        public Dictionary<string, LuaTypes> rmRef = new Dictionary<string, LuaTypes>();
+        public List<string> nullRef = new List<string>();
+        #endregion
+
+        #region api
+        public void PushAddRef(string addKey, int addType)
+        {
+            addRef.Add(addKey, (LuaTypes)addType);
+        }
+
+        public void PushRmRef(string addKey, int addType)
+        {
+            rmRef.Add(addKey, (LuaTypes)addType);
+        }
+
+        public void PushNullRef(string value)
+        {
+            nullRef.Add(value);
+        }
+        #endregion
+
+        #region pool
+        private static ObjectPool<LuaDiffInfo> m_pool = new ObjectPool<LuaDiffInfo>(32);
+        public static LuaDiffInfo Create()
+        {
+            LuaDiffInfo r = m_pool.GetObject();
+            r.addRef.Clear();
+            r.rmRef.Clear();
+            r.nullRef.Clear();
+            return r;
+        }
+        public override void Restore()
+        {
+            m_pool.Store(this);
         }
         #endregion
     }

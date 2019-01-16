@@ -81,6 +81,7 @@ namespace MikuLuaProfiler
         private Texture2D oldEndT = null;
 
         private LuaRefScrollView m_luaRefScrollView = null;
+        private LuaDiffScrollView m_luaDiffScrollView = null;
         #endregion
 
         void OnEnable()
@@ -91,6 +92,11 @@ namespace MikuLuaProfiler
             if (m_luaRefScrollView == null)
             {
                 m_luaRefScrollView = new LuaRefScrollView();
+            }
+
+            if (m_luaDiffScrollView == null)
+            {
+                m_luaDiffScrollView = new LuaDiffScrollView();
             }
 
             m_SearchField = new SearchField();
@@ -171,6 +177,7 @@ namespace MikuLuaProfiler
             DoChart();
             EditorGUILayout.EndHorizontal();
 
+            m_luaDiffScrollView.DoRefScroll();
             //DoCapture();
             DoTreeView();
 
@@ -232,6 +239,7 @@ namespace MikuLuaProfiler
                 currentFrameIndex = 0;
                 m_TreeView.Clear(true);
                 m_luaRefScrollView.ClearRefInfo(true);
+                m_luaDiffScrollView.Clear();
             }
             GUILayout.Space(5);
             #endregion
@@ -254,6 +262,7 @@ namespace MikuLuaProfiler
                 m_TreeView.Clear(true);
                 NetWorkServer.RegisterOnReceiveSample(m_TreeView.LoadRootSample);
                 NetWorkServer.RegisterOnReceiveRefInfo(m_luaRefScrollView.DelRefInfo);
+                NetWorkServer.RegisterOnReceiveDiffInfo(m_luaDiffScrollView.DelDiffInfo);
                 NetWorkServer.BeginListen("0.0.0.0", port);
             }
             GUILayout.Label("port:", GUILayout.Height(30), GUILayout.Width(35));
@@ -263,31 +272,21 @@ namespace MikuLuaProfiler
             {
                 NetWorkServer.Close();
             }
-            #endregion
 
-            #region path
-            /*
-            if (GUILayout.Button("Lua Path", EditorStyles.toolbarButton, GUILayout.Height(30)))
+            GUILayout.Space(25);
+            if (GUILayout.Button("MarkLuaRecord", EditorStyles.toolbarButton, GUILayout.Height(30)))
             {
-                LocalToLuaIDE.SetExternalProjectRootPath();
+                NetWorkServer.SendCmd(1);
+                m_luaDiffScrollView.MarkIsRecord();
             }
-            if (GUILayout.Button("IDE Path", EditorStyles.toolbarButton, GUILayout.Height(30)))
+            if (GUILayout.Button("DiffRecord", EditorStyles.toolbarButton, GUILayout.Height(30)))
             {
-                LocalToLuaIDE.SetExternalEditorPath();
+                NetWorkServer.SendCmd(2);
             }
-            if (GUILayout.Button("Clear Path", EditorStyles.toolbarButton, GUILayout.Height(30)))
+            if (GUILayout.Button("ClearDiff", EditorStyles.toolbarButton, GUILayout.Height(30)))
             {
-                LocalToLuaIDE.ClearPath();
+                m_luaDiffScrollView.Clear();
             }
-            GUILayout.Space(100);
-            if (GUILayout.Button("Save Result", EditorStyles.toolbarButton, GUILayout.Height(30)))
-            {
-                m_TreeView.SaveResult();
-            }
-            if (GUILayout.Button("Load Result", EditorStyles.toolbarButton, GUILayout.Height(30)))
-            {
-                m_TreeView.LoadHistory();
-            }*/
             #endregion
 
             #region gc value
