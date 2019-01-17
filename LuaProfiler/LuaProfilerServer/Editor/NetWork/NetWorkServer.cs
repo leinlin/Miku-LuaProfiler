@@ -134,7 +134,7 @@ namespace MikuLuaProfiler
             acceptThread = null;
         }
 
-        // 0获取ref表，1 记录下当前全局表状态，2 diff 当前状态与历史记录
+        // 0获取ref表，1 记录下当前全局表状态，2 diff 当前状态与历史记录, 3 执行完lua的gc在diff
         public static void SendCmd(int cmd)
         {
             lock (m_cmdQueue)
@@ -344,11 +344,31 @@ namespace MikuLuaProfiler
             {
                 diffInfo.PushAddRef(ReadString(br), br.ReadInt32());
             }
+            int addDetailCount = br.ReadInt32();
+            for (int i = 0; i < addDetailCount; i++)
+            {
+                string key = ReadString(br);
+                int count = br.ReadInt32();
+                for (int ii = 0; ii < count; ii++)
+                {
+                    diffInfo.PushAddDetail(key, ReadString(br));
+                }
+            }
 
             int rmCount = br.ReadInt32();
             for (int i = 0; i < rmCount; i++)
             {
                 diffInfo.PushRmRef(ReadString(br), br.ReadInt32());
+            }
+            int rmDetailCount = br.ReadInt32();
+            for (int i = 0; i < rmDetailCount; i++)
+            {
+                string key = ReadString(br);
+                int count = br.ReadInt32();
+                for (int ii = 0; ii < count; ii++)
+                {
+                    diffInfo.PushRmDetail(key, ReadString(br));
+                }
             }
 
             int nullCount = br.ReadInt32();

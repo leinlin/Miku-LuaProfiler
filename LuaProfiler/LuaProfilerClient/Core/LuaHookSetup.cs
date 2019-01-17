@@ -374,10 +374,9 @@ namespace MikuLuaProfiler
             }
 #endif
         }
-        private static void SetAddOrRm(int refIndex, Dictionary<string, int> dict)
+        private static void SetAddOrRm(int refIndex, Dictionary<string, int> dict, Dictionary<string, List<string>> detailDict)
         {
 #if XLUA || TOLUA || SLUA
-
             IntPtr L = LuaProfiler.mainL;
             if (L == IntPtr.Zero)
             {
@@ -397,7 +396,23 @@ namespace MikuLuaProfiler
             while (LuaDLL.lua_next(L, t) != 0)
             {
                 /* 用一下 'key' （在索引 -2 处） 和 'value' （在索引 -1 处） */
-                dict[LuaHook.GetRefString(L, -1)] = (int)LuaDLL.lua_type(L, -2);
+                int key_t = LuaDLL.lua_gettop(L);
+                LuaDLL.lua_pushnil(L);  /* 第一个 key */
+                string firstKey = null;
+                List<string> detailList = new List<string>();
+                while (LuaDLL.lua_next(L, key_t) != 0)
+                {
+                    string key = LuaHook.GetRefString(L, -1);
+                    if (string.IsNullOrEmpty(firstKey))
+                    {
+                        firstKey = key;
+                    }
+                    detailList.Add(key);
+                    LuaDLL.lua_pop(L, 1);
+                }
+                LuaDLL.lua_settop(L, key_t);
+                dict[firstKey] = (int)LuaDLL.lua_type(L, -2);
+                detailDict[firstKey] = detailList;
                 /* 移除 'value' ；保留 'key' 做下一次迭代 */
                 LuaDLL.lua_pop(L, 1);
             }
@@ -432,6 +447,12 @@ namespace MikuLuaProfiler
             }
             LuaDLL.lua_settop(L, oldTop);
 #endif
+        }
+
+        public static void GCDiff()
+        {
+            LuaLib.RunGC();
+            Diff();
         }
 
         public static void Diff()
@@ -472,8 +493,8 @@ namespace MikuLuaProfiler
             int addRef = LuaDLL.luaL_ref(L, LuaIndexes.LUA_REGISTRYINDEX);
             LuaDiffInfo ld = LuaDiffInfo.Create();
             SetNullObject(nullObjectRef, ld.nullRef);
-            SetAddOrRm(rmRef, ld.rmRef);
-            SetAddOrRm(addRef, ld.addRef);
+            SetAddOrRm(rmRef, ld.rmRef, ld.rmDetail);
+            SetAddOrRm(addRef, ld.addRef, ld.addDetail);
 
             NetWorkClient.SendMessage(ld);
 
@@ -871,13 +892,37 @@ function miku_is_null(val)
 end
 ";
         const string diff_script = @"
-local weak_meta_table = {__mode = 'kv'}
+local weak_meta_key_table = {__mode = 'k'}
+local weak_meta_value_table = {__mode = 'v'}
 function miku_do_record(val, prefix, key, record, history, null_list)
-    if getmetatable(record) ~= weak_meta_table then
-        setmetatable(record, weak_meta_table)
+    if getmetatable(record) ~= weak_meta_key_table then
+        setmetatable(record, weak_meta_key_table)
+    end
+
+    local typeStr = type(val)
+    if typeStr ~= 'table' and typeStr ~= 'string' and typeStr ~= 'userdata' and typeStr ~= 'function' then
+        return
+    end
+
+    local strKey = tostring(key)
+    if not strKey then
+        strKey = 'empty'
+    end
+    local tmp_prefix = prefix.. (prefix == '' and '' or '.') .. strKey
+    if null_list then
+        if type(val) == 'userdata' then
+            local metaTable = getmetatable(val)
+            if metaTable and miku_is_null(val) then
+                null_list[tmp_prefix] = val
+            end
+        end
     end
 
     if record[val] then
+        if record[val] == nil then
+            record[val] = {}
+        end
+        table.insert(record[val], tmp_prefix)
         return
     end
     if val == history then
@@ -886,25 +931,11 @@ function miku_do_record(val, prefix, key, record, history, null_list)
     if val == record then
         return
     end
-    local typeStr = type(val)
-    if typeStr ~= 'table' and typeStr ~= 'string' and typeStr ~= 'userdata' and typeStr ~= 'function' then
-        return
-    end
-    local strKey = tostring(key)
-    if not strKey then
-        strKey = 'empty'
-    end
 
-    local tmp_prefix = prefix.. (prefix == '' and '' or '.') .. strKey
-    record[val] = tmp_prefix
-    if null_list then
-        if typeStr == 'userdata' then
-            local metaTable = getmetatable(val)
-            if metaTable and miku_is_null(val) then
-                null_list[tmp_prefix] = val
-            end
-        end
+    if record[val] == nil then
+        record[val] = {}
     end
+    table.insert(record[val], tmp_prefix)
 
     if typeStr == 'table' then
         for k,v in pairs(val) do
@@ -944,9 +975,9 @@ end
 
 function miku_diff(record)
     local add = { }
-    setmetatable(add, weak_meta_table)
+    setmetatable(add, weak_meta_key_table)
     local null_list = { }
-    setmetatable(null_list, weak_meta_table)
+    setmetatable(null_list, weak_meta_value_table)
     miku_do_record(_G, '', '_G', add, record, null_list)
     miku_do_record(debug.getregistry(), '', '_R', add, record, null_list)
     local rm = { }

@@ -236,6 +236,11 @@ namespace MikuLuaProfiler
                                         HookLuaSetup.RegisterAction(LuaHook.Diff);
                                     }
                                     break;
+                                case 3:
+                                    {
+                                        HookLuaSetup.RegisterAction(LuaHook.GCDiff);
+                                    }
+                                    break;
                             }
                         }
                     }
@@ -827,6 +832,18 @@ namespace MikuLuaProfiler
                     WriteString(bw, item.Key);
                     bw.Write(item.Value);
                 }
+                var addDetail = ld.addDetail;
+                bw.Write(addDetail.Count);
+                foreach (var item in addDetail)
+                {
+                    WriteString(bw, item.Key);
+                    var list = item.Value;
+                    bw.Write(list.Count);
+                    foreach (var listItem in list)
+                    {
+                        WriteString(bw, listItem);
+                    }
+                }
                 // rm
                 var rmDict = ld.rmRef;
                 bw.Write(rmDict.Count);
@@ -835,6 +852,19 @@ namespace MikuLuaProfiler
                     WriteString(bw, item.Key);
                     bw.Write(item.Value);
                 }
+                var rmDetail = ld.rmDetail;
+                bw.Write(rmDetail.Count);
+                foreach (var item in rmDetail)
+                {
+                    WriteString(bw, item.Key);
+                    var list = item.Value;
+                    bw.Write(list.Count);
+                    foreach (var listItem in list)
+                    {
+                        WriteString(bw, listItem);
+                    }
+                }
+
                 // null
                 var nullList = ld.nullRef;
                 bw.Write(nullList.Count);

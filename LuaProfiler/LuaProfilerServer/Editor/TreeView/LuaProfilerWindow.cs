@@ -283,6 +283,10 @@ namespace MikuLuaProfiler
             {
                 NetWorkServer.SendCmd(2);
             }
+            if (GUILayout.Button("GCDiff", EditorStyles.toolbarButton, GUILayout.Height(30)))
+            {
+                NetWorkServer.SendCmd(3);
+            }
             if (GUILayout.Button("ClearDiff", EditorStyles.toolbarButton, GUILayout.Height(30)))
             {
                 m_luaDiffScrollView.Clear();

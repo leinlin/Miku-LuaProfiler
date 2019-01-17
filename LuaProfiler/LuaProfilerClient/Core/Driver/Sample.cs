@@ -77,8 +77,10 @@ namespace MikuLuaProfiler
     public class LuaDiffInfo : NetBase
     {
         #region field
-        public Dictionary<string, int> addRef = new Dictionary<string, int>(); //1添加、0移除
+        public Dictionary<string, int> addRef = new Dictionary<string, int>();
+        public Dictionary<string, List<string>> addDetail = new Dictionary<string, List<string>>();
         public Dictionary<string, int> rmRef = new Dictionary<string, int>();
+        public Dictionary<string, List<string>> rmDetail = new Dictionary<string, List<string>>();
         public List<string> nullRef = new List<string>();
         #endregion
 
@@ -105,7 +107,9 @@ namespace MikuLuaProfiler
         {
             LuaDiffInfo r = m_pool.GetObject();
             r.addRef.Clear();
+            r.addDetail.Clear();
             r.rmRef.Clear();
+            r.rmDetail.Clear();
             r.nullRef.Clear();
             return r;
         }

@@ -76,7 +76,9 @@ namespace MikuLuaProfiler
     {
         #region field
         public Dictionary<string, LuaTypes> addRef = new Dictionary<string, LuaTypes>(); //1添加、0移除
+        public Dictionary<string, List<string>> addDetail = new Dictionary<string, List<string>>();
         public Dictionary<string, LuaTypes> rmRef = new Dictionary<string, LuaTypes>();
+        public Dictionary<string, List<string>> rmDetail = new Dictionary<string, List<string>>();
         public List<string> nullRef = new List<string>();
         #endregion
 
@@ -86,9 +88,31 @@ namespace MikuLuaProfiler
             addRef.Add(addKey, (LuaTypes)addType);
         }
 
+        public void PushAddDetail(string addKey, string value)
+        {
+            List<string> list;
+            if (!addDetail.TryGetValue(addKey, out list))
+            {
+                list = new List<string>();
+                addDetail[addKey] = list;
+            }
+            list.Add(value);
+        }
+
         public void PushRmRef(string addKey, int addType)
         {
             rmRef.Add(addKey, (LuaTypes)addType);
+        }
+
+        public void PushRmDetail(string key, string value)
+        {
+            List<string> list;
+            if (!rmDetail.TryGetValue(key, out list))
+            {
+                list = new List<string>();
+                rmDetail[key] = list;
+            }
+            list.Add(value);
         }
 
         public void PushNullRef(string value)
@@ -103,7 +127,9 @@ namespace MikuLuaProfiler
         {
             LuaDiffInfo r = m_pool.GetObject();
             r.addRef.Clear();
+            r.addDetail.Clear();
             r.rmRef.Clear();
+            r.rmDetail.Clear();
             r.nullRef.Clear();
             return r;
         }
