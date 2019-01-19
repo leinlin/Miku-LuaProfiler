@@ -27,7 +27,51 @@
 
             #region value
             GUILayout.BeginVertical();
-            EditorGUILayout.LabelField("add values count:" + luaDiff.addRef.Count);
+
+            GUILayout.BeginHorizontal();
+            EditorGUILayout.LabelField("add values count:" + luaDiff.addRef.Count, GUILayout.Width(150));
+            if (GUILayout.Button("ShowLog", GUILayout.Width(100)))
+            {
+                string str = "add:\n";
+                foreach (var item in luaDiff.addRef)
+                {
+                    List<string> list = null;
+                    string key = item.Key;
+                    string value = item.Value.ToString();
+                    if (luaDiff.addDetail.TryGetValue(key, out list))
+                    {
+                        foreach (var itemx in list)
+                        {
+                            str += itemx + " ";
+                        }
+                        str += value + "\n";
+                    }
+                }
+
+                str += "rm:\n";
+                foreach (var item in luaDiff.rmRef)
+                {
+                    List<string> list = null;
+                    string key = item.Key;
+                    string value = item.Value.ToString();
+                    if (luaDiff.rmDetail.TryGetValue(key, out list))
+                    {
+                        foreach (var itemx in list)
+                        {
+                            str += itemx + " ";
+                        }
+                        str += value + "\n";
+                    }
+                }
+
+                str += "null:\n";
+                foreach (var item in luaDiff.nullRef)
+                {
+                    str += item + "\n";
+                }
+                Debug.Log(str);
+            }
+            GUILayout.EndHorizontal();
 
             scrollPositionAdd = GUILayout.BeginScrollView(scrollPositionAdd, EditorStyles.helpBox, GUILayout.Height(100));
             foreach (var item in luaDiff.addRef)
@@ -78,8 +122,8 @@
             List<string> list = null;
             dict.TryGetValue(key, out list);
             int count = list == null ? 0 : list.Count;
-
-            GUILayout.Label(string.Format("Key:{0} Value:{1}", key, value));
+            GUILayout.Label(string.Format("Key:{0}", key), GUILayout.Width(200));
+            GUILayout.Label(string.Format("Value:{0}", value));
             GUILayout.Label(string.Format("Ref Count:{0}", count));
             if (GUILayout.Button("detail", GUILayout.Width(100)))
             {

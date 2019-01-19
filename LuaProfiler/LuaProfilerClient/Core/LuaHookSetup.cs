@@ -792,13 +792,13 @@ function getfenv(fn)
 end
 ";
         const string get_ref_string = @"
-local weak_meta_table = {__mode = 'kv'}
+local weak_meta_table = {__mode = 'k'}
 local infoTb = {}
 local funAddrTb = {}
 setmetatable(infoTb, weak_meta_table)
 setmetatable(funAddrTb, weak_meta_table)
 
-local function get_fun_info(fun)
+local function miku_get_fun_info(fun)
     local result = infoTb[fun]
     local addr = funAddrTb[fun]
     if not result then
@@ -855,7 +855,7 @@ function lua_miku_add_ref_fun_info(data)
     local t = 1
     local typeStr = miku_check_type(data)
     if typeStr == 1 then
-        result,addr = get_fun_info(data)
+        result,addr = miku_get_fun_info(data)
         t = 1
     elseif typeStr == 2 then
         result,addr = get_table_info(data)
@@ -880,7 +880,8 @@ end
 ";
         const string null_script = @"
 function miku_is_null(val)
-    if val.Equals then
+    local metaTable = getmetatable(val)
+    if type(metaTable) == 'table' and metaTable.__index and val.Equals then
         local status,retval = pcall(val.Equals, val, nil)
         if status then
             return retval
@@ -894,13 +895,37 @@ end
         const string diff_script = @"
 local weak_meta_key_table = {__mode = 'k'}
 local weak_meta_value_table = {__mode = 'v'}
+local infoTb = {}
+local tolua_object_tb
 function miku_do_record(val, prefix, key, record, history, null_list)
+    if val == infoTb then
+        return
+    end
+    if not tolua_object_tb then
+        tolua_object_tb = debug.getregistry()[4]
+    end
+    if val == tolua_object_tb then
+        return
+    end
+    if val == miku_do_record then
+        return
+    end
+    if val == miku_diff then
+        return
+    end
+    if val == lua_miku_remove_ref_fun_info then
+        return
+    end
+    if val == lua_miku_add_ref_fun_info then
+        return
+    end
+
     if getmetatable(record) ~= weak_meta_key_table then
         setmetatable(record, weak_meta_key_table)
     end
 
     local typeStr = type(val)
-    if typeStr ~= 'table' and typeStr ~= 'string' and typeStr ~= 'userdata' and typeStr ~= 'function' then
+    if typeStr ~= 'table' and typeStr ~= 'userdata' and typeStr ~= 'function' then
         return
     end
 
@@ -908,7 +933,16 @@ function miku_do_record(val, prefix, key, record, history, null_list)
     if not strKey then
         strKey = 'empty'
     end
-    local tmp_prefix = prefix.. (prefix == '' and '' or '.') .. strKey
+    local prefixTb = infoTb[prefix]
+    if not prefixTb then
+        prefixTb = {}
+        infoTb[prefix] = prefixTb
+    end
+    local tmp_prefix = prefixTb[strKey]
+    if not tmp_prefix then
+        tmp_prefix = prefix.. (prefix == '' and '' or '.') .. strKey
+        prefixTb[strKey] = tmp_prefix
+    end
     if null_list then
         if type(val) == 'userdata' then
             local metaTable = getmetatable(val)
