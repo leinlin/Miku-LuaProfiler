@@ -84,6 +84,14 @@ namespace MikuLuaProfiler
         private LuaDiffScrollView m_luaDiffScrollView = null;
         #endregion
 
+        public static void ClearConsole()
+        {
+            // 找到需要 Hook 的方法
+            var logEntries = System.Type.GetType("UnityEditor.LogEntries,UnityEditor.dll");
+            var clearMethod = logEntries.GetMethod("Clear", System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.Public);
+            clearMethod.Invoke(null, null);
+        }
+
         void OnEnable()
         {
             if (m_TreeViewState == null)
@@ -257,6 +265,7 @@ namespace MikuLuaProfiler
 
             if (GUILayout.Button("OpenService", EditorStyles.toolbarButton, GUILayout.Height(30)))
             {
+                ClearConsole();
                 NetWorkServer.Close();
                 currentFrameIndex = 0;
                 m_TreeView.Clear(true);
@@ -270,6 +279,7 @@ namespace MikuLuaProfiler
 
             if (GUILayout.Button("CloseService", EditorStyles.toolbarButton, GUILayout.Height(30)))
             {
+                ClearConsole();
                 NetWorkServer.Close();
             }
 
