@@ -945,8 +945,8 @@ function miku_do_record(val, prefix, key, record, history, null_list)
     end
     if null_list then
         if type(val) == 'userdata' then
-            local metaTable = getmetatable(val)
-            if metaTable and miku_is_null(val) then
+            local st,ret = pcall(miku_is_null, val)
+            if st and ret then
                 null_list[tmp_prefix] = val
             end
         end
