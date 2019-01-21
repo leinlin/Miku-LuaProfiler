@@ -87,7 +87,11 @@ namespace MikuLuaProfiler
         public static void ClearConsole()
         {
             // 找到需要 Hook 的方法
+#if UNITY_2017_1_OR_NEWER
             var logEntries = System.Type.GetType("UnityEditor.LogEntries,UnityEditor.dll");
+#else
+            var logEntries = System.Type.GetType("UnityEditorInternal.LogEntries,UnityEditor.dll");
+#endif
             var clearMethod = logEntries.GetMethod("Clear", System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.Public);
             clearMethod.Invoke(null, null);
         }
@@ -595,7 +599,7 @@ namespace MikuLuaProfiler
             }
         }
 
-        #region chart
+            #region chart
         private void DrawChart(Rect rect)
         {
             if (m_TreeView == null) return;
@@ -948,7 +952,7 @@ namespace MikuLuaProfiler
                 m_luaRefScrollView.LoadHistory(startGameFrame, endGameFrame);
             }
         }
-        #endregion
+            #endregion
 
         // Add menu named "My Window" to the Window menu
         [MenuItem("Window/Lua Profiler Window")]
@@ -961,4 +965,4 @@ namespace MikuLuaProfiler
         }
     }
 #endif
-}
+        }
