@@ -1,5 +1,4 @@
-﻿#if UNITY_EDITOR || USE_LUA_PROFILER
-/*
+﻿/*
                #########                       
               ############                     
               #############                    
@@ -27,20 +26,21 @@
 __________#_______####_______####______________
                 我们的未来没有BUG                
 * ==============================================================================
-* Filename: NetWorkClient
+* Filename: NativeHelper
 * Created:  2018/7/13 14:29:22
 * Author:   エル・プサイ・コングリィ
 * Purpose:  
 * ==============================================================================
 */
-
+#if UNITY_EDITOR || USE_LUA_PROFILER
 namespace MikuLuaProfiler
 {
     using System;
     using System.Diagnostics;
     using System.Runtime.InteropServices;
     using UnityEngine;
-#if UNITY_5_6_OR_NEWER
+
+#if UNITY_5_5_OR_NEWER
     using UnityEngine.Profiling;
 #endif
 
@@ -53,10 +53,10 @@ namespace MikuLuaProfiler
 #endif
 
 #if UNITY_ANDROID && !UNITY_EDITOR
-        static AndroidJavaClass m_debugClass;
         static IntPtr m_debugClassPtr;
         static IntPtr m_getPassPtr;
         static IntPtr m_getBatteryLevel;
+        static AndroidJavaClass m_debugClass;
         static jvalue[] m_jv = new jvalue[0] { };
 #endif
 
@@ -78,7 +78,7 @@ namespace MikuLuaProfiler
 #if UNITY_ANDROID && !UNITY_EDITOR
             return AndroidJNI.CallStaticIntMethod(m_debugClassPtr, m_getPassPtr, m_jv) * 1024;
 #else
-#if UNITY_5_6_OR_NEWER
+#if UNITY_5_5_OR_NEWER
             return (int)Profiler.GetTotalAllocatedMemoryLong();
 #else
             return (int)Profiler.GetTotalAllocatedMemory();

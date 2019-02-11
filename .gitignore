@@ -52,3 +52,4 @@ manifest.json
 
 /ToLuaClient/Assets/Source/Generate/*Wrap.cs
 /ToLuaClient/Assets/Source/Generate/*Wrap.cs.meta
+/LuaProfiler/LuaProfilerClient/Resources.meta
