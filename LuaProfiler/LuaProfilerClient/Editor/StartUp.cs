@@ -828,18 +828,17 @@ namespace MikuLuaProfiler
 
             var il = method.Body.GetILProcessor();
             il.Append(il.Create(OpCodes.Nop));
-            il.Append(il.Create(OpCodes.Ldarg_0));
-            il.Append(il.Create(OpCodes.Call, module.ImportReference(m_hookRef)));
+
             il.Append(il.Create(OpCodes.Ldarg_0));
             il.Append(il.Create(OpCodes.Ldarg_1));
             il.Append(il.Create(OpCodes.Call, module.ImportReference(newMethod)));
             il.Append(il.Create(OpCodes.Stloc_0));
-            var ldloc0 = il.Create(OpCodes.Ldloc_0);
-            il.Append(ldloc0);
-            il.Append(il.Create(OpCodes.Ret));
 
-            //BR
-            il.InsertBefore(ldloc0, il.Create(OpCodes.Br, ldloc0));
+            il.Append(il.Create(OpCodes.Ldarg_0));
+            il.Append(il.Create(OpCodes.Ldloc_0));
+            il.Append(il.Create(OpCodes.Call, module.ImportReference(m_hookRef)));
+            il.Append(il.Create(OpCodes.Ldloc_0));
+            il.Append(il.Create(OpCodes.Ret));
         }
 
         private static void InjectUnrefMethod(MethodDefinition method, ModuleDefinition module, MethodDefinition newMethod)

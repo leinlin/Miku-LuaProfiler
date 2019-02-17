@@ -281,12 +281,15 @@ namespace MikuLuaProfiler
             return buff;
         }
 
-        public static void HookRef(IntPtr L)
+        public static void HookRef(IntPtr L, int reference)
         {
 #if XLUA || TOLUA || SLUA
             if (isHook)
             {
-                LuaLib.DoRefLuaFun(L, "lua_miku_add_ref_fun_info");
+                HookLuaSetup.RegisterAction(()=> 
+                {
+                    LuaLib.DoRefLuaFun(L, "lua_miku_add_ref_fun_info", reference);
+                });
             }
 #endif
         }
@@ -296,9 +299,10 @@ namespace MikuLuaProfiler
 #if XLUA || TOLUA || SLUA
             if (isHook)
             {
-                LuaDLL.lua_getref(L, reference);
-                LuaLib.DoRefLuaFun(L, "lua_miku_remove_ref_fun_info");
-                LuaDLL.lua_pop(L, 1);
+                HookLuaSetup.RegisterAction(() =>
+                {
+                    LuaLib.DoRefLuaFun(L, "lua_miku_remove_ref_fun_info", reference);
+                });
             }
 #endif
         }
@@ -683,8 +687,9 @@ namespace MikuLuaProfiler
 #endif
         }
 
-        public static void DoRefLuaFun(IntPtr L, string funName)
+        public static void DoRefLuaFun(IntPtr L, string funName, int reference)
         {
+            LuaDLL.lua_getref(L, reference);
             int oldTop = LuaDLL.lua_gettop(L);
             lua_getglobal(L, "miku_handle_error");
             do
@@ -698,8 +703,8 @@ namespace MikuLuaProfiler
                 }
 
             } while (false);
-
             LuaDLL.lua_settop(L, oldTop);
+            LuaDLL.lua_pop(L, 1);
         }
 #endif
     }
@@ -836,8 +841,16 @@ local function get_table_info(tb)
     local result = infoTb[tb]
     local addr = funAddrTb[tb]
     if not result then
+        local tostringFun
+        if getmetatable(tb) and rawget(getmetatable(tb), '__tostring') then
+            tostringFun = rawget(getmetatable(tb), '__tostring')
+            rawset(getmetatable(tb), '__tostring', nil)
+        end
         local addStr = tostring(tb)
-        result = tb['__name'] or tb['__cname']
+        if tostringFun then
+            rawset(getmetatable(tb), '__tostring', tostringFun)
+        end
+        result = rawget(tb, '__name') or rawget(tb, 'name') or rawget(tb, '__cname')
         if not result then
             result = serialize(tb)
         end
