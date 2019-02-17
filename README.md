@@ -5,9 +5,6 @@
 **Unity + Lua** script is now most popular incremental update frameWork for mobile game in China,However, since there haven't been good tool to monitor the cpu and memory usage of lua vm, lots of developers have no idea to optimize their code,so there are many potential risks in lua codes.<br>
 this tool is designed to support an **easy-to-use profiler** for unity that help finding bottleneck and make your game more fast and stable.
 
-### Test Demo 
-use administrator mode to run the **link.bat** <br/>
-
 ### Use renderings
 ![](doc/use.gif)
 
@@ -133,7 +130,16 @@ Click **Record** button, when game connect to server, toggle **StartRecord** to 
 ![](doc/record.gif)
 
 ### On-device Profiler
-Set macro **USE_LUA_PROFILER** to inject profiler code in you App.If you want to use **luac code or luajit bytecode** ,use **InjectLua.exe** in folder tools To inject the lua profiler code.
+Set macro **USE_LUA_PROFILER** to inject profiler code in you App.</br>
+
+#### Android
+set IP:127.0.0.1 port:2333. Connect your android phone with a USB cable.Execute the following instructions in cmd windows.</br>
+```
+adb reverse tcp:2333 tcp:2333
+```
+Execute your app.</br>
+
+If you want to use **luac code or luajit bytecode** ,use **InjectLua.exe** in folder tools To inject the lua profiler code.</br>
 
 ```
 InjectLua.exe "inpath" "outpath"
