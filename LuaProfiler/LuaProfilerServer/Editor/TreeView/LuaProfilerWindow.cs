@@ -252,6 +252,7 @@ namespace MikuLuaProfiler
                 m_TreeView.Clear(true);
                 m_luaRefScrollView.ClearRefInfo(true);
                 m_luaDiffScrollView.Clear();
+                ClearConsole();
             }
             GUILayout.Space(5);
             #endregion

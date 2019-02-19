@@ -65,10 +65,10 @@ namespace MikuLuaProfiler
         {
 #if UNITY_ANDROID && !UNITY_EDITOR
             object[] jv = new object[0] { };
-            m_debugClassPtr = AndroidJNI.FindClass("com.miku.profiler.Profiler");
+            m_debugClassPtr = AndroidJNI.FindClass("com/miku/profiler/Profiler");
             m_getPassPtr = AndroidJNIHelper.GetMethodID<int>(m_debugClassPtr, "GetPassValue", jv, true);
             m_getBatteryLevel = AndroidJNIHelper.GetMethodID<float>(m_debugClassPtr,"GetBattleryLevel", jv, true);
-            m_debugClass = new AndroidJavaClass("com.miku.profiler.Profiler");
+            m_debugClass = new AndroidJavaClass("com/miku/profiler/Profiler");
             m_debugClass.CallStatic("run");
 #endif
         }
