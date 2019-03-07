@@ -137,7 +137,7 @@ namespace MikuLuaProfiler
         public string name;
         public int costTime;
         public Sample _father;
-        public List<Sample> childs = new List<Sample>(16);
+        public MList<Sample> childs = new MList<Sample>(16);
         public string captureUrl = null;
 
         public bool CheckSampleValid()
@@ -184,9 +184,11 @@ namespace MikuLuaProfiler
                 if (value != null)
                 {
                     bool needAdd = true;
-                    foreach (var item in value.childs)
+                    var childList = value.childs;
+                    for (int i = 0,imax = childList.Count;i<imax;i++)
                     {
-                        if (item.name == name)
+                        var item = childList[i];
+                        if ((object)(item.name) == (object)(name))
                         {
                             needAdd = false;
                             item.AddSample(this);
@@ -195,7 +197,7 @@ namespace MikuLuaProfiler
                     }
                     if (needAdd)
                     {
-                        value.childs.Add(this);
+                        childList.Add(this);
                         _father = value;
                     }
                 }

@@ -42,6 +42,7 @@ using System.Linq;
 using System.Security.Cryptography;
 using UnityEditor;
 using UnityEngine;
+using MikuLuaProfiler;
 #if XLUA
 using LuaDLL = XLua.LuaDLL.Lua;
 #elif TOLUA
@@ -50,7 +51,7 @@ using LuaDLL = LuaInterface.LuaDLL;
 using LuaDLL = SLua.LuaDLL;
 #endif
 
-namespace MikuLuaProfiler
+namespace MikuLuaProfiler_Editor
 {
 
     [InitializeOnLoad]
@@ -96,17 +97,6 @@ namespace MikuLuaProfiler
             LuaDeepProfilerSetting.Instance.isInited = true;
         }
 
-        //private static void Update()
-        //{
-        //    tickNum++;
-        //    if (tickNum < 60)
-        //    {
-        //        return;
-        //    }
-        //    Debug.Log("success inject profiler code");
-        //    EditorApplication.update -= callback;
-        //}
-
          private static void AppendMacro(string macro)
         {
             System.Diagnostics.StackTrace st = new System.Diagnostics.StackTrace(true);
@@ -115,7 +105,7 @@ namespace MikuLuaProfiler
             string selfPath = path;
 
 #if UNITY_EDITOR_WIN
-            path = path.Replace("Editor\\StartUp.cs", "Core\\LuaHookSetup.cs");
+            path = path.Replace("Editor\\StartUp.cs", "Core\\LuaDLL.cs");
 #else
             path = path.Replace("Editor/StartUp.cs", "Core/LuaHookSetup.cs");
 #endif
@@ -152,27 +142,19 @@ namespace MikuLuaProfiler
         private static MethodDefinition m_hookUnref;
         public delegate void InjectMethodAction(MethodDefinition method, ModuleDefinition module, MethodDefinition newMethod);
 
+        private const string LUA_NEW_STATE = "luaL_newstate";
+        private const string LUA_CLOSE = "lua_close";
+        private const string LUA_REF = "luaL_ref";
+        private const string LUA_UNREF = "luaL_unref";
 #if XLUA
         private const string LUA_FULL_NAME = "XLua.LuaDLL.Lua";
-        private const string LUA_NEW_STATE = "luaL_newstate";
-        private const string LUA_CLOSE = "lua_close";
         private const string LUA_LOAD_BUFFER = "xluaL_loadbuffer";
-        private const string LUA_REF = "luaL_ref";
-        private const string LUA_UNREF = "luaL_unref";
 #elif SLUA
         private const string LUA_FULL_NAME = "SLua.LuaDLL";
-        private const string LUA_NEW_STATE = "luaL_newstate";
-        private const string LUA_CLOSE = "lua_close";
         private const string LUA_LOAD_BUFFER = "luaLS_loadbuffer";
-        private const string LUA_REF = "luaL_ref";
-        private const string LUA_UNREF = "luaL_unref";
 #elif TOLUA
         private const string LUA_FULL_NAME = "LuaInterface.LuaDLL";
-        private const string LUA_NEW_STATE = "luaL_newstate";
-        private const string LUA_CLOSE = "lua_close";
         private const string LUA_LOAD_BUFFER = "tolua_loadbuffer";
-        private const string LUA_REF = "luaL_ref";
-        private const string LUA_UNREF = "luaL_unref";
 #endif
 
         #region try finally
@@ -188,6 +170,27 @@ namespace MikuLuaProfiler
             var profilerPath = (typeof(LuaProfiler).Assembly).ManifestModule.FullyQualifiedName;
 
             InjectAllMethods(projectPath, profilerPath, false);
+        }
+
+        private static bool IsMonoBehavior(TypeDefinition td)
+        {
+            if (td == null) return false;
+
+            if (td.FullName == "UnityEngine.MonoBehaviour")
+            {
+                return true;
+            }
+            else
+            {
+                if (td.BaseType == null)
+                {
+                    return false;
+                }
+                else
+                {
+                    return IsMonoBehavior(td.BaseType.Resolve());
+                }
+            }
         }
 
         private static void InjectAllMethods(string injectPath, string profilerPath, bool needMdb)
@@ -246,8 +249,7 @@ namespace MikuLuaProfiler
                         {
                             continue;
                         }
-                        var t = item.DeclaringType.GetMonoType();
-                        bool isMonoBehaviour = typeof(MonoBehaviour).IsAssignableFrom(t);
+                        bool isMonoBehaviour = IsMonoBehavior(item.DeclaringType.BaseType.Resolve());
                         if (isMonoBehaviour)
                         {
                             continue;
@@ -275,10 +277,7 @@ namespace MikuLuaProfiler
             LuaDeepProfilerSetting.Instance.assMd5 = new FileInfo(injectPath).LastWriteTimeUtc.Ticks.ToString();
         }
 
-        public static Type GetMonoType(this TypeReference type)
-        {
-            return System.Reflection.Assembly.Load(type.Module.Assembly.Name.Name).GetType(type.GetReflectionName());
-        }
+
 
         private static string GetReflectionName(this TypeReference type)
         {
@@ -582,7 +581,7 @@ namespace MikuLuaProfiler
         public static void HookLuaFun()
         {
             #if XLUA || TOLUA || SLUA
-            string profilerPath = (typeof(LuaProfiler).Assembly).ManifestModule.FullyQualifiedName;
+            string profilerPath = (typeof(MikuLuaProfiler.LuaProfiler).Assembly).ManifestModule.FullyQualifiedName;
             string luaPath = (typeof(LuaDLL).Assembly).ManifestModule.FullyQualifiedName;
             DoHookLuaFun(luaPath, profilerPath);
             #endif
@@ -605,7 +604,6 @@ namespace MikuLuaProfiler
 
             #region find lua method
             var profilerType = luaAssembly.MainModule.GetType(LUA_FULL_NAME);
-            if (profilerType == null) return;
             foreach (var m in profilerType.Methods)
             {
                 //已经注入了就不注入了
@@ -618,6 +616,7 @@ namespace MikuLuaProfiler
 
             #region find profiler method
             var luaProfiler = profilerAssembly.MainModule.GetType("MikuLuaProfiler.LuaProfiler");
+
             foreach (var m in luaProfiler.Methods)
             {
                 if (m.Name == "set_mainL")

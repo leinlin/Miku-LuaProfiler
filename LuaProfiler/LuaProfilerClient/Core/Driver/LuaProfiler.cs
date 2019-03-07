@@ -47,7 +47,6 @@ namespace MikuLuaProfiler
         private static IntPtr _mainL = IntPtr.Zero;
         private static readonly Stack<Sample> beginSampleMemoryStack = new Stack<Sample>();
         private static int m_currentFrame = 0;
-        private static Dictionary<MethodBase, string> m_methodNameDict = new Dictionary<MethodBase, string>(4096);
         public static int mainThreadId = -100;
         const long MaxB = 1024;
         const long MaxK = MaxB * 1024;
@@ -56,6 +55,7 @@ namespace MikuLuaProfiler
         #endregion
 
         #region property
+        public static bool m_hasL = false;
         public static IntPtr mainL
         {
             get
@@ -66,7 +66,12 @@ namespace MikuLuaProfiler
             {
                 if (value != IntPtr.Zero)
                 {
-                    LuaLib.lua_openLib(value);
+                    m_hasL = true;
+                    LuaDLL.luaL_initlibs(value);
+                }
+                else
+                {
+                    m_hasL = false;
                 }
                 _mainL = value;
             }
@@ -80,87 +85,6 @@ namespace MikuLuaProfiler
         }
         #endregion
 
-        #region api
-        public static int GetLuaMemorySize()
-        {
-            long result = 0;
-            if (mainL != IntPtr.Zero)
-            {
-                try
-                {
-                    result = LuaLib.GetLuaMemory(mainL);
-                }
-                catch { }
-            }
-
-            return (int)result;
-        }
-        public static string GetLuaMemory()
-        {
-            long result = 0;
-            if (mainL != IntPtr.Zero)
-            {
-                try
-                {
-                    result = LuaLib.GetLuaMemory(mainL);
-                }
-                catch { }
-            }
-
-            return GetMemoryString(result);
-        }
-
-        public static string GetMethodLineString(MethodBase m)
-        {
-            string methodName = "";
-            if (!m_methodNameDict.TryGetValue(m, out methodName))
-            {
-                System.Diagnostics.StackTrace st = new System.Diagnostics.StackTrace(true);
-                System.Diagnostics.StackFrame sf = st.GetFrame(1);
-                if (sf != null)
-                {
-                    string fileName = sf.GetFileName();
-                    if (!string.IsNullOrEmpty(fileName))
-                    {
-                        fileName = fileName.Replace(Environment.CurrentDirectory, "").Replace("\\", "/");
-                        fileName = fileName.Substring(1, fileName.Length - 1);
-                        methodName = string.Format("{0},line:{1}&[c#]:{2}::{3}",
-                            fileName, sf.GetFileLineNumber(), m.ReflectedType.FullName, m.Name);
-                    }
-                }
-                if(string.IsNullOrEmpty(methodName))
-                {
-                    methodName = string.Format("{0}::{1}", m.ReflectedType.FullName, m.Name);
-                }
-                m_methodNameDict.Add(m, methodName);
-            }
-
-            return methodName;
-        }
-
-        public static string GetMemoryString(long value, string unit = "B")
-        {
-            string result = null;
-            if (value < MaxB)
-            {
-                result = string.Format("{0}{1}", value, unit);
-            }
-            else if (value < MaxK)
-            {
-                result = string.Format("{0:N2}K{1}", (float)value / MaxB, unit);
-            }
-            else if (value < MaxM)
-            {
-                result = string.Format("{0:N2}M{1}", (float)value / MaxK, unit);
-            }
-            else if (value < MaxG)
-            {
-                result = string.Format("{0:N2}G{1}", (float)value / MaxM, unit);
-            }
-            return result;
-        }
-        #endregion
-
         #region sample
         public static void BeginSampleCSharp(string name)
         {
@@ -170,11 +94,12 @@ namespace MikuLuaProfiler
         {
             EndSample(_mainL);
         }
+
         public static long getcurrentTime
         {
             get
             {
-                return DateTime.UtcNow.Ticks;
+                return System.Diagnostics.Stopwatch.GetTimestamp();
             }
         }
         public static void BeginSample(IntPtr luaState, string name)
@@ -183,7 +108,7 @@ namespace MikuLuaProfiler
             {
                 return;
             }
-
+            HookLuaSetup.OnStartGame();
             var setting = LuaDeepProfilerSetting.Instance;
             if (setting == null) return;
 

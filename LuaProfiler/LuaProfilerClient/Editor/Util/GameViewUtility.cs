@@ -1,4 +1,4 @@
-﻿namespace MikuLuaProfiler
+﻿namespace MikuLuaProfiler_Editor
 {
 
     using System;

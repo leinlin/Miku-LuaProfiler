@@ -9,11 +9,10 @@
 using UnityEngine;
 using UnityEditor;
 
-namespace MikuLuaProfiler
+namespace MikuLuaProfiler_Editor
 {
-    public class LuaProfilerWindow : EditorWindow
+    public class LuaProfilerWindowProfiler : EditorWindow
     {
-        private bool m_isStop = false;
         void OnEnable()
         {
         }
@@ -28,6 +27,7 @@ namespace MikuLuaProfiler
         void DoToolbar()
         {
             var setting = LuaDeepProfilerSetting.Instance;
+
             #region profiler settting
             GUILayout.Label("profiler setting");
             GUILayout.BeginVertical("Box");
@@ -95,37 +95,6 @@ namespace MikuLuaProfiler
             GUILayout.EndVertical();
             #endregion
 
-            #region gc control
-            GUILayout.Space(10);
-            GUILayout.Label("gc control");
-
-            GUILayout.BeginVertical("Box");
-            bool isStop = GUILayout.Toggle(m_isStop, "Stop Lua GC");
-
-            if (m_isStop != isStop)
-            {
-                if (isStop)
-                {
-                    LuaLib.StopGC();
-                    m_isStop = true;
-                }
-                else
-                {
-                    LuaLib.ResumeGC();
-                    m_isStop = false;
-                }
-            }
-            GUILayout.Space(5);
-
-            if (GUILayout.Button("Run GC", GUILayout.Height(50)))
-            {
-                LuaLib.RunGC();
-                System.GC.Collect();
-            }
-            GUILayout.Space(5);
-            GUILayout.EndVertical();
-            #endregion
-
             #region capture
             /*
             GUILayout.Space(10);
@@ -179,7 +148,7 @@ namespace MikuLuaProfiler
             //InjectMethods.ChangeAttribute();
             // Get existing open window or if none, make a new one:
 
-            var window = GetWindow<LuaProfilerWindow>();
+            var window = GetWindow<LuaProfilerWindowProfiler>();
             window.titleContent = new GUIContent("Lua Profiler");
             window.Show();
         }

@@ -34,7 +34,7 @@ __________#_______####_______####______________
 */
 
 #if UNITY_EDITOR || USE_LUA_PROFILER
-namespace MikuLuaProfiler
+namespace MikuLuaProfiler_Editor
 {
     using System.Diagnostics;
     using System.IO;
@@ -44,7 +44,7 @@ namespace MikuLuaProfiler
     {
         public static LuaDeepProfilerSetting MakeInstance()
         {
-            instance = Load();
+            instance = LuaDeepProfilerSetting.Load();
             return instance;
         }
         public static LuaDeepProfilerSetting Instance
@@ -347,7 +347,7 @@ namespace MikuLuaProfiler
         public const string SettingsAssetName = "LuaDeepProfilerSettings";
         private static LuaDeepProfilerSetting instance;
         private bool m_isDeepMonoProfiler = false;
-        private bool m_isDeepLuaProfiler = true;
+        private bool m_isDeepLuaProfiler = false;
         private int m_captureLuaGC = 51200;
         private bool m_isNeedCapture = false;
         private bool m_discardInvalid = true;
