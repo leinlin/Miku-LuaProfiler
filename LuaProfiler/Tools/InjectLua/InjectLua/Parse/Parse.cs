@@ -1,4 +1,30 @@
 ﻿/*
+               #########                       
+              ############                     
+              #############                    
+             ##  ###########                   
+            ###  ###### #####                  
+            ### #######   ####                 
+           ###  ########## ####                
+          ####  ########### ####               
+         ####   ###########  #####             
+        #####   ### ########   #####           
+       #####   ###   ########   ######         
+      ######   ###  ###########   ######       
+     ######   #### ##############  ######      
+    #######  #####################  ######     
+    #######  ######################  ######    
+   #######  ###### #################  ######   
+   #######  ###### ###### #########   ######   
+   #######    ##  ######   ######     ######   
+   #######        ######    #####     #####    
+    ######        #####     #####     ####     
+     #####        ####      #####     ###      
+      #####       ###        ###      #        
+        ###       ###        ###               
+         ##       ###        ###               
+__________#_______####_______####______________
+                我们的未来没有BUG                
 * ==============================================================================
 * Filename: Parse
 * Created:  2018/7/13 14:29:22
@@ -22,7 +48,7 @@ namespace MikuLuaProfiler
         {
             LLex l = new LLex(new StringLoadInfo(value), name);
 
-            l.InsertString(0, LOCAL_PROFILER + "BeginMikuSample(\"" + name + ",line:1&[lua]:require " + name + "\") ");
+            l.InsertString(0, LOCAL_PROFILER + "BeginMikuSample(\"" + "[lua]:require " + name + " &line:1" +"\") ");
             int lastPos = 0;
             int nextPos = l.pos;
             l.Next();
@@ -62,7 +88,7 @@ namespace MikuLuaProfiler
                             var hisToken = history[index];
                             while (hisToken is JumpToken)
                             {
-                                index--;
+                                index--; 
                                 if (index < 0) break;
                                 hisToken = history[index];
                             }
@@ -87,7 +113,7 @@ namespace MikuLuaProfiler
                                     {
                                         funName = ':' + funName;
                                     }
-                                    else if ((hisToken.TokenType == (int)'.')
+                                    else if ((hisToken.TokenType == (int)'.') 
                                         || (hisToken.TokenType == (int)'['))
                                     {
                                         funName = '.' + funName;
@@ -110,7 +136,7 @@ namespace MikuLuaProfiler
 
                             lastPos = nextPos;
                             nextPos = l.pos;
-
+ 
 
                             if (!isLeft && !isForward)
                             {
@@ -120,7 +146,7 @@ namespace MikuLuaProfiler
                                 }
                                 else if ((l.Token.TokenType == (int)':'))
                                 {
-                                    funName += ':';
+                                    funName += ':'; 
                                 }
                                 else if ((l.Token.TokenType == (int)'.'))
                                 {
@@ -137,10 +163,10 @@ namespace MikuLuaProfiler
                             {
                                 if (string.IsNullOrEmpty(funName))
                                 {
-                                    funName = l.Source + ",line " + l.LineNumber;
+                                    funName = "";
                                 }
-                                l.InsertString(nextPos - 1, " BeginMikuSample(\"" + l.Source
-                                    + ",line:" + l.LineNumber + "&[lua]:" + funName + "\") ");
+                                string profilerStr = string.Format(" BeginMikuSample(\"[lua]:{0} {1}&line:{2}\") ", funName, l.Source, l.LineNumber);
+                                l.InsertString(nextPos - 1, profilerStr);
                                 nextPos = l.pos;
                                 break;
                             }

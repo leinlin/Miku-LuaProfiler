@@ -107,6 +107,7 @@ namespace MikuLuaProfiler
                 GameObject go = new GameObject();
                 go.name = "MikuLuaProfiler";
                 go.hideFlags = HideFlags.HideAndDontSave;
+                DontDestroyOnLoad(go);
                 go.AddComponent<HookLuaSetup>();
                 NetWorkClient.ConnectServer(setting.ip, setting.port);
             }
