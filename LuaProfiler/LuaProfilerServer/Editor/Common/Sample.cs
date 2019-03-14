@@ -171,7 +171,6 @@ namespace MikuLuaProfiler
                 {
                     result -= item.costLuaGC;
                 }
-
                 return result;
             }
         }
@@ -456,7 +455,18 @@ namespace MikuLuaProfiler
                 Sample child = Deserialize(datas);
                 child.fahter = s;
             }
-
+            int lua_gc = 0;
+            foreach (var item in s.childs)
+            {
+                lua_gc += item.costLuaGC;
+            }
+            s.costLuaGC = Math.Max(lua_gc, s.costLuaGC);
+            int mono_gc = 0;
+            foreach (var item in s.childs)
+            {
+                mono_gc += item.costMonoGC;
+            }
+            s.costMonoGC = Math.Max(mono_gc, s.costMonoGC);
             bool hasCapture = b.ReadBoolean();
             if (hasCapture)
             {

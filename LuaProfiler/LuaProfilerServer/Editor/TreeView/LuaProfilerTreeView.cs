@@ -12,7 +12,6 @@ namespace MikuLuaProfiler
 #if UNITY_5_6_OR_NEWER
     using System;
     using System.Collections.Generic;
-    using System.Text.RegularExpressions;
     using UnityEditor;
     using UnityEditor.IMGUI.Controls;
     using UnityEngine;
@@ -23,6 +22,17 @@ namespace MikuLuaProfiler
     public class LuaProfilerTreeViewItem : TreeViewItem
     {
         private static ObjectPool<LuaProfilerTreeViewItem> objectPool = new ObjectPool<LuaProfilerTreeViewItem>(30);
+        public static LuaProfilerTreeViewItem Create(LuaProfilerTreeViewItem item, LuaProfilerTreeViewItem father)
+        {
+            var dict = LuaProfilerTreeView.m_nodeDict;
+
+            LuaProfilerTreeViewItem mt;
+            mt = objectPool.GetObject();
+            mt.ResetByItem(item, father);
+
+            return mt;
+        }
+
         public static LuaProfilerTreeViewItem Create(Sample sample, int depth, LuaProfilerTreeViewItem father)
         {
             var dict = LuaProfilerTreeView.m_nodeDict;
@@ -30,7 +40,7 @@ namespace MikuLuaProfiler
             LuaProfilerTreeViewItem mt;
             mt = objectPool.GetObject();
             mt.ResetBySample(sample, depth, father);
-            dict[mt.fullName] =  mt;
+            dict[mt.fullName] = mt;
 
             return mt;
         }
@@ -186,6 +196,34 @@ namespace MikuLuaProfiler
             this.father = father;
         }
 
+        public void ResetByItem(LuaProfilerTreeViewItem item, LuaProfilerTreeViewItem father)
+        {
+            filePath = item.filePath;
+            m_isLua = item.m_isLua;
+
+            _showMonoGC = item._showMonoGC;
+            _showLuaGC = item._showLuaGC;
+            totalMonoMemory = item.totalMonoMemory;
+            totalLuaMemory = item.totalLuaMemory;
+            selfLuaMemory = item.selfLuaMemory;
+            selfMonoMemory = item.selfMonoMemory;
+            totalTime = item.totalTime;
+            displayName = item.displayName;
+            m_originName = item.m_originName;
+
+            fullName = item.fullName;
+            frameCalls = item.frameCalls;
+            currentTime = item.currentTime;
+            totalCallTime = item.totalCallTime;
+
+            averageTime = totalTime / Mathf.Max(totalCallTime, 1);
+
+            childs.Clear();
+            this.id = item.id;
+            depth = 0;
+            this.father = father;
+        }
+
         public void AddSample(Sample sample)
         {
             if (_frameCount == sample.frameCount)
@@ -286,6 +324,21 @@ namespace MikuLuaProfiler
         public readonly List<Sample> history = new List<Sample>(2160);
         public string startUrl = null;
         public string endUrl = null;
+
+        private string m_searchString = "";
+        public new string searchString
+        {
+            set
+            {
+                if (m_searchString == value) return;
+                m_searchString = value;
+                needRebuild = true;
+            }
+            get
+            {
+                return m_searchString;
+            }
+        }
         #endregion
 
         public LuaProfilerTreeView(TreeViewState treeViewState, float width)
@@ -304,6 +357,7 @@ namespace MikuLuaProfiler
             EditorApplication.update += DequeueSample;
             Reload();
         }
+
 
         public void DequeueSample()
         {
@@ -383,7 +437,7 @@ namespace MikuLuaProfiler
                     minWidth = 70,
                     maxWidth = 70,
                     autoResize = true,
-                    canSort = false,
+                    canSort = true,
                     allowToggleVisibility = false
                 },
                 new MultiColumnHeaderState.Column
@@ -411,7 +465,7 @@ namespace MikuLuaProfiler
                     minWidth = 70,
                     maxWidth = 70,
                     autoResize = true,
-                    canSort = false,
+                    canSort = true,
                     allowToggleVisibility = false
                 },
                 new MultiColumnHeaderState.Column
@@ -575,6 +629,7 @@ namespace MikuLuaProfiler
             else
             {
                 searchString = "";
+                Reload();
                 foreach (var item in roots)
                 {
                     SetExpandedRecursive(item.id, false);
@@ -834,7 +889,7 @@ namespace MikuLuaProfiler
             {
                 history.Add(sample.Clone());
             }
-            
+
             if (m_nodeDict.TryGetValue(f, out item))
             {
                 item.AddSample(sample);
@@ -846,6 +901,19 @@ namespace MikuLuaProfiler
                 needRebuild = true;
             }
 
+        }
+
+
+        private void AddSearchStringItem(List<LuaProfilerTreeViewItem> roots, List<LuaProfilerTreeViewItem> rootList)
+        {
+            foreach (var item in roots)
+            {
+                if (item.displayName.Contains(searchString))
+                {
+                    rootList.Add(item);
+                }
+                AddSearchStringItem(item.childs, rootList);
+            }
         }
 
         private void ReLoadTreeItems()
@@ -931,9 +999,48 @@ namespace MikuLuaProfiler
             {
                 return m_root;
             }
-            ReLoadTreeItems();
-            // Utility method that initializes the TreeViewItem.children and -parent for all items.
-            SetupParentsAndChildrenFromDepths(m_root, m_treeViewItems);
+            if (string.IsNullOrEmpty(m_searchString))
+            {
+                ReLoadTreeItems();
+                // Utility method that initializes the TreeViewItem.children and -parent for all items.
+                SetupParentsAndChildrenFromDepths(m_root, m_treeViewItems);
+            }
+            else
+            {
+                m_treeViewItems.Clear();
+
+                List<LuaProfilerTreeViewItem> rootList = new List<LuaProfilerTreeViewItem>();
+                AddSearchStringItem(roots, rootList);
+
+                int sortIndex = multiColumnHeader.sortedColumnIndex;
+                int sign = 0;
+                if (sortIndex > 0)
+                {
+                    sign = multiColumnHeader.IsSortedAscending(sortIndex) ? 1 : -1;
+                }
+                switch (sortIndex)
+                {
+                    case 1: rootList.Sort((a, b) => { return sign * Math.Sign(a.totalLuaMemory - b.totalLuaMemory); }); break;
+                    case 2: rootList.Sort((a, b) => { return sign * Math.Sign(a.selfLuaMemory - b.selfLuaMemory); }); break;
+                    case 3: rootList.Sort((a, b) => { return sign * Math.Sign(a.totalMonoMemory - b.totalMonoMemory); }); break;
+                    case 4: rootList.Sort((a, b) => { return sign * Math.Sign(a.selfMonoMemory - b.selfMonoMemory); }); break;
+                    case 5: rootList.Sort((a, b) => { return sign * Math.Sign(a.currentTime - b.currentTime); }); break;
+                    case 6: rootList.Sort((a, b) => { return sign * Math.Sign(a.averageTime - b.averageTime); }); break;
+                    case 7: rootList.Sort((a, b) => { return sign * Math.Sign(a.totalTime - b.totalTime); }); break;
+                    case 8: rootList.Sort((a, b) => { return sign * Math.Sign(a.showLuaGC - b.showLuaGC); }); break;
+                    case 9: rootList.Sort((a, b) => { return sign * Math.Sign(a.showMonoGC - b.showMonoGC); }); break;
+                    case 10: rootList.Sort((a, b) => { return sign * Math.Sign(a.totalCallTime - b.totalCallTime); }); break;
+                    case 11: rootList.Sort((a, b) => { return sign * Math.Sign(a.frameCalls - b.frameCalls); }); break;
+                }
+
+                foreach (var item in rootList)
+                {
+                    LuaProfilerTreeViewItem mt = LuaProfilerTreeViewItem.Create(item, m_root);
+                    m_treeViewItems.Add(mt);
+                }
+                SetupParentsAndChildrenFromDepths(m_root, m_treeViewItems);
+            }
+
             needRebuild = false;
             // Return root of the tree
             return m_root;
