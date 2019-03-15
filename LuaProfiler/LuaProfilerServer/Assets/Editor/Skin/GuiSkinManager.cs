@@ -182,7 +182,7 @@ namespace MikuLuaProfiler
             {
                 if (GuiSkinManager._tpSkin == null)
                 {
-                    GuiSkinManager._tpSkin = (AssetDatabase.LoadAssetAtPath("Assets/LuaProfilerServer/Editor/Skin/GUISkin.guiskin", typeof(GUISkin)) as GUISkin);
+                    GuiSkinManager._tpSkin = (AssetDatabase.LoadAssetAtPath("Assets/Editor/Skin/GUISkin.guiskin", typeof(GUISkin)) as GUISkin);
                 }
                 return GuiSkinManager._tpSkin;
             }

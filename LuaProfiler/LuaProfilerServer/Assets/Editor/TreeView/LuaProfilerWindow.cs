@@ -216,27 +216,27 @@ namespace MikuLuaProfiler
         {
             if (disableChart == null)
             {
-                disableChart = AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/LuaProfilerServer/Editor/Skin/disable.png");
+                disableChart = AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/Editor/Skin/disable.png");
             }
             if (luaChart == null)
             {
-                luaChart = AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/LuaProfilerServer/Editor/Skin/lua.png");
+                luaChart = AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/Editor/Skin/lua.png");
             }
             if(monoChart == null)
             {
-                monoChart = AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/LuaProfilerServer/Editor/Skin/mono.png");
+                monoChart = AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/Editor/Skin/mono.png");
             }
             if (fpsChart == null)
             {
-                fpsChart = AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/LuaProfilerServer/Editor/Skin/fps.png");
+                fpsChart = AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/Editor/Skin/fps.png");
             }
             if (pssChart == null)
             {
-                pssChart = AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/LuaProfilerServer/Editor/Skin/pss.png");
+                pssChart = AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/Editor/Skin/pss.png");
             }
             if (powrChart == null)
             {
-                powrChart = AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/LuaProfilerServer/Editor/Skin/power.png");
+                powrChart = AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/Editor/Skin/power.png");
             }
         }
 
