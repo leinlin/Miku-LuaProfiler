@@ -44,7 +44,7 @@ namespace MikuLuaProfiler
     {
         public static LuaDeepProfilerSetting MakeInstance()
         {
-            instance = Load();
+            instance = LuaDeepProfilerSetting.Load();
             return instance;
         }
         public static LuaDeepProfilerSetting Instance
@@ -88,6 +88,22 @@ namespace MikuLuaProfiler
                 if (this.m_isDeepLuaProfiler != value)
                 {
                     this.m_isDeepLuaProfiler = value;
+                    this.Save();
+                }
+            }
+        }
+
+        public bool isCleanMode
+        {
+            get
+            {
+                return m_isCleanMode;
+            }
+            set
+            {
+                if (this.m_isCleanMode != value)
+                {
+                    this.m_isCleanMode = value;
                     this.Save();
                 }
             }
@@ -265,7 +281,7 @@ namespace MikuLuaProfiler
             binaryWriter.Write(bytes);
             binaryWriter.Write(this.m_port);
             binaryWriter.Write(m_discardInvalid);
-
+            binaryWriter.Write(m_isCleanMode);
             output.Flush();
             binaryWriter.Close();
 #endif
@@ -316,6 +332,7 @@ namespace MikuLuaProfiler
                     luaDeepProfilerSetting.m_ip = Encoding.UTF8.GetString(binaryReader.ReadBytes(count));
                     luaDeepProfilerSetting.m_port = binaryReader.ReadInt32();
                     luaDeepProfilerSetting.m_discardInvalid = binaryReader.ReadBoolean();
+                    luaDeepProfilerSetting.m_isCleanMode = binaryReader.ReadBoolean();
                     binaryReader.Close();
                 }
                 catch
@@ -347,7 +364,8 @@ namespace MikuLuaProfiler
         public const string SettingsAssetName = "LuaDeepProfilerSettings";
         private static LuaDeepProfilerSetting instance;
         private bool m_isDeepMonoProfiler = false;
-        private bool m_isDeepLuaProfiler = true;
+        private bool m_isDeepLuaProfiler = false;
+        private bool m_isCleanMode = false;
         private int m_captureLuaGC = 51200;
         private bool m_isNeedCapture = false;
         private bool m_discardInvalid = true;

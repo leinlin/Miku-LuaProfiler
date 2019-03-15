@@ -84,7 +84,7 @@ namespace MikuLuaProfiler
                 Screen.SetResolution(480, 270, true);
             }
 
-            if (setting.isDeepLuaProfiler || setting.isDeepMonoProfiler)
+            if (setting.isDeepLuaProfiler || setting.isDeepMonoProfiler || setting.isCleanMode)
             {
                 GameObject go = new GameObject();
                 go.name = "MikuLuaProfiler";
@@ -232,6 +232,10 @@ namespace MikuLuaProfiler
         public static bool isHook = true;
         public static byte[] Hookloadbuffer(IntPtr L, byte[] buff, string name)
         {
+            if (LuaDeepProfilerSetting.Instance.isCleanMode)
+            {
+                return buff;
+            }
             if (!isHook)
             {
                 return buff;
