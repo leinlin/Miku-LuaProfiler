@@ -250,7 +250,10 @@ namespace MikuLuaProfiler
 
             string fileName = name.Replace(".lua", "");
             fileName = fileName.Replace("@", "").Replace('.', '/');
-
+            if (fileName.Contains("protobuf"))
+            {
+                return buff;
+            }
             // utf-8
             if (buff[0] == 239 && buff[1] == 187 && buff[2] == 191)
             {

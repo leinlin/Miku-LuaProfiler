@@ -152,13 +152,13 @@ namespace MikuLuaProfiler
                     break;
                 }
 
-                if (costLuaGC > 0)
+                if (costLuaGC != 0)
                 {
                     result = true;
                     break;
                 }
 
-                if (costMonoGC > 0)
+                if (costMonoGC != 0)
                 {
                     result = true;
                     break;

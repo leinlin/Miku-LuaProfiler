@@ -116,21 +116,52 @@ namespace MikuLuaProfiler
 
             if (m_currentFrame != frameCount)
             {
-                PopAllSampleWhenLateUpdate();
+                PopAllSampleWhenLateUpdate(luaState);
                 m_currentFrame = frameCount;
             }
             long memoryCount = LuaLib.GetLuaMemory(luaState);
             Sample sample = Sample.Create(getcurrentTime, (int)memoryCount, name);
             beginSampleMemoryStack.Push(sample);
         }
-        public static void PopAllSampleWhenLateUpdate()
+        private static List<Sample> popChilds = new List<Sample>();
+        public static void PopAllSampleWhenLateUpdate(IntPtr luaState)
         {
             while(beginSampleMemoryStack.Count > 0)
             {
                 var item = beginSampleMemoryStack.Pop();
                 if (item.fahter == null)
                 {
-                    NetWorkClient.SendMessage(item);
+                    if (beginSampleMemoryStack.Count > 0)
+                    {
+                        long mono_gc = 0;
+                        long lua_gc = 0;
+                        long cost_time = 0;
+                        for (int i = 0, imax = item.childs.Count; i < imax; i++)
+                        {
+                            Sample c = item.childs[i];
+                            lua_gc += c.costLuaGC;
+                            mono_gc += c.costMonoGC;
+                            cost_time += c.costTime;
+                        }
+                        item.costLuaGC = (int)Math.Max(lua_gc, 0);
+                        item.costMonoGC = (int)Math.Max(mono_gc, 0);
+                        item.costTime = (int)cost_time;
+
+                        popChilds.Add(item);
+                    }
+                    else
+                    {
+                        item.costLuaGC = (int)LuaLib.GetLuaMemory(luaState) - item.currentLuaMemory;
+                        item.costTime = (int)(getcurrentTime - item.currentTime);
+                        item.costMonoGC = (int)(GC.GetTotalMemory(false) - item.currentMonoMemory);
+                        item.currentLuaMemory = (int)LuaLib.GetLuaMemory(luaState);
+                        for (int i = 0, imax = popChilds.Count; i < imax; i++)
+                        {
+                            popChilds[i].fahter = item;
+                        }
+                        popChilds.Clear();
+                        NetWorkClient.SendMessage(item);
+                    }
                     //item.Restore();
                 }
             }
@@ -157,8 +188,25 @@ namespace MikuLuaProfiler
             sample.costTime = (int)(getcurrentTime - sample.currentTime);
             var monoGC = nowMonoCount - sample.currentMonoMemory;
             var luaGC = nowMemoryCount - sample.currentLuaMemory;
-            sample.costLuaGC = (int)(luaGC > 0 ? luaGC : 0);
-            sample.costMonoGC = (int)(monoGC > 0 ? monoGC : 0);
+            sample.currentLuaMemory = (int)nowMemoryCount;
+            sample.currentMonoMemory = (int)nowMonoCount;
+            sample.costLuaGC = (int)luaGC;
+            sample.costMonoGC = (int)monoGC;
+
+            if (sample.childs.Count > 0)
+            {
+                long mono_gc = 0;
+                long lua_gc = 0;
+                for (int i = 0, imax = sample.childs.Count; i < imax; i++)
+                {
+                    Sample c = sample.childs[i];
+                    lua_gc += c.costLuaGC;
+                    mono_gc += c.costMonoGC;
+                }
+                sample.costLuaGC = (int)Math.Max(lua_gc, luaGC);
+                sample.costMonoGC = (int)Math.Max(mono_gc, monoGC);
+            }
+
 
             if (!sample.CheckSampleValid())
             {

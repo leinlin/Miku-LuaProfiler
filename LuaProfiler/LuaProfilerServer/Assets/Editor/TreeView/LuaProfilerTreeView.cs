@@ -24,8 +24,6 @@ namespace MikuLuaProfiler
         private static ObjectPool<LuaProfilerTreeViewItem> objectPool = new ObjectPool<LuaProfilerTreeViewItem>(30);
         public static LuaProfilerTreeViewItem Create(LuaProfilerTreeViewItem item, LuaProfilerTreeViewItem father)
         {
-            var dict = LuaProfilerTreeView.m_nodeDict;
-
             LuaProfilerTreeViewItem mt;
             mt = objectPool.GetObject();
             mt.ResetByItem(item, father);
@@ -132,7 +130,10 @@ namespace MikuLuaProfiler
             if (sample != null)
             {
                 filePath = sample.name.Split(splitDot, 2)[0].Trim();
-                m_isLua = sample.name.Substring(0, 6) == "[lua]:";
+                if (sample.name.Length >= 6)
+                {
+                    m_isLua = sample.name.Substring(0, 6) == "[lua]:";
+                }
 
                 _showMonoGC = sample.costMonoGC;
                 _showLuaGC = sample.costLuaGC;
@@ -312,12 +313,12 @@ namespace MikuLuaProfiler
         private readonly List<TreeViewItem> m_treeViewItems = new List<TreeViewItem>();
         private GUIStyle m_gs;
         private Queue<Sample> m_runningSamplesQueue = new Queue<Sample>(256);
-        private Queue<Sample> m_historySamplesQueue = new Queue<Sample>(256);
         private long m_luaMemory = 0;
         private long m_monoMemory = 0;
         private long m_pssMemory = 0;
         private float m_fps = 0;
         private float m_power = 0;
+        private long m_catchLuaMemory = 0;
 
         public bool needRebuild = true;
         public readonly HistoryCurve historyCurve = new HistoryCurve(1024);
@@ -371,23 +372,11 @@ namespace MikuLuaProfiler
                         lock (this)
                         {
                             s = m_runningSamplesQueue.Dequeue();
+                            m_catchLuaMemory += s.costLuaGC;
                             LoadRootSample(s, LuaDeepProfilerSetting.Instance.isRecord);
 
                             s.Restore();
                         }
-                    }
-                }
-                else if (m_historySamplesQueue.Count > 0)
-                {
-                    int delNum = 0;
-                    while (m_historySamplesQueue.Count > 0 && delNum < MAX_DEAL_COUNT)
-                    {
-                        lock (this)
-                        {
-                            Sample s = m_historySamplesQueue.Dequeue();
-                            LoadRootSample(s, false, true);
-                        }
-                        delNum++;
                     }
                 }
             }
@@ -592,6 +581,7 @@ namespace MikuLuaProfiler
             m_pssMemory = 0;
             m_fps = 0;
             m_power = 0;
+            m_catchLuaMemory = 0;
             needRebuild = true;
         }
 
@@ -725,6 +715,7 @@ namespace MikuLuaProfiler
             history.AddRange(samples);
 
             ReLoadSamples(0, history.Count);
+            LoadHistoryCurve();
         }
 
         const long MaxB = 1024;
@@ -779,6 +770,11 @@ namespace MikuLuaProfiler
             return m_fps.ToString("0.00");
         }
 
+        public string GetCatchedLuaMemory()
+        {
+            return GetMemoryString(m_catchLuaMemory);
+        }
+
         public string GetPower()
         {
             return m_power.ToString("0.00") + "%";
@@ -786,10 +782,8 @@ namespace MikuLuaProfiler
 
         private void LoadHistoryRootSample(Sample sample)
         {
-            lock (this)
-            {
-                m_historySamplesQueue.Enqueue(sample);
-            }
+            m_catchLuaMemory += sample.costLuaGC;
+            LoadRootSample(sample, false, true);
         }
 
         public void LoadRootSample(Sample sample)
@@ -870,6 +864,10 @@ namespace MikuLuaProfiler
             m_pssMemory = sample.pss;
             m_fps = sample.fps;
             m_power = sample.power;
+            if (isHistory)
+            {
+                m_catchLuaMemory = sample.costLuaGC;
+            }
 
             if (!(instance.isRecord && !instance.isStartRecord))
             {

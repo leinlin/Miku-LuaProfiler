@@ -438,13 +438,13 @@ namespace MikuLuaProfiler
             s.frameCount = b.ReadInt32();
             s.fps = b.ReadSingle();
             s.pss = b.ReadInt32();
+            s.power = b.ReadSingle();
             s.costLuaGC = b.ReadInt32();
             s.costMonoGC = b.ReadInt32();
 
             int len = b.ReadInt32();
             byte[] datas = b.ReadBytes(len);
             s.name = Encoding.UTF8.GetString(datas);
-
             s.costTime = b.ReadInt32();
 
             int childCount = b.ReadInt32();
@@ -455,18 +455,7 @@ namespace MikuLuaProfiler
                 Sample child = Deserialize(datas);
                 child.fahter = s;
             }
-            int lua_gc = 0;
-            foreach (var item in s.childs)
-            {
-                lua_gc += item.costLuaGC;
-            }
-            s.costLuaGC = Math.Max(lua_gc, s.costLuaGC);
-            int mono_gc = 0;
-            foreach (var item in s.childs)
-            {
-                mono_gc += item.costMonoGC;
-            }
-            s.costMonoGC = Math.Max(mono_gc, s.costMonoGC);
+
             bool hasCapture = b.ReadBoolean();
             if (hasCapture)
             {
@@ -491,6 +480,19 @@ namespace MikuLuaProfiler
             }
             s.currentLuaMemory = b.ReadInt32();
             s.currentMonoMemory = b.ReadInt32();
+
+            int lua_gc = 0;
+            foreach (var item in s.childs)
+            {
+                lua_gc += item.costLuaGC;
+            }
+            s.costLuaGC = Math.Max(lua_gc, s.costLuaGC);
+            int mono_gc = 0;
+            foreach (var item in s.childs)
+            {
+                mono_gc += item.costMonoGC;
+            }
+            s.costMonoGC = Math.Max(mono_gc, s.costMonoGC);
 
             b.Close();
 

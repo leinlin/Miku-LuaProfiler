@@ -489,6 +489,13 @@ namespace MikuLuaProfiler
             GUILayout.Label(m_TreeView.GetFPS());
             EditorGUILayout.EndHorizontal();
 
+            GUILayout.Space(5);
+            EditorGUILayout.BeginHorizontal();
+            GUILayout.Space(15);
+            GUILayout.Label("catch", GUILayout.Width(40));
+            GUILayout.Label(m_TreeView.GetCatchedLuaMemory());
+            EditorGUILayout.EndHorizontal();
+
             GUILayout.Space(1);
             GUILayout.FlexibleSpace();
             #endregion
