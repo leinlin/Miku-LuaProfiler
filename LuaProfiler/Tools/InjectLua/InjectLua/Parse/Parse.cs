@@ -113,7 +113,7 @@ namespace MikuLuaProfiler
                                     {
                                         funName = ':' + funName;
                                     }
-                                    else if ((hisToken.TokenType == (int)'.') 
+                                    else if ((hisToken.TokenType == (int)'.')
                                         || (hisToken.TokenType == (int)'['))
                                     {
                                         funName = '.' + funName;
@@ -121,6 +121,10 @@ namespace MikuLuaProfiler
                                     else if (hisToken is StringToken)
                                     {
                                         funName = ((StringToken)hisToken).SemInfo + funName;
+                                    }
+                                    else
+                                    {
+                                        break;
                                     }
                                     index--;
                                     if (index < 0) break;

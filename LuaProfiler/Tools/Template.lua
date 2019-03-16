@@ -23,6 +23,13 @@ function()
     return function()print("\u888fk")end
 end
 
+UIManager.ShowMsgBox({content="中途退出则挑战失败\n确认是否退出？",okFunc=function()
+    GameControllers.Dungeon:dungeonCommLeave(0)
+end,title_ok="退  出",
+cancelFunc=function()
+    GameControllers.Dungeon.isForceLeave = false
+end})
+
 function()
     return fk;
 end
