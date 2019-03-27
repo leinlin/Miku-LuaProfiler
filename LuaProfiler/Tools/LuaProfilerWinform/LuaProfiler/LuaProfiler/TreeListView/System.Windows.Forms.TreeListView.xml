@@ -1,0 +1,1885 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>System.Windows.Forms.TreeListView</name>
+    </assembly>
+    <members>
+        <member name="T:System.Runtime.InteropServices.APIs.APIsClipboard">
+            <summary>
+            Summary description for Clipboard.
+            </summary>
+        </member>
+        <member name="T:System.Runtime.InteropServices.APIs.APIsEnums.WindowMessages">
+            <summary>
+            Window messages / WM
+            </summary>
+        </member>
+        <member name="T:System.Runtime.InteropServices.APIs.APIsEnums.KeyStatesMasks">
+            <summary>
+            Key State Masks / MK
+            </summary>
+        </member>
+        <member name="T:System.Runtime.InteropServices.APIs.APIsEnums.EditControlNotificationCodes">
+            <summary>
+            Edit Control Notification Codes / EN
+            </summary>
+        </member>
+        <member name="T:System.Runtime.InteropServices.APIs.APIsEnums.ComboBoxNotificationCodes">
+            <summary>
+            Combo Box Notification Codes / CBN
+            </summary>
+        </member>
+        <member name="T:System.Runtime.InteropServices.APIs.APIsEnums.ComboBoxMessages">
+            <summary>
+            Combo Box Messages / CB
+            </summary>
+        </member>
+        <member name="T:System.Runtime.InteropServices.APIs.APIsEnums.ScrollBarFlags">
+            <summary>
+            ScrollBar flags / SB
+            </summary>
+        </member>
+        <member name="F:System.Runtime.InteropServices.APIs.APIsEnums.ScrollBarFlags.LINEUP">
+            <summary>
+            Scrolls one line up
+            </summary>
+        </member>
+        <member name="F:System.Runtime.InteropServices.APIs.APIsEnums.ScrollBarFlags.LINELEFT">
+            <summary>
+            Scrolls one line left
+            </summary>
+        </member>
+        <member name="F:System.Runtime.InteropServices.APIs.APIsEnums.ScrollBarFlags.LINEDOWN">
+            <summary>
+            Scrolls one line down
+            </summary>
+        </member>
+        <member name="F:System.Runtime.InteropServices.APIs.APIsEnums.ScrollBarFlags.LINERIGHT">
+            <summary>
+            Scrolls one page right
+            </summary>
+        </member>
+        <member name="F:System.Runtime.InteropServices.APIs.APIsEnums.ScrollBarFlags.PAGEUP">
+            <summary>
+            Scrolls one page up
+            </summary>
+        </member>
+        <member name="F:System.Runtime.InteropServices.APIs.APIsEnums.ScrollBarFlags.PAGELEFT">
+            <summary>
+            Scrolls one page left
+            </summary>
+        </member>
+        <member name="F:System.Runtime.InteropServices.APIs.APIsEnums.ScrollBarFlags.PAGEDOWN">
+            <summary>
+            Scrolls one page down
+            </summary>
+        </member>
+        <member name="F:System.Runtime.InteropServices.APIs.APIsEnums.ScrollBarFlags.PAGERIGHT">
+            <summary>
+            Scrolls one page right
+            </summary>
+        </member>
+        <member name="F:System.Runtime.InteropServices.APIs.APIsEnums.ScrollBarFlags.TOP">
+            <summary>
+            Scrolls to the upper left
+            </summary>
+        </member>
+        <member name="F:System.Runtime.InteropServices.APIs.APIsEnums.ScrollBarFlags.BOTTOM">
+            <summary>
+            Scrolls to the lower right
+            </summary>
+        </member>
+        <member name="F:System.Runtime.InteropServices.APIs.APIsEnums.ScrollBarFlags.ENDSCROLL">
+            <summary>
+            Ends scroll
+            </summary>
+        </member>
+        <member name="T:System.Runtime.InteropServices.APIs.APIsEnums.EditControlMessages">
+            <summary>
+            Edit Control Messages / EM
+            </summary>
+        </member>
+        <member name="T:System.Runtime.InteropServices.APIs.APIsEnums.MenuItemMasks">
+            <summary>
+            MenuItem Masks / MIIM
+            </summary>
+        </member>
+        <member name="T:System.Runtime.InteropServices.APIs.APIsEnums.MenuItemFlags">
+            <summary>
+            MenuItem Flags / MF
+            </summary>
+        </member>
+        <member name="T:System.Runtime.InteropServices.APIs.APIsEnums.MenuItemStates">
+            <summary>
+            MenuItem States / MFS
+            </summary>
+        </member>
+        <member name="T:System.Runtime.InteropServices.APIs.APIsEnums.QueryContextMenuFlags">
+            <summary>
+            QueryContextMenuFlags / CMF
+            </summary>
+        </member>
+        <member name="T:System.Runtime.InteropServices.APIs.APIsEnums.TrackPopupMenuFlags">
+            <summary>
+            TrackPopupMenuFlags / TPM
+            </summary>
+        </member>
+        <member name="T:System.Runtime.InteropServices.APIs.APIsEnums.MenuItemTypes">
+            <summary>
+            MenuItemTypes / MFT
+            </summary>
+        </member>
+        <member name="T:System.Runtime.InteropServices.APIs.APIsEnums.ClipboardFormats">
+            <summary>
+            ClipboardFormats / CLIPFORMAT
+            </summary>
+        </member>
+        <member name="T:System.Runtime.InteropServices.APIs.APIsEnums.TargetDevices">
+            <summary>
+            TargetDevices / DVASPECT
+            </summary>
+        </member>
+        <member name="T:System.Runtime.InteropServices.APIs.APIsEnums.StorageMediumTypes">
+            <summary>
+            StorageMediumTypes / TYMED
+            </summary>
+        </member>
+        <member name="T:System.Runtime.InteropServices.APIs.APIsEnums.ShellSpecialFolders">
+            <summary>
+            ShellSpecialFolders / CSIDL
+            </summary>
+        </member>
+        <member name="T:System.Runtime.InteropServices.APIs.APIsEnums.ShellFolderGetaFromIDList">
+            <summary>
+            ShellFolderGetaFromIDList / SHGDFIL
+            </summary>
+        </member>
+        <member name="T:System.Runtime.InteropServices.APIs.APIsEnums.ShellFolderEnumObjectsTypes">
+            <summary>
+            ShellFolderEnumObjectsTypes / SHCONTF
+            </summary>
+        </member>
+        <member name="T:System.Runtime.InteropServices.APIs.APIsEnums.ShellFolderAttributes">
+            <summary>
+            ShellFolderAttributes / SFGAOF
+            </summary>
+        </member>
+        <member name="T:System.Runtime.InteropServices.APIs.APIsEnums.ShellFolderDisplayNames">
+            <summary>
+            ShellFolderDisplayNames / SHGNO
+            </summary>
+        </member>
+        <member name="T:System.Runtime.InteropServices.APIs.APIsEnums.ShellExecuteFlags">
+            <summary>
+            Shell Execute Flags / SEE
+            </summary>
+        </member>
+        <member name="T:System.Runtime.InteropServices.APIs.APIsEnums.ShellGetFileInformationFlags">
+            <summary>
+            Shell Get File Information Flags / SHGFI
+            </summary>
+        </member>
+        <member name="T:System.Runtime.InteropServices.APIs.APIsEnums.SystemCommands">
+            <summary>
+            System Commands / SC
+            </summary>
+        </member>
+        <member name="F:System.Runtime.InteropServices.APIs.APIsEnums.SystemCommands.SIZE">
+            <summary>
+            Sizes the window
+            </summary>
+        </member>
+        <member name="F:System.Runtime.InteropServices.APIs.APIsEnums.SystemCommands.MOVE">
+            <summary>
+            Moves the window
+            </summary>
+        </member>
+        <member name="F:System.Runtime.InteropServices.APIs.APIsEnums.SystemCommands.MINIMIZE">
+            <summary>
+            Minimizes the window
+            </summary>
+        </member>
+        <member name="F:System.Runtime.InteropServices.APIs.APIsEnums.SystemCommands.MAXIMIZE">
+            <summary>
+            Maximizes the window
+            </summary>
+        </member>
+        <member name="F:System.Runtime.InteropServices.APIs.APIsEnums.SystemCommands.NEXTWINDOW">
+            <summary>
+            Moves to the next window
+            </summary>
+        </member>
+        <member name="F:System.Runtime.InteropServices.APIs.APIsEnums.SystemCommands.PREVWINDOW">
+            <summary>
+            Moves to the previous window
+            </summary>
+        </member>
+        <member name="F:System.Runtime.InteropServices.APIs.APIsEnums.SystemCommands.CLOSE">
+            <summary>
+            Closes the window
+            </summary>
+        </member>
+        <member name="F:System.Runtime.InteropServices.APIs.APIsEnums.SystemCommands.VSCROLL">
+            <summary>
+            Scrolls vertically
+            </summary>
+        </member>
+        <member name="F:System.Runtime.InteropServices.APIs.APIsEnums.SystemCommands.HSCROLL">
+            <summary>
+            Scrolls horizontally
+            </summary>
+        </member>
+        <member name="F:System.Runtime.InteropServices.APIs.APIsEnums.SystemCommands.MOUSEMENU">
+            <summary>
+            Retrieves the window menu as a result of a mouse click
+            </summary>
+        </member>
+        <member name="F:System.Runtime.InteropServices.APIs.APIsEnums.SystemCommands.KEYMENU">
+            <summary>
+            Retrieves the window menu as a result of a keystroke
+            </summary>
+        </member>
+        <member name="F:System.Runtime.InteropServices.APIs.APIsEnums.SystemCommands.RESTORE">
+            <summary>
+            Restores the window to its normal position and size
+            </summary>
+        </member>
+        <member name="F:System.Runtime.InteropServices.APIs.APIsEnums.SystemCommands.TASKLIST">
+            <summary>
+            Activates the Start menu
+            </summary>
+        </member>
+        <member name="F:System.Runtime.InteropServices.APIs.APIsEnums.SystemCommands.SCREENSAVE">
+            <summary>
+            Executes the screen saver application specified in the [boot] section of the System.ini file
+            </summary>
+        </member>
+        <member name="F:System.Runtime.InteropServices.APIs.APIsEnums.SystemCommands.HOTKEY">
+            <summary>
+            Activates the window associated with the application-specified hot key. The lParam parameter identifies the window to activate
+            </summary>
+        </member>
+        <member name="F:System.Runtime.InteropServices.APIs.APIsEnums.SystemCommands.DEFAULT">
+            <summary>
+            Selects the default item; the user double-clicked the window menu
+            </summary>
+        </member>
+        <member name="F:System.Runtime.InteropServices.APIs.APIsEnums.SystemCommands.MONITORPOWER">
+            <summary>
+            Sets the state of the display. This command supports devices that have power-saving features, such as a battery-powered personal computer. 
+            The lParam parameter can have the following values:
+                1 - the display is going to low power
+                2 - the display is being shut off
+            </summary>
+        </member>
+        <member name="F:System.Runtime.InteropServices.APIs.APIsEnums.SystemCommands.CONTEXTHELP">
+            <summary>
+            Changes the cursor to a question mark with a pointer. If the user then clicks a control in the dialog box, the control receives a WM_HELP message
+            </summary>
+        </member>
+        <member name="T:System.Runtime.InteropServices.APIs.APIsEnums.GetCommandStringInformations">
+            <summary>
+            GetCommandString informations / GCS
+            </summary>
+        </member>
+        <member name="T:System.Runtime.InteropServices.APIs.APIsEnums.FileOperations">
+            <summary>
+            File Operations / FO
+            </summary>
+        </member>
+        <member name="T:System.Runtime.InteropServices.APIs.APIsEnums.FileOperationFlags">
+            <summary>
+            FileOperation Flag / FOF
+            </summary>
+        </member>
+        <member name="F:System.Runtime.InteropServices.APIs.APIsEnums.FileOperationFlags.SILENT">
+            <summary>
+            Don't create progress/report
+            </summary>
+        </member>
+        <member name="F:System.Runtime.InteropServices.APIs.APIsEnums.FileOperationFlags.NOCONFIRMATION">
+            <summary>
+            Don't prompt the user.
+            </summary>
+        </member>
+        <member name="F:System.Runtime.InteropServices.APIs.APIsEnums.FileOperationFlags.WANTMAPPINGHANDLE">
+            <summary>
+            Fill in SHFILEOPSTRUCT.hNameMappings
+            </summary>
+        </member>
+        <member name="F:System.Runtime.InteropServices.APIs.APIsEnums.FileOperationFlags.FILESONLY">
+            <summary>
+            On *.*, do only files
+            </summary>
+        </member>
+        <member name="T:System.Runtime.InteropServices.APIs.APIsEnums.ListViewMessages">
+            <summary>
+            ListView Messages / LVM
+            </summary>
+        </member>
+        <member name="T:System.Runtime.InteropServices.APIs.APIsEnums.ListViewNotifications">
+            <summary>
+            ListView Notifications / LVN
+            </summary>
+        </member>
+        <member name="T:System.Runtime.InteropServices.APIs.APIsEnums.ListViewItemFlags">
+            <summary>
+            ListViewItem Flags / LVIF
+            </summary>
+        </member>
+        <member name="T:System.Runtime.InteropServices.APIs.APIsEnums.ListViewItemStates">
+            <summary>
+            ListViewItemState / LVIS
+            </summary>
+        </member>
+        <member name="T:System.Runtime.InteropServices.APIs.APIsEnums.ListViewSubItemPortion">
+            <summary>
+            List View sub item portion / LVIR
+            </summary>
+        </member>
+        <member name="T:System.Runtime.InteropServices.APIs.APIsEnums.ListViewHitTestFlags">
+            <summary>
+            ListView HitTest Flags / LVHT
+            </summary>
+        </member>
+        <member name="T:System.Runtime.InteropServices.APIs.APIsEnums.ReflectedMessages">
+            <summary>
+            Reflected Messages / OCM
+            </summary>
+        </member>
+        <member name="T:System.Runtime.InteropServices.APIs.APIsEnums.HeaderItemFlags">
+            <summary>
+            HeaderItem flags / HDI
+            </summary>
+        </member>
+        <member name="T:System.Runtime.InteropServices.APIs.APIsEnums.HeaderControlMessages">
+            <summary>
+            Header Control Messages / HDM
+            </summary>
+        </member>
+        <member name="T:System.Runtime.InteropServices.APIs.APIsEnums.HeaderControlNotifications">
+            <summary>
+            Header Control Notifications / HDN
+            </summary>
+        </member>
+        <member name="T:System.Runtime.InteropServices.APIs.APIsEnums.HeaderControlHitTestFlags">
+            <summary>
+            Header Control HitTest Flags / HHT
+            </summary>
+        </member>
+        <member name="T:System.Runtime.InteropServices.APIs.APIsEnums.CustomDrawReturnFlags">
+            <summary>
+            Custom Draw Return Flags / CDRF
+            </summary>
+        </member>
+        <member name="T:System.Runtime.InteropServices.APIs.APIsEnums.CustomDrawItemStateFlags">
+            <summary>
+            CustomDrawItemStateFlags / CDIS
+            </summary>
+        </member>
+        <member name="T:System.Runtime.InteropServices.APIs.APIsEnums.CustomDrawDrawStateFlags">
+            <summary>
+            CustomDrawDrawStateFlags / CDDS
+            </summary>
+        </member>
+        <member name="T:System.Runtime.InteropServices.APIs.APIsEnums.PatBltTypes">
+            <summary>
+            PatBlt Types
+            </summary>
+        </member>
+        <member name="T:System.Runtime.InteropServices.APIs.APIsEnums.BackgroundMode">
+            <summary>
+            Background Mode
+            </summary>
+        </member>
+        <member name="T:System.Runtime.InteropServices.APIs.APIsEnums.ShowWindowStyles">
+            <summary>
+            ShowWindow Styles / SW
+            </summary>
+        </member>
+        <member name="T:System.Runtime.InteropServices.APIs.APIsEnums.WindowsHookCodes">
+            <summary>
+            Windows Hook Codes / WH
+            </summary>
+        </member>
+        <member name="T:System.Runtime.InteropServices.APIs.APIsEnums.CursorTypes">
+            <summary>
+            Cursor Types / IDC
+            </summary>
+        </member>
+        <member name="T:System.Runtime.InteropServices.APIs.APIsEnums.SystemMetricsCodes">
+            <summary>
+            System Metrics Codes / SM
+            </summary>
+        </member>
+        <member name="T:System.Runtime.InteropServices.APIs.APIsEnums.SystemObjects">
+            <summary>
+            Windows System Objects / OBJID
+            </summary>
+        </member>
+        <member name="T:System.Runtime.InteropServices.APIs.APIsEnums.TrackerEventFlags">
+            <summary>
+            Tracker Event Flags / TME
+            </summary>
+        </member>
+        <member name="T:System.Runtime.InteropServices.APIs.APIsEnums.DrawTextFormatFlags">
+            <summary>
+            Draw Text format flags / DT
+            </summary>
+        </member>
+        <member name="T:System.Runtime.InteropServices.APIs.APIsEnums.UpdateLayeredWindowFlags">
+            <summary>
+            Update Layered Windows Flags / ULW
+            </summary>
+        </member>
+        <member name="T:System.Runtime.InteropServices.APIs.APIsEnums.PeekMessageFlags">
+            <summary>
+            Peek Message Flags / PM
+            </summary>
+        </member>
+        <member name="T:System.Runtime.InteropServices.APIs.APIsEnums.NotificationMessages">
+            <summary>
+            Notification Messages / NM
+            </summary>
+        </member>
+        <member name="T:System.Runtime.InteropServices.APIs.APIsEnums.SystemColors">
+            <summary>
+            System Colors / COLOR
+            </summary>
+        </member>
+        <member name="T:System.Runtime.InteropServices.APIs.APIsEnums.DrawFrameControlFlags">
+            <summary>
+            Draw Frame Control Flags / DFC
+            </summary>
+        </member>
+        <member name="T:System.Runtime.InteropServices.APIs.APIsEnums.DrawFrameControlStateFlags">
+            <summary>
+            Draw Frame Control State Flags / DFC
+            </summary>
+        </member>
+        <member name="T:System.Runtime.InteropServices.APIs.APIsEnums.UxThemeMinButtonStates">
+            <summary>
+            UxTheme MinButton States / MINBS
+            </summary>
+        </member>
+        <member name="T:System.Runtime.InteropServices.APIs.APIsEnums.UxThemeWindowParts">
+            <summary>
+            UxTheme Window Parts / WP
+            </summary>
+        </member>
+        <member name="M:System.Runtime.InteropServices.APIs.APIsShell.SHGetDesktopFolder(System.Runtime.InteropServices.APIs.COMInterfaces.IShellFolder@)">
+            <summary>
+            Retrieves the IShellFolder interface for the desktop folder, which is the root of the Shell's namespace.
+            </summary>
+        </member>
+        <member name="M:System.Runtime.InteropServices.APIs.APIsShell.SHGetSpecialFolderLocation(System.IntPtr,System.Runtime.InteropServices.APIs.APIsEnums.ShellSpecialFolders,System.IntPtr@)">
+            <summary>
+            Retrieves a pointer to the ITEMIDLIST structure of a special folder.
+            </summary>
+        </member>
+        <member name="M:System.Runtime.InteropServices.APIs.APIsShell.SHBindToParent(System.IntPtr,System.Guid,System.Runtime.InteropServices.APIs.COMInterfaces.IShellFolder@,System.IntPtr@)">
+            <summary>
+            This function takes the fully-qualified PIDL of a namespace object, and returns a specified interface pointer on the parent object.
+            </summary>
+        </member>
+        <member name="M:System.Runtime.InteropServices.APIs.APIsShell.SHFileOperation(System.Runtime.InteropServices.APIs.APIsStructs.SHFILEOPSTRUCT@)">
+            <summary>
+            Copies, moves, renames, or deletes a file system object.
+            </summary>
+        </member>
+        <member name="M:System.Runtime.InteropServices.APIs.APIsShell.ShellExecute(System.IntPtr,System.String,System.String,System.String,System.String,System.Int32)">
+            <summary>
+            Execute the file
+            </summary>
+        </member>
+        <member name="M:System.Runtime.InteropServices.APIs.APIsShell.StrRetToBuf(System.Runtime.InteropServices.APIs.APIsStructs.STRRET,System.IntPtr,System.String,System.UInt32)">
+            <summary>
+            Takes a STRRET structure returned by IShellFolder::GetDisplayNameOf, converts it to a string, and places the result in a buffer.
+            </summary>
+        </member>
+        <member name="M:System.Runtime.InteropServices.APIs.APIsShlwapi.PathCompactPath(System.IntPtr,System.Text.StringBuilder,System.Int32)">
+            <summary>
+            Truncates a file path to fit within a given pixel width by replacing path components with ellipses.
+            </summary>
+            <param name="hDC"></param>
+            <param name="lpszPath"></param>
+            <param name="dx"></param>
+            <returns>Returns TRUE if the path was successfully compacted to the specified width. Returns FALSE on failure, or if the base portion of the path would not fit the specified width</returns>
+        </member>
+        <member name="M:System.Runtime.InteropServices.APIs.APIsShlwapi.PathCompactPathEx(System.Text.StringBuilder,System.Text.StringBuilder,System.Int32,System.Int32)">
+            <summary>
+            Truncates a path to fit within a certain number of characters by replacing path components with ellipses
+            </summary>
+            <param name="pszOut"></param>
+            <param name="pszSrc"></param>
+            <param name="cchMax"></param>
+            <param name="dwFlags"></param>
+            <returns>Returns TRUE if successful, or FALSE otherwise</returns>
+        </member>
+        <member name="M:System.Runtime.InteropServices.APIs.APIsShlwapi.PathIsFileSpec(System.String)">
+            <summary>
+            Searches a path for any path delimiting characters (for example, ':' or '\' ). If there are no path delimiting characters present, the path is considered to be a File Spec path
+            </summary>
+            <param name="path">Path searched</param>
+            <returns>Returns TRUE if there are no path delimiting characters within the path, or FALSE if there are path delimiting characters</returns>
+        </member>
+        <member name="M:System.Runtime.InteropServices.APIs.APIsShlwapi.PathIsPrefix(System.String,System.String)">
+            <summary>
+            Searches a path to determine if it contains a valid prefix of the type passed by pszPrefix. A prefix is one of these types: "C:\\", ".", "..", "..\\"
+            </summary>
+            <param name="prefix"></param>
+            <param name="path"></param>
+            <returns>Returns TRUE if the compared path is the full prefix for the path, or FALSE otherwise</returns>
+        </member>
+        <member name="M:System.Runtime.InteropServices.APIs.APIsShlwapi.PathIsRelative(System.String)">
+            <summary>
+            Searches a path and determines if it is relative
+            </summary>
+            <param name="path"></param>
+            <returns>Returns TRUE if the path is relative, or FALSE if it is absolute</returns>
+        </member>
+        <member name="M:System.Runtime.InteropServices.APIs.APIsShlwapi.PathIsRoot(System.String)">
+            <summary>
+            Parses a path to determine if it is a directory root
+            </summary>
+            <param name="path"></param>
+            <returns>Returns TRUE if the specified path is a root, or FALSE otherwise</returns>
+        </member>
+        <member name="M:System.Runtime.InteropServices.APIs.APIsShlwapi.PathIsSameRoot(System.String,System.String)">
+            <summary>
+            Compares two paths to determine if they have a common root component
+            </summary>
+            <param name="path1"></param>
+            <param name="path2"></param>
+            <returns>Returns TRUE if both strings have the same root component, or FALSE otherwise</returns>
+        </member>
+        <member name="M:System.Runtime.InteropServices.APIs.APIsShlwapi.PathIsUNC(System.String)">
+            <summary>
+            Determines if the string is a valid UNC (universal naming convention) for a server and share path
+            </summary>
+            <param name="path"></param>
+            <returns>Returns TRUE if the string is a valid UNC path, or FALSE otherwise</returns>
+        </member>
+        <member name="M:System.Runtime.InteropServices.APIs.APIsShlwapi.PathIsUNCServer(System.String)">
+            <summary>
+            Determines if a string is a valid UNC (universal naming convention) for a server path only
+            </summary>
+            <param name="path"></param>
+            <returns>Returns TRUE if the string is a valid UNC path for a server only (no share name), or FALSE otherwise</returns>
+        </member>
+        <member name="M:System.Runtime.InteropServices.APIs.APIsShlwapi.PathIsUNCServerShare(System.String)">
+            <summary>
+            Determines if a string is a valid universal naming convention (UNC) share path, \\server\share
+            </summary>
+            <param name="path"></param>
+            <returns>Returns TRUE if the string is in the form \\server\share, or FALSE otherwise</returns>
+        </member>
+        <member name="M:System.Runtime.InteropServices.APIs.APIsShlwapi.PathIsURL(System.String)">
+            <summary>
+            Tests a given string to determine if it conforms to a valid URL format
+            </summary>
+            <param name="path"></param>
+            <returns>Returns TRUE if pszPath has a valid URL format, or FALSE otherwise</returns>
+        </member>
+        <member name="M:System.Runtime.InteropServices.APIs.APIsShlwapi.PathMakePretty(System.Text.StringBuilder)">
+            <summary>
+            Converts a path to all lowercase characters to give the path a consistent appearance
+            </summary>
+            <param name="path"></param>
+            <returns>Returns TRUE if the path has been converted, or FALSE otherwise</returns>
+        </member>
+        <member name="M:System.Runtime.InteropServices.APIs.APIsShlwapi.PathMatchSpec(System.String,System.String)">
+            <summary>
+            Searches a string using a DOS wild card match type
+            </summary>
+            <param name="fileparam">Contains the path to be searched</param>
+            <param name="spec">Contains the file type for which to search. For example, to test whether or not pszFileParam is a DOC file, pszSpec should be set to "*.doc"</param>
+            <returns>Returns TRUE if the string matches, or FALSE otherwise</returns>
+        </member>
+        <member name="M:System.Runtime.InteropServices.APIs.APIsShlwapi.PathParseIconLocation(System.Text.StringBuilder)">
+            <summary>
+            Parses a file location string containing a file location and icon index, and returns separate values
+            </summary>
+            <param name="IconFile">Contains a file location string. It should be in the form "pathname,iconindex". When the function returns, pszIconFile will point to the file's pathname</param>
+            <returns>Returns the valid icon index value</returns>
+        </member>
+        <member name="M:System.Runtime.InteropServices.APIs.APIsShlwapi.PathQuoteSpaces(System.Text.StringBuilder)">
+            <summary>
+            Searches a path for spaces. If spaces are found, the entire path is enclosed in quotation marks
+            </summary>
+            <param name="lpsz">Path to search</param>
+        </member>
+        <member name="M:System.Runtime.InteropServices.APIs.APIsShlwapi.PathRelativePathTo(System.Text.StringBuilder,System.String,System.Int32,System.String,System.Int32)">
+            <summary>
+            Creates a relative path from one file or folder to another
+            </summary>
+            <param name="path"></param>
+            <param name="from"></param>
+            <param name="attrFrom"></param>
+            <param name="to"></param>
+            <param name="attrTo"></param>
+            <returns>Returns TRUE if successful, or FALSE otherwise</returns>
+        </member>
+        <member name="M:System.Runtime.InteropServices.APIs.APIsShlwapi.PathRemoveArgs(System.Text.StringBuilder)">
+            <summary>
+            Removes any arguments from a given path
+            </summary>
+            <param name="path"></param>
+        </member>
+        <member name="M:System.Runtime.InteropServices.APIs.APIsShlwapi.PathRemoveBackslash(System.String)">
+            <summary>
+            Removes the trailing backslash from a given path
+            </summary>
+            <param name="path"></param>
+            <returns>Returns the address of the NULL that replaced the backslash, or the address of the last character if it's not a backslash</returns>
+        </member>
+        <member name="T:System.Runtime.InteropServices.APIs.APIsStructs.SHFILEOPSTRUCT">
+            <summary>
+            Contains information that the SHFileOperation function uses to perform file operations.
+            </summary>
+        </member>
+        <member name="F:System.Runtime.InteropServices.APIs.APIsStructs.SHFILEOPSTRUCT.hwnd">
+            <summary>
+            Window handle to the dialog box to display information about the status of the file operation.
+            </summary>
+        </member>
+        <member name="F:System.Runtime.InteropServices.APIs.APIsStructs.SHFILEOPSTRUCT.wFunc">
+            <summary>
+            Value that indicates which operation to perform.
+            </summary>
+        </member>
+        <member name="F:System.Runtime.InteropServices.APIs.APIsStructs.SHFILEOPSTRUCT.pFrom">
+            <summary>
+            Address of a buffer to specify one or more source file names.
+            </summary>
+        </member>
+        <member name="F:System.Runtime.InteropServices.APIs.APIsStructs.SHFILEOPSTRUCT.pTo">
+            <summary>
+            Address of a buffer to contain the name of the destination file or directory.
+            </summary>
+        </member>
+        <member name="F:System.Runtime.InteropServices.APIs.APIsStructs.SHFILEOPSTRUCT.fFlags">
+            <summary>
+            Flags that control the file operation (should use APISEnums.FOF).
+            </summary>
+        </member>
+        <member name="F:System.Runtime.InteropServices.APIs.APIsStructs.SHFILEOPSTRUCT.fAnyOperationsAborted">
+            <summary>
+            Value that receives TRUE if the user aborted any file operations before they were completed, or FALSE otherwise.
+            </summary>
+        </member>
+        <member name="F:System.Runtime.InteropServices.APIs.APIsStructs.SHFILEOPSTRUCT.hNameMappings">
+            <summary>
+            A handle to a name mapping object containing the old and new names of the renamed files.
+            </summary>
+        </member>
+        <member name="F:System.Runtime.InteropServices.APIs.APIsStructs.SHFILEOPSTRUCT.lpszProgressTitle">
+            <summary>
+            Address of a string to use as the title of a progress dialog box.
+            </summary>
+        </member>
+        <member name="T:System.Runtime.InteropServices.APIs.ColorUtil">
+            <summary>
+            Summary description for ColorConvert.
+            </summary>
+        </member>
+        <member name="T:System.Runtime.InteropServices.APIs.TextUtil">
+            <summary>
+            Summary description for TextUtil.
+            </summary>
+        </member>
+        <member name="T:System.Windows.Forms.TreeListViewItemsEditorForm">
+            <summary>
+            Editor for the TreeListView.Items property
+            </summary>
+        </member>
+        <member name="P:System.Windows.Forms.TreeListViewItemsEditorForm.Items">
+            <summary>
+            Get the items that are edited in this form
+            </summary>
+        </member>
+        <member name="M:System.Windows.Forms.TreeListViewItemsEditorForm.#ctor(System.Windows.Forms.TreeListViewItemCollection)">
+            <summary>
+            Constructor
+            </summary>
+            <param name="collection"></param>
+        </member>
+        <member name="M:System.Windows.Forms.TreeListViewItemsEditorForm.Dispose(System.Boolean)">
+            <summary>
+            Nettoyage des ressources utilis閑s.
+            </summary>
+        </member>
+        <member name="M:System.Windows.Forms.TreeListViewItemsEditorForm.InitializeComponent">
+            <summary>
+            M閠hode requise pour la prise en charge du concepteur - ne modifiez pas
+            le contenu de cette m閠hode avec l'閐iteur de code.
+            </summary>
+        </member>
+        <member name="T:System.Windows.Forms.TreeListViewItemsEditor">
+            <summary>
+            UITypeEditor for the TreeListView.Items property
+            </summary>
+        </member>
+        <member name="M:System.Windows.Forms.TreeListViewItemsEditor.#ctor">
+            <summary>
+            Constructor
+            </summary>
+        </member>
+        <member name="M:System.Windows.Forms.TreeListViewItemsEditor.GetEditStyle(System.ComponentModel.ITypeDescriptorContext)">
+            <summary>
+            Shows a dropdown icon in the property editor
+            </summary>
+            <param name="context">The context of the editing control</param>
+            <returns>Returns <c>UITypeEditorEditStyle.DropDown</c></returns>
+        </member>
+        <member name="M:System.Windows.Forms.TreeListViewItemsEditor.EditValue(System.ComponentModel.ITypeDescriptorContext,System.IServiceProvider,System.Object)">
+            <summary>
+            Overrides the method used to provide basic behaviour for selecting editor.
+            Shows our custom control for editing the value.
+            </summary>
+            <param name="context">The context of the editing control</param>
+            <param name="provider">A valid service provider</param>
+            <param name="value">The current value of the object to edit</param>
+            <returns>The new value of the object</returns>
+        </member>
+        <member name="T:System.Windows.Forms.ITreeListViewItemComparer">
+            <summary>
+            Interface ITreeListViewItemComparer
+            </summary>
+        </member>
+        <member name="P:System.Windows.Forms.ITreeListViewItemComparer.SortOrder">
+            <summary>
+            Sort order
+            </summary>
+        </member>
+        <member name="P:System.Windows.Forms.ITreeListViewItemComparer.Column">
+            <summary>
+            Column for the comparison
+            </summary>
+        </member>
+        <member name="T:System.Windows.Forms.SelectedTreeListViewItemCollection">
+            <summary>
+            Collection of selected items in a TreeListView
+            </summary>
+        </member>
+        <member name="P:System.Windows.Forms.SelectedTreeListViewItemCollection.Item(System.Int32)">
+            <summary>
+            Gets a TreeListViewItem at the specified index
+            </summary>
+        </member>
+        <member name="M:System.Windows.Forms.SelectedTreeListViewItemCollection.#ctor(System.Windows.Forms.TreeListView)">
+            <summary>
+            Create a new instance of a SelectedTreeListViewItemCollection
+            </summary>
+            <param name="TreeListView"></param>
+        </member>
+        <member name="M:System.Windows.Forms.SelectedTreeListViewItemCollection.Contains(System.Windows.Forms.TreeListViewItem)">
+            <summary>
+            Returns true if the specified item is in the collection
+            </summary>
+            <param name="item"></param>
+            <returns></returns>
+        </member>
+        <member name="M:System.Windows.Forms.SelectedTreeListViewItemCollection.IndexOf(System.Windows.Forms.TreeListViewItem)">
+            <summary>
+            Index of an item
+            </summary>
+            <param name="item"></param>
+            <returns></returns>
+        </member>
+        <member name="T:System.Windows.Forms.TreeListView">
+            <summary>
+            TreeListView control (simulates a TreeView in a ListView)
+            </summary>
+        </member>
+        <member name="E:System.Windows.Forms.TreeListView.AfterLabelEdit">
+            <summary>
+            当用户编辑item的标签后触发。
+            Occurs when the label for an item is edited by the user.
+            </summary>
+        </member>
+        <member name="E:System.Windows.Forms.TreeListView.BeforeLabelEdit">
+            <summary>
+            Occurs when the user starts editing the label of an item.
+            </summary>
+        </member>
+        <member name="E:System.Windows.Forms.TreeListView.BeforeExpand">
+            <summary>
+            Occurs before the tree node is collapsed.
+            </summary>
+        </member>
+        <member name="E:System.Windows.Forms.TreeListView.BeforeCollapse">
+            <summary>
+            Occurs before the tree node is collapsed.
+            </summary>
+        </member>
+        <member name="E:System.Windows.Forms.TreeListView.AfterExpand">
+            <summary>
+            Occurs after the tree node is expanded
+            </summary>
+        </member>
+        <member name="E:System.Windows.Forms.TreeListView.AfterCollapse">
+            <summary>
+            Occurs after the tree node is collapsed
+            </summary>
+        </member>
+        <member name="M:System.Windows.Forms.TreeListView.OnAfterLabelEdit(System.Windows.Forms.TreeListViewLabelEditEventArgs)">
+            <summary>
+            Raises the AfterLabelEdit event.
+            </summary>
+            <param name="e"></param>
+        </member>
+        <member name="M:System.Windows.Forms.TreeListView.OnAfterLabelEdit(System.Windows.Forms.LabelEditEventArgs)">
+            <summary>
+            Please use OnAfterLabelEdit(TreeListViewLabelEditEventArgs e)
+            </summary>
+            <param name="e"></param>
+        </member>
+        <member name="M:System.Windows.Forms.TreeListView.OnBeforeLabelEdit(System.Windows.Forms.TreeListViewBeforeLabelEditEventArgs)">
+            <summary>
+            Raises the BeforeLabelEdit event.
+            </summary>
+            <param name="e"></param>
+        </member>
+        <member name="M:System.Windows.Forms.TreeListView.OnBeforeLabelEdit(System.Windows.Forms.LabelEditEventArgs)">
+            <summary>
+            Please use OnBeforeLabelEdit(TreeListViewLabelEditEventArgs e)
+            </summary>
+            <param name="e"></param>
+        </member>
+        <member name="M:System.Windows.Forms.TreeListView.OnBeforeExpand(System.Windows.Forms.TreeListViewCancelEventArgs)">
+            <summary>
+            Raises the BeforeExpand event.
+            </summary>
+            <param name="e"></param>
+        </member>
+        <member name="M:System.Windows.Forms.TreeListView.OnAfterExpand(System.Windows.Forms.TreeListViewEventArgs)">
+            <summary>
+            Raises the AfterExpand event.
+            </summary>
+            <param name="e"></param>
+        </member>
+        <member name="M:System.Windows.Forms.TreeListView.OnBeforeCollapse(System.Windows.Forms.TreeListViewCancelEventArgs)">
+            <summary>
+            Raises the BeforeCollapse event.
+            </summary>
+            <param name="e"></param>
+        </member>
+        <member name="M:System.Windows.Forms.TreeListView.OnAfterCollapse(System.Windows.Forms.TreeListViewEventArgs)">
+            <summary>
+            Raises the AfterCollapse event.
+            </summary>
+            <param name="e"></param>
+        </member>
+        <member name="M:System.Windows.Forms.TreeListView.OnMouseDown(System.Windows.Forms.MouseEventArgs)">
+            <summary>
+            Raises the MouseDown event
+            </summary>
+            <param name="e">A MouseEventArgs that contains the event data</param>
+        </member>
+        <member name="P:System.Windows.Forms.TreeListView.Scrollable">
+            <summary>
+            Gets or sets a value indicating whether a scroll bar is added to the control when there is not enough room to display all items
+            </summary>
+        </member>
+        <member name="P:System.Windows.Forms.TreeListView.CheckBoxes">
+            <summary>
+            Gets or sets a value indicating whether a check box appears next to each item in the control
+            </summary>
+        </member>
+        <member name="P:System.Windows.Forms.TreeListView.FullRowSelect">
+            <summary>
+            Gets or sets a value indicating whether clicking an item selects all its subitems
+            </summary>
+        </member>
+        <member name="P:System.Windows.Forms.TreeListView.StateImageList">
+            <summary>
+            Not supported
+            </summary>
+        </member>
+        <member name="P:System.Windows.Forms.TreeListView.LargeImageList">
+            <summary>
+            Not supported
+            </summary>
+        </member>
+        <member name="P:System.Windows.Forms.TreeListView.SmallImageList">
+            <summary>
+            Gets or sets the ImageList to use when displaying items as small icons in the control (must be filled in)
+            </summary>
+        </member>
+        <member name="P:System.Windows.Forms.TreeListView.Sorting">
+            <summary>
+            Get or set the sort order
+            </summary>
+        </member>
+        <member name="P:System.Windows.Forms.TreeListView.ExpandMethod">
+            <summary>
+            Get or set the expand method
+            </summary>
+        </member>
+        <member name="P:System.Windows.Forms.TreeListView.View">
+            <summary>
+            View (always Details)
+            </summary>
+        </member>
+        <member name="P:System.Windows.Forms.TreeListView.Items">
+            <summary>
+            Items of the TreeListView
+            </summary>
+        </member>
+        <member name="P:System.Windows.Forms.TreeListView.SelectedItems">
+            <summary>
+            Get currently selected items
+            </summary>
+        </member>
+        <member name="P:System.Windows.Forms.TreeListView.CheckedItems">
+            <summary>
+            Get currently checked items
+            </summary>
+        </member>
+        <member name="P:System.Windows.Forms.TreeListView.FocusedItem">
+            <summary>
+            获取当前焦点所在的项。 Gets the item in the control that currently has focus.
+            </summary>
+        </member>
+        <member name="P:System.Windows.Forms.TreeListView.HasMarquee">
+            <summary>
+            Gets whether the marquee selection tool is curently being used
+            </summary>
+        </member>
+        <member name="P:System.Windows.Forms.TreeListView.EditedItem">
+            <summary>
+            Gets the informations of the current edited item
+            </summary>
+        </member>
+        <member name="P:System.Windows.Forms.TreeListView.InEdit">
+            <summary>
+            Gets whether an item is currently edited
+            </summary>
+        </member>
+        <member name="P:System.Windows.Forms.TreeListView.ItemsCount">
+            <summary>
+            Get the number of items recursively
+            </summary>
+        </member>
+        <member name="P:System.Windows.Forms.TreeListView.Comparer">
+            <summary>
+            Get or set the comparer
+            </summary>
+        </member>
+        <member name="P:System.Windows.Forms.TreeListView.ShowPlusMinus">
+            <summary>
+            Gets or sets a value indicating whether plus-sign (+) and minus-sign (-) buttons are displayed next to TreeListView that contain child TreeListViews
+            </summary>
+        </member>
+        <member name="P:System.Windows.Forms.TreeListView.PlusMinusLineColor">
+            <summary>
+            Gets or Sets the color of the lines if ShowPlusMinus property is enabled
+            </summary>
+        </member>
+        <member name="P:System.Windows.Forms.TreeListView.UseXPHighlightStyle">
+            <summary>
+            Gets or Sets whether the control draw XP-Style highlight color
+            </summary>
+        </member>
+        <member name="P:System.Windows.Forms.TreeListView.PathSeparator">
+            <summary>
+            Gets or sets the delimiter string that the TreeListViewItem path uses
+            </summary>
+        </member>
+        <member name="M:System.Windows.Forms.TreeListView.#ctor">
+            <summary>
+            Create a new instance of a TreeListView
+            </summary>
+        </member>
+        <member name="M:System.Windows.Forms.TreeListView.WndProc(System.Windows.Forms.Message@)">
+            <summary>
+            WndProc
+            </summary>
+            <param name="m"></param>
+        </member>
+        <member name="M:System.Windows.Forms.TreeListView.OnKeyDown(System.Windows.Forms.KeyEventArgs)">
+            <summary>
+            Raises the KeyDown event
+            </summary>
+            <param name="e"></param>
+        </member>
+        <member name="M:System.Windows.Forms.TreeListView.ExpandAll">
+            <summary>
+            Expands all the tree nodes
+            </summary>
+        </member>
+        <member name="M:System.Windows.Forms.TreeListView.CollapseAll">
+            <summary>
+            Collapses all the tree nodes
+            </summary>
+        </member>
+        <member name="M:System.Windows.Forms.TreeListView.GetItemRect(System.Int32,System.Windows.Forms.TreeListViewItemBoundsPortion)">
+            <summary>
+            Retrieves the specified portion of the bounding rectangle for a specific item within the list view control
+            </summary>
+            <param name="index">The zero-based index of the item within the ListView.ListViewItemCollection whose bounding rectangle you want to return</param>
+            <param name="portion">One of the TreeListViewItemBoundsPortion values that represents a portion of the TreeListViewItem for which to retrieve the bounding rectangle</param>
+            <returns>A Rectangle that represents the bounding rectangle for the specified portion of the specified TreeListViewItem</returns>
+        </member>
+        <member name="M:System.Windows.Forms.TreeListView.KillFocus">
+            <summary>
+            Kill the focus of the control
+            </summary>
+        </member>
+        <member name="M:System.Windows.Forms.TreeListView.OnItemCheck(System.Windows.Forms.ItemCheckEventArgs)">
+            <summary>
+            Raises the ItemCheck event
+            </summary>
+            <param name="e">An ItemCheckEventArgs that contains the event data</param>
+        </member>
+        <member name="M:System.Windows.Forms.TreeListView.OnColumnClick(System.Windows.Forms.ColumnClickEventArgs)">
+            <summary>
+            Raises the ColumnClick event
+            </summary>
+            <param name="e">A ColumnClickEventArgs that contains the event data</param>
+        </member>
+        <member name="M:System.Windows.Forms.TreeListView.OnVisibleChanged(System.EventArgs)">
+            <summary>
+            Raises the VisibleChanged event
+            </summary>
+            <param name="e"></param>
+        </member>
+        <member name="M:System.Windows.Forms.TreeListView.GetItemAt(System.Drawing.Point)">
+            <summary>
+            Gets an item at the specified coordinates
+            </summary>
+            <param name="p">Mouse position</param>
+            <returns></returns>
+        </member>
+        <member name="M:System.Windows.Forms.TreeListView.GetItemAtFullRow(System.Drawing.Point)">
+            <summary>
+            Gets an item at the specified coordinates (fullrow)
+            </summary>
+            <param name="p">Mouse position</param>
+            <returns></returns>
+        </member>
+        <member name="M:System.Windows.Forms.TreeListView.GetItemAt(System.Int32,System.Int32)">
+            <summary>
+            Gets an item at the specified coordinates.
+            </summary>
+            <param name="x"></param>
+            <param name="y"></param>
+            <returns></returns>
+        </member>
+        <member name="M:System.Windows.Forms.TreeListView.GetTreeListViewItemFromIndex(System.Int32)">
+            <summary>
+            Gets the TreeListViewItem from the ListView index of the item
+            </summary>
+            <param name="index">Index of the Item</param>
+            <returns></returns>
+        </member>
+        <member name="M:System.Windows.Forms.TreeListView.Sort">
+            <summary>
+            Not supported (use items.Sort)
+            </summary>
+        </member>
+        <member name="M:System.Windows.Forms.TreeListView.Dispose(System.Boolean)">
+            <summary>
+            Nettoyage des ressources utilis閑s.
+            </summary>
+        </member>
+        <member name="M:System.Windows.Forms.TreeListView.BeginUpdate">
+            <summary>
+            Prevents the control from drawing until the EndUpdate method is called
+            </summary>
+        </member>
+        <member name="M:System.Windows.Forms.TreeListView.EndUpdate">
+            <summary>
+            Resumes drawing of the list view control after drawing is suspended by the BeginUpdate method
+            </summary>
+        </member>
+        <member name="M:System.Windows.Forms.TreeListView.GetColumnIndex(System.Int32)">
+            <summary>
+            Get the index of the specified column from its physical position
+            </summary>
+            <param name="columnorder"></param>
+            <returns></returns>
+        </member>
+        <member name="M:System.Windows.Forms.TreeListView.GetColumnOrder(System.Int32)">
+            <summary>
+            Gets the order of a specified column
+            </summary>
+            <param name="columnindex"></param>
+            <returns></returns>
+        </member>
+        <member name="M:System.Windows.Forms.TreeListView.GetColumnsOrder">
+            <summary>
+            Gets the columns order
+            </summary>
+            <returns>Example {3,1,4,2}</returns>
+        </member>
+        <member name="M:System.Windows.Forms.TreeListView.SetColumnsOrder(System.Int32[])">
+            <summary>
+            Indicates the column order (for example : {0,1,3,2})
+            </summary>
+            <param name="colorderarray"></param>
+        </member>
+        <member name="M:System.Windows.Forms.TreeListView.Scroll(System.Int32,System.Int32)">
+            <summary>
+            Scrolls the control
+            </summary>
+            <param name="x"></param>
+            <param name="y"></param>
+        </member>
+        <member name="M:System.Windows.Forms.TreeListView.SetColumnsOrder(System.String)">
+            <summary>
+            Indicates the column order (for example : "3142")
+            </summary>
+            <param name="colorder"></param>
+        </member>
+        <member name="M:System.Windows.Forms.TreeListView.GetVisibleItems">
+            <summary>
+            Gets the items that are visible in the TreeListView
+            </summary>
+            <returns>A collection of items</returns>
+        </member>
+        <member name="M:System.Windows.Forms.TreeListView.GetColumnAt(System.Drawing.Point)">
+            <summary>
+            Gets the column at the specified position
+            </summary>
+            <param name="p">Point in client coordinates</param>
+            <returns>The nul zero based index of the column (-1 if failed)</returns>
+        </member>
+        <member name="M:System.Windows.Forms.TreeListView.GetSubItemRect(System.Windows.Forms.TreeListViewItem,System.Int32)">
+            <summary>
+            Get SubItem rectangle
+            </summary>
+            <param name="item"></param>
+            <param name="column"></param>
+            <returns></returns>
+        </member>
+        <member name="M:System.Windows.Forms.TreeListView.GetSubItemRect(System.Int32,System.Int32)">
+            <summary>
+            Get SubItem rectangle
+            </summary>
+            <param name="row"></param>
+            <param name="col"></param>
+            <returns></returns>
+        </member>
+        <member name="M:System.Windows.Forms.TreeListView.GetHeaderItemText(System.Int32)">
+            <summary>
+            Get HeaderItem text
+            </summary>
+            <param name="index"></param>
+            <returns></returns>
+        </member>
+        <member name="M:System.Windows.Forms.TreeListView.GetHeaderItemRect(System.Int32)">
+            <summary>
+            Get HeaderItem rect
+            </summary>
+            <param name="index"></param>
+            <returns></returns>
+        </member>
+        <member name="M:System.Windows.Forms.TreeListView.GetRowRect(System.Int32)">
+            <summary>
+            Get row rect
+            </summary>
+            <param name="row"></param>
+            <returns></returns>
+        </member>
+        <member name="T:System.Windows.Forms.CheckDirection">
+            <summary>
+            Check boxes direction in the TreeListView
+            </summary>
+        </member>
+        <member name="F:System.Windows.Forms.CheckDirection.None">
+            <summary>
+            Simply check the item
+            </summary>
+        </member>
+        <member name="F:System.Windows.Forms.CheckDirection.Upwards">
+            <summary>
+            Set the indeterminate state to the parent items
+            </summary>
+        </member>
+        <member name="F:System.Windows.Forms.CheckDirection.Downwards">
+            <summary>
+            Check children items recursively
+            </summary>
+        </member>
+        <member name="F:System.Windows.Forms.CheckDirection.All">
+            <summary>
+            Upwards + Downwards
+            </summary>
+        </member>
+        <member name="T:System.Windows.Forms.EditItemInformations">
+            <summary>
+            Class that contains all informations on an edited item
+            </summary>
+        </member>
+        <member name="P:System.Windows.Forms.EditItemInformations.Label">
+            <summary>
+            Gets the label of the subitem
+            </summary>
+        </member>
+        <member name="P:System.Windows.Forms.EditItemInformations.Item">
+            <summary>
+            Gets the item being edited
+            </summary>
+        </member>
+        <member name="P:System.Windows.Forms.EditItemInformations.ColumnIndex">
+            <summary>
+            Gets the number of the subitem
+            </summary>
+        </member>
+        <member name="M:System.Windows.Forms.EditItemInformations.#ctor(System.Windows.Forms.TreeListViewItem,System.Int32,System.String)">
+            <summary>
+            Creates a new instance of EditItemInformations
+            </summary>
+            <param name="item"></param>
+            <param name="column"></param>
+            <param name="label"></param>
+        </member>
+        <member name="T:System.Windows.Forms.TreeListViewBeforeLabelEditEventHandler">
+            <summary>
+            TreeListViewBeforeLabelEditEventHandler delegate
+            </summary>
+        </member>
+        <member name="T:System.Windows.Forms.TreeListViewLabelEditEventHandler">
+            <summary>
+            TreeListViewItemLabelEditHandler delegate
+            </summary>
+        </member>
+        <member name="T:System.Windows.Forms.TreeListViewCancelEventHandler">
+            <summary>
+            TreeListViewCancelEventHandler delegate
+            </summary>
+        </member>
+        <member name="T:System.Windows.Forms.TreeListViewEventHandler">
+            <summary>
+            TreeListViewEventHandler delegate
+            </summary>
+        </member>
+        <member name="T:System.Windows.Forms.TreeListViewLabelEditEventArgs">
+            <summary>
+            TreeListViewLabelEdit编辑事件的参数。Arguments of a TreeListViewLabelEdit event.
+            </summary>
+        </member>
+        <member name="P:System.Windows.Forms.TreeListViewLabelEditEventArgs.Label">
+            <summary>
+            获取子项的Label值。Gets the label of the subitem
+            </summary>
+        </member>
+        <member name="P:System.Windows.Forms.TreeListViewLabelEditEventArgs.LabelOld">
+            <summary>
+            获取编辑之前的标签值
+            </summary>
+        </member>
+        <member name="P:System.Windows.Forms.TreeListViewLabelEditEventArgs.Item">
+            <summary>
+            Gets the item being edited
+            </summary>
+        </member>
+        <member name="P:System.Windows.Forms.TreeListViewLabelEditEventArgs.ColumnIndex">
+            <summary>
+            Gets the number of the subitem
+            </summary>
+        </member>
+        <member name="M:System.Windows.Forms.TreeListViewLabelEditEventArgs.#ctor(System.Windows.Forms.TreeListViewItem,System.Int32,System.String)">
+            <summary>
+            创建TreeListViewLabelEditEventArgs实例
+            </summary>
+            <param name="item">当前操作的TreeListViewItem</param>
+            <param name="column">当前列索引</param>
+            <param name="label">当前Label值</param>
+        </member>
+        <member name="M:System.Windows.Forms.TreeListViewLabelEditEventArgs.#ctor(System.Windows.Forms.TreeListViewItem,System.Int32,System.String,System.String)">
+            <summary>
+            创建TreeListViewLabelEditEventArgs实例
+            </summary>
+            <param name="item">当前操作的TreeListViewItem</param>
+            <param name="column">当前列索引</param>
+            <param name="label">当前Label值</param>
+            <param name="labelOld_">编辑之前的Label值</param>
+        </member>
+        <member name="T:System.Windows.Forms.TreeListViewBeforeLabelEditEventArgs">
+            <summary>
+            Arguments of a TreeListViewBeforeLabelEdit event.
+            </summary>
+        </member>
+        <member name="P:System.Windows.Forms.TreeListViewBeforeLabelEditEventArgs.ColumnIndex">
+            <summary>
+            Gets or sets the index of the subitem
+            </summary>
+        </member>
+        <member name="P:System.Windows.Forms.TreeListViewBeforeLabelEditEventArgs.Editor">
+            <summary>
+            Gets or sets the editor (a TextBox will be displayed if null)
+            </summary>
+        </member>
+        <member name="M:System.Windows.Forms.TreeListViewBeforeLabelEditEventArgs.#ctor(System.Windows.Forms.TreeListViewItem,System.Int32,System.String)">
+            <summary>
+            创建 TreeListViewBeforeLabelEditEventArgs 实例
+            </summary>
+            <param name="item">当前TreeListViewItem</param>
+            <param name="column">当前列索引</param>
+            <param name="label">当前Label值</param>
+        </member>
+        <member name="M:System.Windows.Forms.TreeListViewBeforeLabelEditEventArgs.#ctor(System.Windows.Forms.TreeListViewItem,System.Int32,System.String,System.String)">
+            <summary>
+            创建 TreeListViewBeforeLabelEditEventArgs 实例
+            </summary>
+            <param name="item">当前TreeListViewItem</param>
+            <param name="column">当前列索引</param>
+            <param name="label">当前Label值</param>
+            <param name="oldLabel_">编辑之前的Label值</param>
+        </member>
+        <member name="T:System.Windows.Forms.TreeListViewEventArgs">
+            <summary>
+            Arguments of a TreeListViewEvent
+            </summary>
+        </member>
+        <member name="P:System.Windows.Forms.TreeListViewEventArgs.Item">
+            <summary>
+            Item that will be expanded
+            </summary>
+        </member>
+        <member name="P:System.Windows.Forms.TreeListViewEventArgs.Action">
+            <summary>
+            Action returned by the event
+            </summary>
+        </member>
+        <member name="M:System.Windows.Forms.TreeListViewEventArgs.#ctor(System.Windows.Forms.TreeListViewItem,System.Windows.Forms.TreeListViewAction)">
+            <summary>
+            Create a new instance of TreeListViewEvent arguments
+            </summary>
+            <param name="item"></param>
+            <param name="action"></param>
+        </member>
+        <member name="T:System.Windows.Forms.TreeListViewCancelEventArgs">
+            <summary>
+            Arguments of a TreeListViewCancelEventArgs
+            </summary>
+        </member>
+        <member name="P:System.Windows.Forms.TreeListViewCancelEventArgs.Cancel">
+            <summary>
+            True -> the operation is canceled
+            </summary>
+        </member>
+        <member name="M:System.Windows.Forms.TreeListViewCancelEventArgs.#ctor(System.Windows.Forms.TreeListViewItem,System.Windows.Forms.TreeListViewAction)">
+            <summary>
+            Create a new instance of TreeListViewCancelEvent arguments
+            </summary>
+            <param name="item"></param>
+            <param name="action"></param>
+        </member>
+        <member name="T:System.Windows.Forms.TreeListViewAction">
+            <summary>
+            TreeListView actions
+            </summary>
+        </member>
+        <member name="F:System.Windows.Forms.TreeListViewAction.ByKeyboard">
+            <summary>
+            By Keyboard
+            </summary>
+        </member>
+        <member name="F:System.Windows.Forms.TreeListViewAction.ByMouse">
+            <summary>
+            ByMouse
+            </summary>
+        </member>
+        <member name="F:System.Windows.Forms.TreeListViewAction.Collapse">
+            <summary>
+            Collapse
+            </summary>
+        </member>
+        <member name="F:System.Windows.Forms.TreeListViewAction.Expand">
+            <summary>
+            Expand
+            </summary>
+        </member>
+        <member name="F:System.Windows.Forms.TreeListViewAction.Unknown">
+            <summary>
+            Unknown
+            </summary>
+        </member>
+        <member name="T:System.Windows.Forms.TreeListViewExpandMethod">
+            <summary>
+            Expand / Collapse method
+            </summary>
+        </member>
+        <member name="F:System.Windows.Forms.TreeListViewExpandMethod.IconDbleClick">
+            <summary>
+            Expand when double clicking on the icon
+            </summary>
+        </member>
+        <member name="F:System.Windows.Forms.TreeListViewExpandMethod.EntireItemDbleClick">
+            <summary>
+            Expand when double clicking on the entire item
+            </summary>
+        </member>
+        <member name="F:System.Windows.Forms.TreeListViewExpandMethod.ItemOnlyDbleClick">
+            <summary>
+            Expand when double clicking on the item only
+            </summary>
+        </member>
+        <member name="F:System.Windows.Forms.TreeListViewExpandMethod.None">
+            <summary>
+            None
+            </summary>
+        </member>
+        <member name="T:System.Windows.Forms.CheckBoxesTypes">
+            <summary>
+            Check boxes types for TreeListView control
+            </summary>
+        </member>
+        <member name="F:System.Windows.Forms.CheckBoxesTypes.None">
+            <summary>
+            No CheckBoxes
+            </summary>
+        </member>
+        <member name="F:System.Windows.Forms.CheckBoxesTypes.Simple">
+            <summary>
+            Simple CheckBoxes
+            </summary>
+        </member>
+        <member name="F:System.Windows.Forms.CheckBoxesTypes.Recursive">
+            <summary>
+            Check children recursively and set indeterminate state for the parents
+            </summary>
+        </member>
+        <member name="T:System.Windows.Forms.TreeListViewItemBoundsPortion">
+            <summary>
+            Specifies a portion of the tree list view item from which to retrieve the bounding rectangle
+            </summary>
+        </member>
+        <member name="F:System.Windows.Forms.TreeListViewItemBoundsPortion.Entire">
+            <summary>
+            The bounding rectangle of the entire item, including the icon, the item text, and the subitem text (if displayed), should be retrieved
+            </summary>
+        </member>
+        <member name="F:System.Windows.Forms.TreeListViewItemBoundsPortion.Icon">
+            <summary>
+            The bounding rectangle of the icon or small icon should be retrieved
+            </summary>
+        </member>
+        <member name="F:System.Windows.Forms.TreeListViewItemBoundsPortion.ItemOnly">
+            <summary>
+            The bounding rectangle specified by the Entire value without the subitems
+            </summary>
+        </member>
+        <member name="F:System.Windows.Forms.TreeListViewItemBoundsPortion.Label">
+            <summary>
+            The bounding rectangle of the item text should be retrieved
+            </summary>
+        </member>
+        <member name="F:System.Windows.Forms.TreeListViewItemBoundsPortion.PlusMinus">
+            <summary>
+            The bounding rectangle of the item plus minus
+            </summary>
+        </member>
+        <member name="T:System.Windows.Forms.TreeListViewItem">
+            <summary>
+            Represents an item in a TreeListView control
+            </summary>
+        </member>
+        <member name="T:System.Windows.Forms.TreeListViewItem.TreeListViewItemHanlder">
+            <summary>
+            TreeListViewItemHandler delegate
+            </summary>
+        </member>
+        <member name="T:System.Windows.Forms.TreeListViewItem.TreeListViewItemCheckedHandler">
+            <summary>
+            TreeListViewItemCheckedHandler delegate
+            </summary>
+        </member>
+        <member name="E:System.Windows.Forms.TreeListViewItem.AfterCollapse">
+            <summary>
+            Occurs after the tree node is collapsed
+            </summary>
+        </member>
+        <member name="E:System.Windows.Forms.TreeListViewItem.AfterExpand">
+            <summary>
+            Occurs after the tree node is expanded
+            </summary>
+        </member>
+        <member name="P:System.Windows.Forms.TreeListViewItem.NextVisibleItem">
+            <summary>
+            Gets the next visible item in the TreeListView
+            </summary>
+        </member>
+        <member name="P:System.Windows.Forms.TreeListViewItem.PrevVisibleItem">
+            <summary>
+            Gets the previous visible item in the TreeListView
+            </summary>
+        </member>
+        <member name="P:System.Windows.Forms.TreeListViewItem.Checked">
+            <summary>
+            Gets or sets a value indicating whether the item is checked.
+            </summary>
+        </member>
+        <member name="P:System.Windows.Forms.TreeListViewItem.CheckStatus">
+            <summary>
+            Gets the check state of this item
+            </summary>
+        </member>
+        <member name="P:System.Windows.Forms.TreeListViewItem.ParentsInHierarch">
+            <summary>
+            Gets a collection of the parent of this item
+            </summary>
+        </member>
+        <member name="P:System.Windows.Forms.TreeListViewItem.FullPath">
+            <summary>
+            Gets the fullpath of an item (Parents.Text + \ + this.Text)
+            </summary>
+        </member>
+        <member name="P:System.Windows.Forms.TreeListViewItem.Text">
+            <summary>
+            Get or Set the Text property
+            </summary>
+        </member>
+        <member name="P:System.Windows.Forms.TreeListViewItem.Container">
+            <summary>
+            Get the collection that contains this item
+            </summary>
+        </member>
+        <member name="P:System.Windows.Forms.TreeListViewItem.LastChildIndexInListView">
+            <summary>
+            Get the biggest index in the listview of the visible childs of this item
+            including this item
+            </summary>
+        </member>
+        <member name="P:System.Windows.Forms.TreeListViewItem.ChildrenCount">
+            <summary>
+            Get the children count recursively
+            </summary>
+        </member>
+        <member name="P:System.Windows.Forms.TreeListViewItem.IsExpanded">
+            <summary>
+            Returns true if this item is expanded
+            </summary>
+        </member>
+        <member name="P:System.Windows.Forms.TreeListViewItem.Level">
+            <summary>
+            Get the level of the item in the treelistview
+            </summary>
+        </member>
+        <member name="P:System.Windows.Forms.TreeListViewItem.Items">
+            <summary>
+            Get the items contained in this item
+            </summary>
+        </member>
+        <member name="P:System.Windows.Forms.TreeListViewItem.Parent">
+            <summary>
+            Get the parent of this item
+            </summary>
+        </member>
+        <member name="P:System.Windows.Forms.TreeListViewItem.ListView">
+            <summary>
+            Gets the TreeListView containing this item
+            </summary>
+        </member>
+        <member name="P:System.Windows.Forms.TreeListViewItem.TreeListView">
+            <summary>
+            Gets the TreeListView containing this item
+            </summary>
+        </member>
+        <member name="P:System.Windows.Forms.TreeListViewItem.HasChildren">
+            <summary>
+            return is need expand
+            </summary>
+        </member>
+        <member name="P:System.Windows.Forms.TreeListViewItem.Visible">
+            <summary>
+            Returns true if this item is visible in the TreeListView
+            </summary>
+        </member>
+        <member name="M:System.Windows.Forms.TreeListViewItem.#ctor">
+            <summary>
+            Create a new instance of a TreeListViewItem
+            </summary>
+        </member>
+        <member name="M:System.Windows.Forms.TreeListViewItem.#ctor(System.String)">
+            <summary>
+            Create a new instance of a TreeListViewItem
+            </summary>
+        </member>
+        <member name="M:System.Windows.Forms.TreeListViewItem.#ctor(System.String,System.Int32)">
+            <summary>
+            Create a new instance of a TreeListViewItem
+            </summary>
+        </member>
+        <member name="M:System.Windows.Forms.TreeListViewItem.BeginEdit(System.Int32)">
+            <summary>
+            Places the subitem into edit mode
+            </summary>
+            <param name="column">Number of the subitem to edit</param>
+        </member>
+        <member name="M:System.Windows.Forms.TreeListViewItem.BeginEdit">
+            <summary>
+            Places the item into edit mode
+            </summary>
+        </member>
+        <member name="M:System.Windows.Forms.TreeListViewItem.Redraw">
+            <summary>
+            Asks the associated TreeListView control to redraw this item
+            </summary>
+        </member>
+        <member name="M:System.Windows.Forms.TreeListViewItem.GetBounds(System.Windows.Forms.TreeListViewItemBoundsPortion)">
+            <summary>
+            Retrieves the specified portion of the bounding rectangle for the item
+            </summary>
+            <param name="portion">One of the TreeListViewItemBoundsPortion values that represents a portion of the item for which to retrieve the bounding rectangle</param>
+            <returns>A Rectangle that represents the bounding rectangle for the specified portion of the item</returns>
+        </member>
+        <member name="M:System.Windows.Forms.TreeListViewItem.Remove">
+            <summary>
+            Remove this item from its associated collection
+            </summary>
+        </member>
+        <member name="M:System.Windows.Forms.TreeListViewItem.IsAParentOf(System.Windows.Forms.TreeListViewItem)">
+            <summary>
+            Check if this node is one of the parents of an item (recursively)
+            </summary>
+            <param name="item"></param>
+            <returns></returns>
+        </member>
+        <member name="M:System.Windows.Forms.TreeListViewItem.EnsureVisible">
+            <summary>
+            Ensure that the node is visible (expand parents and scroll listview so that the item is visible)
+            </summary>
+        </member>
+        <member name="M:System.Windows.Forms.TreeListViewItem.SetIndentation">
+            <summary>
+            Set the indentation using the level of this item
+            </summary>
+            <returns>True if successfull, false otherwise</returns>
+        </member>
+        <member name="M:System.Windows.Forms.TreeListViewItem.RefreshIndentation(System.Boolean)">
+            <summary>
+            Refresh indentation of this item and of its children (recursively)
+            </summary>
+            <param name="recursively">Recursively</param>
+        </member>
+        <member name="M:System.Windows.Forms.TreeListViewItem.Expand">
+            <summary>
+            Expand
+            </summary>
+        </member>
+        <member name="M:System.Windows.Forms.TreeListViewItem.ExpandAll">
+            <summary>
+            Expand all sub nodes
+            </summary>
+        </member>
+        <member name="M:System.Windows.Forms.TreeListViewItem.Collapse">
+            <summary>
+            Collapse
+            </summary>
+        </member>
+        <member name="M:System.Windows.Forms.TreeListViewItem.CollapseAll">
+            <summary>
+            Collapse all sub nodes
+            </summary>
+        </member>
+        <member name="M:System.Windows.Forms.TreeListViewItem.Hide">
+            <summary>
+            Hide this node (remove from TreeListView but
+            not from associated Parent items)
+            </summary>
+        </member>
+        <member name="T:System.Windows.Forms.TreeListViewItemCollection">
+            <summary>
+            Represents the collection of items in a TreeListView control or in a TreeListViewItem
+            </summary>
+        </member>
+        <member name="T:System.Windows.Forms.TreeListViewItemCollection.TreeListViewItemCollectionComparer">
+            <summary>
+            Comparer for TreeListViewItem
+            </summary>
+        </member>
+        <member name="P:System.Windows.Forms.TreeListViewItemCollection.TreeListViewItemCollectionComparer.SortOrder">
+            <summary>
+            Sort order
+            </summary>
+        </member>
+        <member name="P:System.Windows.Forms.TreeListViewItemCollection.TreeListViewItemCollectionComparer.Column">
+            <summary>
+            Column for the comparison
+            </summary>
+        </member>
+        <member name="M:System.Windows.Forms.TreeListViewItemCollection.TreeListViewItemCollectionComparer.#ctor">
+            <summary>
+            Create a new instance of  Comparer
+            </summary>
+        </member>
+        <member name="M:System.Windows.Forms.TreeListViewItemCollection.TreeListViewItemCollectionComparer.#ctor(System.Windows.Forms.SortOrder)">
+            <summary>
+            Create a new instance of  Comparer
+            </summary>
+            <param name="order"></param>
+        </member>
+        <member name="M:System.Windows.Forms.TreeListViewItemCollection.TreeListViewItemCollectionComparer.#ctor(System.Windows.Forms.SortOrder,System.Int32)">
+            <summary>
+            Create a new instance of  Comparer
+            </summary>
+            <param name="order"></param>
+            <param name="column"></param>
+        </member>
+        <member name="M:System.Windows.Forms.TreeListViewItemCollection.TreeListViewItemCollectionComparer.Compare(System.Object,System.Object)">
+            <summary>
+            Compare two TreeListViewItems
+            </summary>
+            <param name="x"></param>
+            <param name="y"></param>
+            <returns></returns>
+        </member>
+        <member name="P:System.Windows.Forms.TreeListViewItemCollection.Sortable">
+            <summary>
+            Gets or sets a value indicating whether the items of the collection can be reorder while the sort function is being called
+            </summary>
+        </member>
+        <member name="P:System.Windows.Forms.TreeListViewItemCollection.SortOrder">
+            <summary>
+            Get or set the new sortorder (apply automatically the sort function
+            if the sortorder value is changed)
+            </summary>
+        </member>
+        <member name="P:System.Windows.Forms.TreeListViewItemCollection.Comparer">
+            <summary>
+            Gets the comparer used in the Sort and Add functions
+            </summary>
+        </member>
+        <member name="P:System.Windows.Forms.TreeListViewItemCollection.SortOrderRecursively">
+            <summary>
+            Set the new sortorder (apply automatically the sort function
+            if the sortorder value is changed) for each collection recursively
+            </summary>
+        </member>
+        <member name="P:System.Windows.Forms.TreeListViewItemCollection.Owner">
+            <summary>
+            TreeListView control that directly contains this collection
+            </summary>
+        </member>
+        <member name="P:System.Windows.Forms.TreeListViewItemCollection.Parent">
+            <summary>
+            TreeListViewItem that contains this collection
+            </summary>
+        </member>
+        <member name="P:System.Windows.Forms.TreeListViewItemCollection.TreeListView">
+            <summary>
+            Returns the TreeListView set in Owner or in Parent
+            </summary>
+        </member>
+        <member name="P:System.Windows.Forms.TreeListViewItemCollection.Item(System.Int32)">
+            <summary>
+            Get an item in the collection
+            </summary>
+        </member>
+        <member name="F:System.Windows.Forms.TreeListViewItemCollection.ItemAdded">
+            <summary>
+            Occurs when an item is added to the collection
+            </summary>
+        </member>
+        <member name="F:System.Windows.Forms.TreeListViewItemCollection.ItemRemoved">
+            <summary>
+            Occurs when an item is removed from the collection
+            </summary>
+        </member>
+        <member name="M:System.Windows.Forms.TreeListViewItemCollection.OnItemAdded(System.Windows.Forms.TreeListViewEventArgs)">
+            <summary>
+            Raises the ItemAdded event
+            </summary>
+            <param name="e"></param>
+        </member>
+        <member name="M:System.Windows.Forms.TreeListViewItemCollection.OnItemRemoved(System.Windows.Forms.TreeListViewEventArgs)">
+            <summary>
+            Raises the ItemRemoved event
+            </summary>
+            <param name="e"></param>
+        </member>
+        <member name="M:System.Windows.Forms.TreeListViewItemCollection.#ctor(System.Windows.Forms.TreeListView)">
+            <summary>
+            Create a collection in the root of a TreeListView (first level items)
+            </summary>
+            <param name="owner"></param>
+        </member>
+        <member name="M:System.Windows.Forms.TreeListViewItemCollection.#ctor(System.Windows.Forms.TreeListViewItem)">
+            <summary>
+            Create a collection within a TreeListViewItem
+            </summary>
+            <param name="parent"></param>
+        </member>
+        <member name="M:System.Windows.Forms.TreeListViewItemCollection.#ctor">
+            <summary>
+            Create a free TreeListViewItemCollection (items will not be
+            displayed in a TreeListView
+            </summary>
+        </member>
+        <member name="M:System.Windows.Forms.TreeListViewItemCollection.ToArray">
+            <summary>
+            Transforms the collection to an array
+            </summary>
+        </member>
+        <member name="M:System.Windows.Forms.TreeListViewItemCollection.Sort(System.Boolean)">
+            <summary>
+            Sort the items in this collection (recursively or not)
+            </summary>
+            <param name="recursively">Recursively</param>
+        </member>
+        <member name="M:System.Windows.Forms.TreeListViewItemCollection.Contains(System.Windows.Forms.TreeListViewItem)">
+            <summary>
+            Returns true if this collection contains an item
+            </summary>
+            <param name="item"></param>
+            <returns></returns>
+        </member>
+        <member name="M:System.Windows.Forms.TreeListViewItemCollection.Add(System.Windows.Forms.TreeListViewItem)">
+            <summary>
+            Adds an item in the collection and in the TreeListView
+            </summary>
+            <param name="item"></param>
+            <returns>Index of the item in the collection</returns>
+        </member>
+        <member name="M:System.Windows.Forms.TreeListViewItemCollection.Add(System.String,System.Int32)">
+            <summary>
+            Adds an item in the collection and in the TreeListView
+            </summary>
+            <param name="value"></param>
+            <param name="imageindex"></param>
+            <returns></returns>
+        </member>
+        <member name="M:System.Windows.Forms.TreeListViewItemCollection.Add(System.String)">
+            <summary>
+            Adds an item in the collection and in the TreeListView
+            </summary>
+            <param name="value"></param>
+            <returns></returns>
+        </member>
+        <member name="M:System.Windows.Forms.TreeListViewItemCollection.AddRange(System.Windows.Forms.TreeListViewItemCollection)">
+            <summary>
+            Adds a collection to this collection
+            </summary>
+            <param name="collection"></param>
+        </member>
+        <member name="M:System.Windows.Forms.TreeListViewItemCollection.Clear">
+            <summary>
+            Removes each node of the collection
+            </summary>
+        </member>
+        <member name="M:System.Windows.Forms.TreeListViewItemCollection.Remove(System.Windows.Forms.TreeListViewItem)">
+            <summary>
+            Remove an item from the collection and the TreeListView
+            </summary>
+            <param name="item"></param>
+        </member>
+        <member name="M:System.Windows.Forms.TreeListViewItemCollection.GetIndexOf(System.Windows.Forms.TreeListViewItem)">
+            <summary>
+            Gets the index of an item in the collection
+            </summary>
+            <param name="item"></param>
+            <returns></returns>
+        </member>
+        <member name="M:System.Windows.Forms.TreeListViewItemCollection.RemoveAt(System.Int32)">
+            <summary>
+            Remove an item from the collection and the TreeListView
+            </summary>
+            <param name="index"></param>
+        </member>
+    </members>
+</doc>
