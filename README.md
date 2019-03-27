@@ -3,7 +3,7 @@
 
 ### Purpose
 **Unity + Lua** script is now most popular incremental update frameWork for mobile game in China,However, since there haven't been good tool to monitor the cpu and memory usage of lua vm, lots of developers have no idea to optimize their code,so there are many potential risks in lua codes.<br>
-this tool is designed to support an **easy-to-use profiler** for unity that help finding bottleneck and make your game more fast and stable.
+this tool is designed to support an **easy-to-use profiler** for Unity that help finding bottleneck and make your game more fast and stable.
 
 ### Use renderings
 ![](doc/use.gif)
@@ -18,8 +18,8 @@ Lua Profiler For Unity supports **XLua**、**SLua**、**ToLua** and also a remot
 
 - You must open two Unity projects,one for game client ,one for editor server
 - Open **LuaProfiler** folder
-- Copy **LuaProfilerClient** folder to you game project content,if your C# Lua script is in **Plugins** folder,Copy **LuaProfilerClient** to **Plugins**.This Tool must make sure That code must in the same DLL which has C# lua codes.If you already import Mono.ceil library,delete `LuaProfilerClient/Editor/Ceil`
-- Use **Unity5.6 or Newer** Unity version to open **LuaProfilerServer** as a unity project
+- Copy **LuaProfilerClient** folder to you game project content,if your C# Lua script is in **Plugins** folder,Copy **LuaProfilerClient** to **Plugins**.This Tool must make sure That code must in the same DLL which has C# lua codes.
+- Use **Unity5.6 or newer version** Unity version to open **LuaProfilerServer** as a Unity project
 - If your Unity version is below 5,call the following code before start the game.
 ```
 MikuLuaProfiler.HookLuaSetup.OnStartGame();
@@ -31,9 +31,9 @@ MikuLuaProfiler.HookLuaSetup.OnStartGame();
 | ----------------------- | -------------------------------------------------------------------------------------------------------   |
 | `Overview`              | function name                                                                                             |
 | `totalLuaMemory`        | The sum of all Lua GCs produced by this function If GC happens then the value will not be very accurate   |
-| `self`                  | The amount of GC produced by the function itself,**If the value is negative, the subfunction produces a GC**  |
+| `self`                  | The amount of GC produced by the function itself                                                          |
 | `totalMonoMemory`       | The sum of all Mono GCs produced by this function If GC happens then the value will not be very accurate  |
-| `self`                  | The amount of GC produced by the function itself ,**If the value is negative, the subfunction produces a GC** |
+| `self`                  | The amount of GC produced by the function itself                                                          |
 | `currentTime`           | The time it takes for the function to run in current frame                                                |
 | `averageTime`           | Count the average value of the time spent on the function                                                 |
 | `totalTime`             | All the time consumed by this function                                                                    |
