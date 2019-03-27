@@ -22,6 +22,7 @@ UnityVS
 
 LuaDeepProfilerSettings.config
 obj
+bin
 Packages
 manifest.json
 
@@ -48,7 +49,6 @@ manifest.json
 /ToLuaClient/Assets/Resources
 /ToLuaClient/Assets/Resources.meta
 /XLuaClient/Assets/XLua/Gen.meta
-/LuaProfiler/Tools/InjectLua/InjectLua/bin
 
 /ToLuaClient/Assets/Source/Generate/*Wrap.cs
 /ToLuaClient/Assets/Source/Generate/*Wrap.cs.meta

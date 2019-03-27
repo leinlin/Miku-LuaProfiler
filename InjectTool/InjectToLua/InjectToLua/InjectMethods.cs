@@ -1,4 +1,4 @@
-/*
+﻿/*
                #########                       
               ############                     
               #############                    
@@ -33,102 +33,16 @@ __________#_______####_______####______________
 * ==============================================================================
 */
 
-using Miku.Cecil;
-using Miku.Cecil.Cil;
+using Mono.Cecil;
+using Mono.Cecil.Cil;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Security.Cryptography;
-using UnityEditor;
-using UnityEngine;
-using MikuLuaProfiler;
-#if XLUA
-using LuaDLL = XLua.LuaDLL.Lua;
-#elif TOLUA
-using LuaDLL = LuaInterface.LuaDLL;
-#elif SLUA
-using LuaDLL = SLua.LuaDLL;
-#endif
 
 namespace MikuLuaProfiler_Editor
 {
-
-    [InitializeOnLoad]
-    public static class StartUp
-    {
-        //private static int tickNum = 0;
-        static StartUp()
-        {
-            if (LuaDeepProfilerSetting.Instance.isDeepLuaProfiler)
-            {
-                InjectMethods.HookLuaFun();
-            }
-            if (LuaDeepProfilerSetting.Instance.isDeepMonoProfiler)
-            {
-                InjectMethods.InjectAllMethods();
-            }
-
-#if XLUA || TOLUA || SLUA
-            if (LuaDeepProfilerSetting.Instance.isInited) return;
-#endif
-            string[] paths = Directory.GetFiles(Application.dataPath, "*.dll", SearchOption.AllDirectories);
-            foreach (var item in paths)
-            {
-                string fileName = Path.GetFileName(item);
-                if (fileName == "slua.dll")
-                {
-                    AppendMacro("#define SLUA");
-                }
-
-                if (fileName == "xlua.dll")
-                {
-                    AppendMacro("#define XLUA");
-                    break;
-                }
-
-                if (fileName == "tolua.dll")
-                {
-                    AppendMacro("#define TOLUA");
-                    break;
-                }
-            }
-
-            LuaDeepProfilerSetting.Instance.isInited = true;
-        }
-
-         private static void AppendMacro(string macro)
-        {
-            System.Diagnostics.StackTrace st = new System.Diagnostics.StackTrace(true);
-            System.Diagnostics.StackFrame sf = st.GetFrame(0);
-            string path = sf.GetFileName();
-            string selfPath = path;
-
-#if UNITY_EDITOR_WIN
-            path = path.Replace("Editor\\StartUp.cs", "Core\\Driver\\LuaDLL.cs");
-#else
-            path = path.Replace("Editor/StartUp.cs", "Core/LuaHookSetup.cs");
-#endif
-            AppendText(macro, selfPath);
-            AppendText(macro, path);
-        }
-
-        private static void AppendText(string macro, string path)
-        {
-            string text = File.ReadAllText(path);
-            string text2 = new StringReader(text).ReadLine();
-            if (text2.Contains("#define"))
-            {
-                text = text.Substring(text2.Length, text.Length - text2.Length);
-            }
-            else
-            {
-                macro += "\r\n";
-            }
-            text = text.Insert(0, macro);
-            File.WriteAllText(path, text);
-        }
-    }
 
     public static class InjectMethods
     {
@@ -157,48 +71,8 @@ namespace MikuLuaProfiler_Editor
         private const string LUA_LOAD_BUFFER = "tolua_loadbuffer";
 #endif
 
-        #region try finally
-        public static void InjectAllMethods()
+        public static void InjectAllMethods(string injectPath, string profilerPath)
         {
-            if (EditorApplication.isCompiling)
-            {
-                Debug.LogError("is compiling");
-                return;
-            }
-
-            var projectPath = System.Reflection.Assembly.Load("Assembly-CSharp").ManifestModule.FullyQualifiedName;
-            var profilerPath = (typeof(LuaProfiler).Assembly).ManifestModule.FullyQualifiedName;
-
-            InjectAllMethods(projectPath, profilerPath);
-        }
-
-        private static bool IsMonoBehavior(TypeDefinition td)
-        {
-            if (td == null) return false;
-
-            if (td.FullName == "UnityEngine.MonoBehaviour")
-            {
-                return true;
-            }
-            else
-            {
-                if (td.BaseType == null)
-                {
-                    return false;
-                }
-                else
-                {
-                    return IsMonoBehavior(td.BaseType.Resolve());
-                }
-            }
-        }
-
-        private static void InjectAllMethods(string injectPath, string profilerPath)
-        {
-            string md5 = null;
-            md5 = new FileInfo(injectPath).LastWriteTimeUtc.Ticks.ToString();
-            if (md5 == LuaDeepProfilerSetting.Instance.assMd5) return;
-
             AssemblyDefinition injectAss = LoadAssembly(injectPath);
             AssemblyDefinition profilerAss = null;
             if (injectPath == profilerPath)
@@ -253,7 +127,7 @@ namespace MikuLuaProfiler_Editor
                         if (isMonoBehaviour)
                         {
                             continue;
-                        } 
+                        }
                     }
 
                     if (item.IsAbstract)
@@ -274,10 +148,118 @@ namespace MikuLuaProfiler_Editor
             }
 
             WriteAssembly(injectPath, injectAss);
-            LuaDeepProfilerSetting.Instance.assMd5 = new FileInfo(injectPath).LastWriteTimeUtc.Ticks.ToString();
         }
 
+        public static void HookLuaFun(string luaPath, string profilerPath)
+        {
+#if XLUA || TOLUA || SLUA
+            AssemblyDefinition luaAssembly = LoadAssembly(luaPath);
+            AssemblyDefinition profilerAssembly = null;
+            if (luaPath == profilerPath)
+            {
+                profilerAssembly = luaAssembly;
+            }
+            else
+            {
+                profilerAssembly = LoadAssembly(profilerPath);
+            }
 
+
+            #region find lua method
+            var profilerType = luaAssembly.MainModule.GetType(LUA_FULL_NAME);
+            foreach (var m in profilerType.Methods)
+            {
+                //已经注入了就不注入了
+                if (m.Name == LUA_NEW_STATE + "_profiler")
+                {
+                    return;
+                }
+            }
+            #endregion
+
+            #region find profiler method
+            var luaProfiler = profilerAssembly.MainModule.GetType("MikuLuaProfiler.LuaProfiler");
+
+            foreach (var m in luaProfiler.Methods)
+            {
+                if (m.Name == "set_mainL")
+                {
+                    m_setMainL = m;
+                }
+                else if (m.Name == "get_mainL")
+                {
+                    m_getMainL = m;
+                }
+            }
+
+            var luaHookType = profilerAssembly.MainModule.GetType("MikuLuaProfiler.LuaHook");
+            foreach (var m in luaHookType.Methods)
+            {
+                if (m.Name == "Hookloadbuffer")
+                {
+                    m_hookloadbuffer = m;
+                }
+                else if (m.Name == "HookRef")
+                {
+                    m_hookRef = m;
+                }
+                else if (m.Name == "HookUnRef")
+                {
+                    m_hookUnref = m;
+                }
+            }
+
+            var luaRegister = profilerAssembly.MainModule.GetType("MikuLuaProfiler.MikuLuaProfilerLuaProfilerWrap");
+            foreach (var m in luaRegister.Methods)
+            {
+                if (m.Name == "__Register")
+                {
+                    m_registerLua = m;
+                    break;
+                }
+            }
+            #endregion
+
+            Dictionary<string, InjectMethodAction> hookExternfunDict = new Dictionary<string, InjectMethodAction>
+            {
+                { LUA_NEW_STATE, InjectNewStateMethod},
+                { LUA_CLOSE, InjectCloseMethod },
+                { LUA_LOAD_BUFFER, InjectLoaderMethod },
+                { LUA_REF, InjectRefMethod },
+                { LUA_UNREF, InjectUnrefMethod },
+            };
+
+            HookDllFun(profilerType, hookExternfunDict, luaAssembly);
+#if SLUA
+            profilerType = luaAssembly.MainModule.GetType("SLua.LuaDLLWrapper");
+            HookDllFun(profilerType, hookExternfunDict, luaAssembly);
+#endif
+
+            luaAssembly.Write(luaPath);
+#endif
+        }
+
+        #region try finally
+        private static bool IsMonoBehavior(TypeDefinition td)
+        {
+            if (td == null) return false;
+
+            if (td.FullName == "UnityEngine.MonoBehaviour")
+            {
+                return true;
+            }
+            else
+            {
+                if (td.BaseType == null)
+                {
+                    return false;
+                }
+                else
+                {
+                    return IsMonoBehavior(td.BaseType.Resolve());
+                }
+            }
+        }
 
         private static string GetReflectionName(this TypeReference type)
         {
@@ -457,41 +439,6 @@ namespace MikuLuaProfiler_Editor
             ass.Write(path);
         }
 
-        public static void Recompile()
-        {
-            BuildTargetGroup bg = BuildTargetGroup.Standalone;
-            switch (EditorUserBuildSettings.activeBuildTarget)
-            {
-                case BuildTarget.Android:
-                    bg = BuildTargetGroup.Android;
-                    break;
-                case BuildTarget.iOS:
-                    bg = BuildTargetGroup.iOS;
-                    break;
-            }
-            string path = PlayerSettings.GetScriptingDefineSymbolsForGroup(bg);
-            bool hasRecompile = false;
-
-            string[] heads = path.Split(';');
-            path = "";
-            foreach (var item in heads)
-            {
-                if (item == "MIKU_RECOMPILE")
-                {
-                    hasRecompile = true;
-                    continue;
-                }
-                path += item + ";";
-            }
-
-            if (!hasRecompile)
-            {
-                path += "MIKU_RECOMPILE;";
-            }
-
-            PlayerSettings.SetScriptingDefineSymbolsForGroup(bg, path);
-        }
-
         private static string GetMD5HashFromFile(string path)
         {
             if (!File.Exists(path))
@@ -518,133 +465,34 @@ namespace MikuLuaProfiler_Editor
             return md5;
         }
 
-        private static void AddResolver(AssemblyDefinition assembly)
+        public static void AddResolver(AssemblyDefinition assembly)
         {
-            var assemblyResolver = assembly.MainModule.AssemblyResolver as DefaultAssemblyResolver;
-            HashSet<string> paths = new HashSet<string>();
-            paths.Add("./Library/ScriptAssemblies/");
-            foreach (string path in (from asm in System.AppDomain.CurrentDomain.GetAssemblies()
+            DefaultAssemblyResolver defaultAssemblyResolver = assembly.MainModule.AssemblyResolver as DefaultAssemblyResolver;
+            HashSet<string> hashSet = new HashSet<string>();
+            hashSet.Add(Path.GetDirectoryName(InjectToLua.Program.filePath));
+            foreach (string path in (from asm in AppDomain.CurrentDomain.GetAssemblies()
                                      select asm.ManifestModule.FullyQualifiedName).Distinct<string>())
             {
                 try
                 {
-                    string dir = Path.GetDirectoryName(path);
-                    if (!paths.Contains(dir))
+                    string directoryName = Path.GetDirectoryName(path);
+                    if (!hashSet.Contains(directoryName))
                     {
-                        paths.Add(dir);
+                        hashSet.Add(directoryName);
                     }
                 }
                 catch
                 {
                 }
             }
-
-            foreach (var item in paths)
+            foreach (string text in hashSet)
             {
-                assemblyResolver.AddSearchDirectory(item);
+                defaultAssemblyResolver.AddSearchDirectory(text);
             }
         }
         #endregion
 
         #region hook
-        public static void HookLuaFun()
-        {
-            #if XLUA || TOLUA || SLUA
-            string profilerPath = (typeof(MikuLuaProfiler.LuaProfiler).Assembly).ManifestModule.FullyQualifiedName;
-            string luaPath = (typeof(LuaDLL).Assembly).ManifestModule.FullyQualifiedName;
-            DoHookLuaFun(luaPath, profilerPath);
-            #endif
-        }
-
-        private static void DoHookLuaFun(string luaPath, string profilerPath)
-        {
-#if XLUA || TOLUA || SLUA
-            AssemblyDefinition luaAssembly = LoadAssembly(luaPath);
-            AssemblyDefinition profilerAssembly = null;
-            if (luaPath == profilerPath)
-            {
-                profilerAssembly = luaAssembly;
-            }
-            else
-            {
-                profilerAssembly = LoadAssembly(profilerPath);
-            }
-            
-
-            #region find lua method
-            var profilerType = luaAssembly.MainModule.GetType(LUA_FULL_NAME);
-            foreach (var m in profilerType.Methods)
-            {
-                //已经注入了就不注入了
-                if (m.Name == LUA_NEW_STATE + "_profiler")
-                {
-                    return;
-                }
-            }
-            #endregion
-
-            #region find profiler method
-            var luaProfiler = profilerAssembly.MainModule.GetType("MikuLuaProfiler.LuaProfiler");
-
-            foreach (var m in luaProfiler.Methods)
-            {
-                if (m.Name == "set_mainL")
-                {
-                    m_setMainL = m;
-                }
-                else if (m.Name == "get_mainL")
-                {
-                    m_getMainL = m;
-                }
-            }
-
-            var luaHookType = profilerAssembly.MainModule.GetType("MikuLuaProfiler.LuaHook");
-            foreach (var m in luaHookType.Methods)
-            {
-                if (m.Name == "Hookloadbuffer")
-                {
-                    m_hookloadbuffer = m;
-                }
-                else if (m.Name == "HookRef")
-                {
-                    m_hookRef = m;
-                }
-                else if (m.Name == "HookUnRef")
-                {
-                    m_hookUnref = m;
-                }
-            }
-
-            var luaRegister = profilerAssembly.MainModule.GetType("MikuLuaProfiler.MikuLuaProfilerLuaProfilerWrap");
-            foreach (var m in luaRegister.Methods)
-            {
-                if (m.Name == "__Register")
-                {
-                    m_registerLua = m;
-                    break;
-                }
-            }
-            #endregion
-
-            Dictionary<string, InjectMethodAction> hookExternfunDict = new Dictionary<string, InjectMethodAction>
-            {
-                { LUA_NEW_STATE, InjectNewStateMethod},
-                { LUA_CLOSE, InjectCloseMethod },
-                { LUA_LOAD_BUFFER, InjectLoaderMethod },
-                { LUA_REF, InjectRefMethod },
-                { LUA_UNREF, InjectUnrefMethod },
-            };
-
-            HookDllFun(profilerType, hookExternfunDict, luaAssembly);
-#if SLUA
-            profilerType = luaAssembly.MainModule.GetType("SLua.LuaDLLWrapper");
-            HookDllFun(profilerType, hookExternfunDict, luaAssembly);
-#endif
-
-            luaAssembly.Write(luaPath);
-#endif
-        }
-
         private static void HookDllFun(TypeDefinition profilerType, Dictionary<string, InjectMethodAction> hookExternfunDict, AssemblyDefinition assembly)
         {
 #if XLUA || TOLUA || SLUA
@@ -686,13 +534,6 @@ namespace MikuLuaProfiler_Editor
                         action(m, assembly.MainModule, method);
                     }
                 }
-                //else if (m.Name == LUA_TOSTRING)
-                //{
-                //    var method = new MethodDefinition(m.Name + "_profiler", m.Attributes, m.ReturnType);
-                //    profilerType.Methods.Add(method);
-                //    CopyMethod(m, method);
-                //    ModifyTostring(m, assembly.MainModule, method);
-                //}
             }
 #endif
         }
@@ -853,24 +694,5 @@ namespace MikuLuaProfiler_Editor
 
         #endregion
 
-#if USE_LUA_PROFILER || UNITY_EDITOR
-        [UnityEditor.Callbacks.PostProcessScene]
-        private static void OnPostprocessScene()
-        {
-#if XLUA || TOLUA || SLUA
-            var luaPath = (typeof(LuaDLL).Assembly).ManifestModule.FullyQualifiedName;
-            var projectPath = System.Reflection.Assembly.Load("Assembly-CSharp").ManifestModule.FullyQualifiedName;
-            var profilerPath = (typeof(LuaProfiler).Assembly).ManifestModule.FullyQualifiedName;
-            if (LuaDeepProfilerSetting.Instance.isDeepLuaProfiler)
-            {
-                DoHookLuaFun(luaPath, profilerPath);
-            }
-            if (LuaDeepProfilerSetting.Instance.isDeepMonoProfiler)
-            {
-                InjectAllMethods(projectPath, profilerPath);
-            }
-#endif
-        }
-#endif
     }
 }
