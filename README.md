@@ -82,7 +82,7 @@ a();
 tb.Dispose(); //This line of code tends to forget to call
 a= null;      //This line of code tends to forget to call
 ```
-in lua
+in Lua
 ```
 // The lua table tends to forget to call dispose
 CS.UIBehaviour.luauiTable = {}
