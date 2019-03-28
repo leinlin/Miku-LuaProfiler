@@ -108,6 +108,9 @@ namespace MikuLuaProfiler
             {
                 return;
             }
+#if UNITY_EDITOR
+            if (!UnityEngine.Application.isPlaying) return;
+#endif
             HookLuaSetup.OnStartGame();
             var setting = LuaDeepProfilerSetting.Instance;
             if (setting == null) return;
@@ -173,7 +176,9 @@ namespace MikuLuaProfiler
             {
                 return;
             }
-
+#if UNITY_EDITOR
+            if (!UnityEngine.Application.isPlaying) return;
+#endif
             var setting = LuaDeepProfilerSetting.Instance;
             if (setting == null) return;
 

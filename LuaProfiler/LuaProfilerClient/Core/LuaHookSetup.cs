@@ -74,6 +74,9 @@ namespace MikuLuaProfiler
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
         public static void OnStartGame()
         {
+#if UNITY_EDITOR
+            if (!Application.isPlaying) return;
+#endif
             if (isInite) return;
 
             isInite = true;
@@ -128,7 +131,7 @@ namespace MikuLuaProfiler
                 power = NativeHelper.GetBatteryLevel();
                 currentTime = Time.unscaledTime;
             }
-            if ((Input.touchCount == 4 && Input.touches[0].phase == TouchPhase.Began) || Input.GetKeyDown(KeyCode.Delete))
+            if (Input.touchCount == 4 || Input.GetKeyDown(KeyCode.Delete))
             {
                 needShowMenu = !needShowMenu;
                 if (needShowMenu)
