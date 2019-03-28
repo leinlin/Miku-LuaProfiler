@@ -140,6 +140,7 @@ namespace MikuLuaProfiler_Editor
         private static MethodDefinition m_hookloadbuffer;
         private static MethodDefinition m_hookRef;
         private static MethodDefinition m_hookUnref;
+        private static MethodDefinition m_luaGC;
         public delegate void InjectMethodAction(MethodDefinition method, ModuleDefinition module, MethodDefinition newMethod);
 
         private const string LUA_NEW_STATE = "luaL_newstate";
@@ -580,6 +581,10 @@ namespace MikuLuaProfiler_Editor
                 {
                     return;
                 }
+                if (m.Name == "lua_gc")
+                {
+                    m_luaGC = m;
+                }
             }
             #endregion
 
@@ -761,11 +766,9 @@ namespace MikuLuaProfiler_Editor
 
             var il = method.Body.GetILProcessor();
 
-            il.Append(il.Create(OpCodes.Nop));
             il.Append(il.Create(OpCodes.Ldarg_0));
             il.Append(il.Create(OpCodes.Ldarg_1));
             il.Append(il.Create(OpCodes.Ldarg_3));
-
             il.Append(il.Create(OpCodes.Call, module.ImportReference(m_hookloadbuffer)));
             il.Append(il.Create(OpCodes.Starg_S, bufParam));
             il.Append(il.Create(OpCodes.Ldarg_0));
@@ -775,15 +778,12 @@ namespace MikuLuaProfiler_Editor
             il.Append(il.Create(OpCodes.Conv_I4));
             il.Append(il.Create(OpCodes.Ldarg_3));
             il.Append(il.Create(OpCodes.Call, module.ImportReference(newMethod)));
-            il.Append(il.Create(OpCodes.Stloc_0));
-            il.Append(il.Create(OpCodes.Ldloc_0));
-            il.Append(il.Create(OpCodes.Stloc_1));
-
-            var ldloc1 = il.Create(OpCodes.Ldloc_1);
-            il.Append(ldloc1);
+            il.Append(il.Create(OpCodes.Ldarg_0));
+            il.Append(il.Create(OpCodes.Ldc_I4_2));
+            il.Append(il.Create(OpCodes.Ldc_I4_0));
+            il.Append(il.Create(OpCodes.Call, module.ImportReference(m_luaGC)));
+            il.Append(il.Create(OpCodes.Pop));
             il.Append(il.Create(OpCodes.Ret));
-
-            il.InsertBefore(ldloc1, il.Create(OpCodes.Br, ldloc1));
         }
 
         private static void InjectRefMethod(MethodDefinition method, ModuleDefinition module, MethodDefinition newMethod)

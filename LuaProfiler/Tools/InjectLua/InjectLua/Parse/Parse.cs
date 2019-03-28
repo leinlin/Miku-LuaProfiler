@@ -285,7 +285,7 @@ namespace MikuLuaProfiler
 
             if (needLastSample)
             {
-                l.InsertString(nextPos, " EndMikuSample()");
+                l.InsertString(nextPos, "\n EndMikuSample()");
             }
         }
         #endregion
