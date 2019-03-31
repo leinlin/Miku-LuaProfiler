@@ -502,7 +502,7 @@ namespace MikuLuaProfiler
                 _Error("chunk has too many lines");
         }
 
-        private string _ReadLongString(int sep)
+        private string _ReadLongString(int sep, bool isComment)
         {
             _SaveAndNext();
 
@@ -524,7 +524,7 @@ namespace MikuLuaProfiler
                             if (_SkipSep() == sep)
                             {
                                 _SaveAndNext();
-                                if (sep == 0)
+                                if (sep == 0 && !isComment)
                                 {
                                     _LexError(_GetSavedString(),
                                         "nesting of [[...]] is deprecated",
@@ -842,7 +842,7 @@ namespace MikuLuaProfiler
                                 _ClearSaved();
                                 if (sep >= 0)
                                 {
-                                    _ReadLongString(sep);
+                                    _ReadLongString(sep, true);
                                     _ClearSaved();
                                     return new JumpToken(pos);
                                 }
@@ -859,7 +859,7 @@ namespace MikuLuaProfiler
                             int sep = _SkipSep();
                             if (sep >= 0)
                             {
-                                string seminfo = _ReadLongString(sep);
+                                string seminfo = _ReadLongString(sep, false);
                                 return new StringToken(seminfo);
                             }
                             else if (sep == -1) return new LiteralToken('[');
