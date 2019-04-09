@@ -718,6 +718,7 @@ end
 local weak_meta_key_table = {__mode = 'k'}
 local weak_meta_value_table = {__mode = 'v'}
 local infoTb = {}
+
 function miku_do_record(val, prefix, key, record, history, null_list)
     if val == infoTb then
         return
@@ -742,6 +743,15 @@ function miku_do_record(val, prefix, key, record, history, null_list)
     local typeStr = type(val)
     if typeStr ~= 'table' and typeStr ~= 'userdata' and typeStr ~= 'function' then
         return
+    end
+
+    if typeStr == 'table' then
+        local isEmpty = true
+        for k,v in pairs(val) do
+            isEmpty = false
+            break
+        end
+        if isEmpty then return end
     end
 
     local strKey = tostring(key)
