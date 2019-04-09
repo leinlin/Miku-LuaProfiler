@@ -108,23 +108,29 @@ namespace MikuLuaProfiler
             {
                 return;
             }
-#if UNITY_EDITOR
-            if (!UnityEngine.Application.isPlaying) return;
-#endif
-            HookLuaSetup.OnStartGame();
-            var setting = LuaDeepProfilerSetting.Instance;
-            if (setting == null) return;
-
-            int frameCount = HookLuaSetup.frameCount;
-
-            if (m_currentFrame != frameCount)
+            try
             {
-                PopAllSampleWhenLateUpdate(luaState);
-                m_currentFrame = frameCount;
+#if UNITY_EDITOR
+                if (!UnityEngine.Application.isPlaying) return;
+#endif
+                HookLuaSetup.OnStartGame();
+                var setting = LuaDeepProfilerSetting.Instance;
+                if (setting == null) return;
+
+                int frameCount = HookLuaSetup.frameCount;
+
+                if (m_currentFrame != frameCount)
+                {
+                    PopAllSampleWhenLateUpdate(luaState);
+                    m_currentFrame = frameCount;
+                }
+                long memoryCount = LuaLib.GetLuaMemory(luaState);
+                Sample sample = Sample.Create(getcurrentTime, (int)memoryCount, name);
+                beginSampleMemoryStack.Push(sample);
             }
-            long memoryCount = LuaLib.GetLuaMemory(luaState);
-            Sample sample = Sample.Create(getcurrentTime, (int)memoryCount, name);
-            beginSampleMemoryStack.Push(sample);
+            catch
+            {
+            }
         }
         private static List<Sample> popChilds = new List<Sample>();
         public static void PopAllSampleWhenLateUpdate(IntPtr luaState)

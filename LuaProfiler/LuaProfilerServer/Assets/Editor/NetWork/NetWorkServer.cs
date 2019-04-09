@@ -387,7 +387,17 @@ namespace MikuLuaProfiler
             int nullCount = br.ReadInt32();
             for (int i = 0; i < nullCount; i++)
             {
-                diffInfo.PushNullRef(ReadString(br));
+                diffInfo.PushNullRef(ReadString(br), br.ReadInt32());
+            }
+            int nullDetailCount = br.ReadInt32();
+            for (int i = 0; i < nullDetailCount; i++)
+            {
+                string key = ReadString(br);
+                int count = br.ReadInt32();
+                for (int ii = 0; ii < count; ii++)
+                {
+                    diffInfo.PushNullDetail(key, ReadString(br));
+                }
             }
 
             return diffInfo;

@@ -2,6 +2,7 @@
 {
     using System;
     using System.Collections.Generic;
+    using System.IO;
     using System.Text;
     using UnityEditor;
     using UnityEngine;
@@ -17,6 +18,10 @@
         private Vector2 scrollPositionDetail;
         public void DoRefScroll()
         {
+            if (!Directory.Exists(Application.dataPath.Replace("Assets", "Diff")))
+            {
+                Directory.CreateDirectory(Application.dataPath.Replace("Assets", "Diff"));
+            }
             if (m_isRecord)
             {
                 EditorGUILayout.LabelField(m_dateTime);
@@ -32,34 +37,21 @@
             EditorGUILayout.LabelField("add values count:" + luaDiff.addRef.Count, GUILayout.Width(150));
             if (GUILayout.Button("ShowLog", GUILayout.Width(100)))
             {
-                StringBuilder sb = new StringBuilder();
-                sb.AppendLine("add:");
-                foreach (var item in luaDiff.addRef)
-                {
-                    List<string> list = null;
-                    string key = item.Key;
-                    string value = item.Value.ToString();
-                    if (luaDiff.addDetail.TryGetValue(key, out list))
-                    {
-                        foreach (var itemx in list)
-                        {
-                            sb.Append("Key:");
-                            sb.Append(itemx);
-                            sb.Append(" ValueType:");
-                            sb.AppendLine(value);
-                        }
-                        sb.AppendLine("");
-                    }
-                }
-                LuaProfilerWindow.ClearConsole();
-                Debug.Log(sb.ToString());
+                ShowLog("add", luaDiff.addRef, luaDiff.addDetail);
             }
             GUILayout.EndHorizontal();
 
             scrollPositionAdd = GUILayout.BeginScrollView(scrollPositionAdd, EditorStyles.helpBox, GUILayout.Height(100));
+            int drawCount = 0;
             foreach (var item in luaDiff.addRef)
             {
                 DrawItemInfo(item.Key, item.Value.ToString(), luaDiff.addDetail);
+                drawCount++;
+                if (drawCount > 200)
+                {
+                    GUILayout.Label("more please show log", GUILayout.Width(400));
+                    break;
+                }
             }
             GUILayout.EndScrollView();
 
@@ -67,34 +59,21 @@
             EditorGUILayout.LabelField("rm values count:" + luaDiff.rmRef.Count, GUILayout.Width(150));
             if (GUILayout.Button("ShowLog", GUILayout.Width(100)))
             {
-                StringBuilder sb = new StringBuilder();
-                sb.AppendLine("rm:");
-                foreach (var item in luaDiff.rmRef)
-                {
-                    List<string> list = null;
-                    string key = item.Key;
-                    string value = item.Value.ToString();
-                    if (luaDiff.rmDetail.TryGetValue(key, out list))
-                    {
-                        foreach (var itemx in list)
-                        {
-                            sb.Append("Key:");
-                            sb.Append(itemx);
-                            sb.Append(" ValueType:");
-                            sb.AppendLine(value);
-                        }
-                        sb.AppendLine("");
-                    }
-                }
-                LuaProfilerWindow.ClearConsole();
-                Debug.Log(sb.ToString());
+                ShowLog("rm", luaDiff.rmRef, luaDiff.rmDetail);
             }
             GUILayout.EndHorizontal();
 
             scrollPositionRm = GUILayout.BeginScrollView(scrollPositionRm, EditorStyles.helpBox, GUILayout.Height(100));
+            drawCount = 0;
             foreach (var item in luaDiff.rmRef)
             {
                 DrawItemInfo(item.Key, item.Value.ToString(), luaDiff.rmDetail);
+                drawCount++;
+                if (drawCount > 200)
+                {
+                    GUILayout.Label("more please show log", GUILayout.Width(400));
+                    break;
+                }
             }
             GUILayout.EndScrollView();
 
@@ -102,22 +81,23 @@
             EditorGUILayout.LabelField("Destory null values count:" + luaDiff.nullRef.Count, GUILayout.Width(200));
             if (GUILayout.Button("ShowLog", GUILayout.Width(100)))
             {
-                StringBuilder sb = new StringBuilder();
-                sb.AppendLine("null:");
-                foreach (var item in luaDiff.nullRef)
-                {
-                    sb.AppendLine(item);
-                }
-                LuaProfilerWindow.ClearConsole();
-                Debug.Log(sb.ToString());
+                ShowLog("null", luaDiff.nullRef, luaDiff.nullDetail);
             }
             GUILayout.EndHorizontal();
 
             scrollPositionNull = GUILayout.BeginScrollView(scrollPositionNull, EditorStyles.helpBox, GUILayout.Height(100));
+            drawCount = 0;
             foreach (var item in luaDiff.nullRef)
             {
-                GUILayout.Label(item);
+                DrawItemInfo(item.Key, item.Value.ToString(), luaDiff.nullDetail);
+                drawCount++;
+                if (drawCount > 200)
+                {
+                    GUILayout.Label("more please show log", GUILayout.Width(400));
+                    break;
+                }
             }
+
             GUILayout.EndScrollView();
             GUILayout.EndVertical();
             #endregion
@@ -138,13 +118,44 @@
 
         }
 
+        public void ShowLog(string fileName, Dictionary<string, LuaTypes> refDict, Dictionary<string, List<string>> detailDict)
+        {
+            StringBuilder sb = new StringBuilder();
+            foreach (var item in refDict)
+            {
+                List<string> list = null;
+                string key = item.Key;
+                string value = item.Value.ToString();
+                if (detailDict.TryGetValue(key, out list))
+                {
+                    sb.AppendLine("type:" + value);
+                    for (int i = 0,imax=list.Count;i<imax;i++)
+                    {
+                        if (i == imax - 1)
+                        {
+                            sb.AppendLine(" └─ref" + i + " url:" + list[i]);
+                        }
+                        else
+                        {
+                            sb.AppendLine(" ├─ref" + i + " url:" + list[i]);
+                        }
+
+                    }
+                }
+            }
+            LuaProfilerWindow.ClearConsole();
+            string path = Application.dataPath.Replace("Assets", "Diff/" + fileName + ".txt");
+            File.WriteAllText(path, sb.ToString());
+            System.Diagnostics.Process.Start("explorer.exe", Application.dataPath.Replace("Assets", "Diff").Replace("/", "\\"));
+        }
+
         public void DrawItemInfo(string key, string value, Dictionary<string, List<string>> dict)
         {
             GUILayout.BeginHorizontal();
             List<string> list = null;
             dict.TryGetValue(key, out list);
             int count = list == null ? 0 : list.Count;
-            GUILayout.Label(string.Format("Key:{0}", key, GUILayout.Width(400)));
+            GUILayout.Label(string.Format("Key:{0}", key), GUILayout.Width(400));
             GUILayout.Label(string.Format("Value:{0}", value));
             GUILayout.Label(string.Format("Ref Count:{0}", count));
             if (GUILayout.Button("detail", GUILayout.Width(100)))

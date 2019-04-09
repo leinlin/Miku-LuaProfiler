@@ -79,7 +79,8 @@ namespace MikuLuaProfiler
         public Dictionary<string, List<string>> addDetail = new Dictionary<string, List<string>>();
         public Dictionary<string, LuaTypes> rmRef = new Dictionary<string, LuaTypes>();
         public Dictionary<string, List<string>> rmDetail = new Dictionary<string, List<string>>();
-        public List<string> nullRef = new List<string>();
+        public Dictionary<string, LuaTypes> nullRef = new Dictionary<string, LuaTypes>();
+        public Dictionary<string, List<string>> nullDetail = new Dictionary<string, List<string>>();
         #endregion
 
         #region api
@@ -115,9 +116,20 @@ namespace MikuLuaProfiler
             list.Add(value);
         }
 
-        public void PushNullRef(string value)
+        public void PushNullRef(string addKey, int addType)
         {
-            nullRef.Add(value);
+            nullRef.Add(addKey, (LuaTypes)addType);
+        }
+
+        public void PushNullDetail(string addKey, string value)
+        {
+            List<string> list;
+            if (!nullDetail.TryGetValue(addKey, out list))
+            {
+                list = new List<string>();
+                nullDetail[addKey] = list;
+            }
+            list.Add(value);
         }
         #endregion
 

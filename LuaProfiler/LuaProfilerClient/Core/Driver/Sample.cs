@@ -81,24 +81,8 @@ namespace MikuLuaProfiler
         public Dictionary<string, List<string>> addDetail = new Dictionary<string, List<string>>();
         public Dictionary<string, int> rmRef = new Dictionary<string, int>();
         public Dictionary<string, List<string>> rmDetail = new Dictionary<string, List<string>>();
-        public List<string> nullRef = new List<string>();
-        #endregion
-
-        #region api
-        public void PushAddRef(string addKey, int addType)
-        {
-            addRef.Add(addKey, addType);
-        }
-
-        public void PushRmRef(string addKey, int addType)
-        {
-            rmRef.Add(addKey, addType);
-        }
-
-        public void PushNullRef(string value)
-        {
-            nullRef.Add(value);
-        }
+        public Dictionary<string, int> nullRef = new Dictionary<string, int>();
+        public Dictionary<string, List<string>> nullDetail = new Dictionary<string, List<string>>();
         #endregion
 
         #region pool

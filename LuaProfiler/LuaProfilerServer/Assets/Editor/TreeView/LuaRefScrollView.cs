@@ -40,12 +40,19 @@ namespace MikuLuaProfiler
                     scrollPositionTb = GUILayout.BeginScrollView(scrollPositionTb, EditorStyles.helpBox);
                 }
                 GUILayout.BeginVertical();
+                int drawedCount = 0;
                 foreach (var item in dictItem)
                 {
                     GUILayout.BeginHorizontal();
                     int count = item.Value.Count;
                     GUILayout.Label(item.Key + " count:" + count);
                     GUILayout.EndHorizontal();
+                    drawedCount++;
+                    if (drawedCount > 100)
+                    {
+                        GUILayout.Label("more");
+                        break;
+                    }
                 }
                 GUILayout.EndVertical();
                 GUILayout.EndScrollView();

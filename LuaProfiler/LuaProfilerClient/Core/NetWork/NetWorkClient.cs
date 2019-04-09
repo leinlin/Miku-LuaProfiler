@@ -860,11 +860,24 @@ namespace MikuLuaProfiler
                 }
 
                 // null
-                var nullList = ld.nullRef;
-                bw.Write(nullList.Count);
-                foreach (var item in nullList)
+                var nullDict = ld.nullRef;
+                bw.Write(nullDict.Count);
+                foreach (var item in nullDict)
                 {
-                    WriteString(bw, item);
+                    WriteString(bw, item.Key);
+                    bw.Write(item.Value);
+                }
+                var nullDetail = ld.nullDetail;
+                bw.Write(nullDetail.Count);
+                foreach (var item in nullDetail)
+                {
+                    WriteString(bw, item.Key);
+                    var list = item.Value;
+                    bw.Write(list.Count);
+                    foreach (var listItem in list)
+                    {
+                        WriteString(bw, listItem);
+                    }
                 }
             }
         }
