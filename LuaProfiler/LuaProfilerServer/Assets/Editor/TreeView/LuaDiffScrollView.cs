@@ -133,11 +133,11 @@
                     {
                         if (i == imax - 1)
                         {
-                            sb.AppendLine(" └─ref" + i + " url:" + list[i]);
+                            sb.AppendLine(" └─ref" + (i + 1) + " url:" + list[i]);
                         }
                         else
                         {
-                            sb.AppendLine(" ├─ref" + i + " url:" + list[i]);
+                            sb.AppendLine(" ├─ref" + (i + 1) + " url:" + list[i]);
                         }
 
                     }
