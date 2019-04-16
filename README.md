@@ -163,7 +163,7 @@ InjectLua.exe "inpath" "outpath"
 如果您发现任何错误或有任何建议加入QQ群：[882425563](https://jq.qq.com/?_wv=1027&k=5QkOBSc) 与我们联系
 
 ### 部署和安装
-Lua Profiler For Unity支持 **XLua**、**SLua**、**ToLua** 以及远程分析器工具，因此它支持Windows，Android，IOS 的真机 Profiler。
+Lua Profiler For Unity支持 **XLua**、**SLua**、**ToLua** ，本工具是基于远程Socket的Profiler工具，因此它支持Android，IOS 的真机 Profiler。
 
 - 您必须打开两个Unity项目，一个用于游戏客户端，一个用于编辑服务器
 - 打开 **LuaProfiler** 文件夹
