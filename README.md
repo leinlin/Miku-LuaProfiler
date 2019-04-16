@@ -154,7 +154,7 @@ InjectLua.exe "inpath" "outpath"
 **Unity + Lua** 脚本现在是中国最流行的增量更新框架，但是，由于没有很好的工具来监控lua vm的cpu和内存使用情况，很多开发人员都不知道如何优化他们的代码，所以在lua代码中存在许多潜在的风险。
 此工具旨在支持Unity 易于使用的分析器，帮助查找瓶颈并使您的游戏更快速，更稳定。
 
-### Use renderings
+### 使用示意图
 ![](doc/use.gif)
 
 ##
@@ -163,7 +163,7 @@ InjectLua.exe "inpath" "outpath"
 如果您发现任何错误或有任何建议加入QQ群：[882425563](https://jq.qq.com/?_wv=1027&k=5QkOBSc) 与我们联系
 
 ### 部署和安装
-Lua Profiler For Unity支持 **XLua**、**SLua**、**ToLua** 以及远程分析器工具，因此它支持Windows，Android，IOS On-device Profiler。
+Lua Profiler For Unity支持 **XLua**、**SLua**、**ToLua** 以及远程分析器工具，因此它支持Windows，Android，IOS 的真机 Profiler。
 
 - 您必须打开两个Unity项目，一个用于游戏客户端，一个用于编辑服务器
 - 打开 **LuaProfiler** 文件夹
@@ -207,7 +207,7 @@ MikuLuaProfiler.HookLuaSetup.OnStartGame();
 选择想要分析器的代码类型，C＃代码颜色为绿色，lua代码颜色为蓝色。<br/>
 
 #### Open server
-同理可以通过 **"Window->Lua Profiler Window"**打开窗口，然后单击 **OpenService**，等待客户端连接
+同理可以通过 **Window->Lua Profiler Window**打开窗口，然后单击 **OpenService**，等待客户端连接
 ## 
 ![](doc/config_server.png)
 
