@@ -147,11 +147,8 @@ If you want to use **luac code or luajit bytecode** ,use **InjectLua.exe** in fo
 InjectLua.exe "inpath" "outpath"
 ```
 
-### Use Case
-![](doc/ljjc.jpg)
-
 ------
-<span id="jump">中文说明</span>
+<span id="jump"></span>
 
 ### 目的
 **Unity + Lua** 脚本现在是中国最流行的增量更新框架，但是，由于没有很好的工具来监控lua vm的cpu和内存使用情况，很多开发人员都不知道如何优化他们的代码，所以在lua代码中存在许多潜在的风险。
