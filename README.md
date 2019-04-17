@@ -179,9 +179,9 @@ MikuLuaProfiler.HookLuaSetup.OnStartGame();
 | Name                    | Descriptions                                                                                              |
 | ----------------------- | -------------------------------------------------------------------------------------------------------   |
 | `Overview`              | 函数名称                                                                                                  |
-| `totalLuaMemory`        | 此函数生成的所有Lua GC的总和如果GC发生，则该值将不会非常准确                                              |
+| `totalLuaMemory`        | 此函数生成的所有Lua GC的总和                                                                              |
 | `self`                  | 函数本身产生的GC量                                                                                        |
-| `totalMonoMemory`       | 此函数生成的所有Mono GC的总和如果GC发生，则该值将不会非常准确                                             |
+| `totalMonoMemory`       | 此函数生成的所有Mono GC的总和                                                                             |
 | `self`                  | 函数本身产生的GC量                                                                                        |
 | `currentTime`           | 函数在当前帧中运行所需的时间                                                                              |
 | `averageTime`           | 计算在函数上花费的时间的平均值                                                                            |
@@ -216,12 +216,12 @@ MikuLuaProfiler.HookLuaSetup.OnStartGame();
 ## 
 
 #### 游戏中的菜单
-按 `DEL` 或 四手指触碰屏幕 以显示此菜单，您可以更改IP连接并显示剖析器信息的更多详细信息</br>
+按 `DEL` 或 四手指触碰屏幕 以显示此菜单，您可以在游戏中随时中断或者重启连接 以及更换IP地址</br>
 ![](doc/menu.png)</br>
 
 
 #### 监控注册表
-程序员往往忘记发布由C＃缓存的Lua对象。例如，当XLua调用LuaEnv.Dispose时，它会抛出异常 "try to dispose a LuaEnv with C# callback!"<br/>
+程序员往往忘记释放由C＃缓存的Lua对象。例如，当XLua调用LuaEnv.Dispose时，它会抛出异常 "try to dispose a LuaEnv with C# callback!"<br/>
 
 原因通常是由以下代码引起的
 ```

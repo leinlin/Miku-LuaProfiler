@@ -301,12 +301,16 @@ namespace MikuLuaProfiler
         public static void Record()
         {
             IntPtr L = LuaProfiler.mainL;
-            LuaDLL.lua_gc(L, LuaGCOptions.LUA_GCCOLLECT, 0);
             if (L == IntPtr.Zero)
             {
                 return;
             }
             isHook = false;
+            Resources.UnloadUnusedAssets();
+            // 调用C# LuaTable LuaFunction WeakTable的析构 来清理掉lua的 ref
+            GC.Collect();
+            // 清理掉C#强ref后，顺便清理掉很多弱引用
+            LuaDLL.lua_gc(L, LuaGCOptions.LUA_GCCOLLECT, 0);
             ClearRecord();
             int oldTop = LuaDLL.lua_gettop(L);
             LuaDLL.lua_getglobal(L, "miku_handle_error");
@@ -414,13 +418,16 @@ namespace MikuLuaProfiler
         public static void Diff()
         {
             IntPtr L = LuaProfiler.mainL;
-            LuaDLL.lua_gc(L, LuaGCOptions.LUA_GCCOLLECT, 0);
             if (L == IntPtr.Zero)
             {
                 return;
             }
             isHook = false;
-
+            Resources.UnloadUnusedAssets();
+            // 调用C# LuaTable LuaFunction WeakTable的析构 来清理掉lua的 ref
+            GC.Collect();
+            // 清理掉C#强ref后，顺便清理掉很多弱引用
+            LuaDLL.lua_gc(L, LuaGCOptions.LUA_GCCOLLECT, 0);
             if (historyRef == -100)
             {
                 Debug.LogError("has no history");
@@ -565,7 +572,6 @@ namespace MikuLuaProfiler
         public static LuaCSFunction handleError = new LuaCSFunction(HandleError);
         public static void __Register(IntPtr L)
         {
-            HookLuaSetup.OnStartGame();
             LuaDLL.lua_newtable(L);
             LuaDLL.lua_pushstring(L, "LuaProfiler");
             LuaDLL.lua_newtable(L);

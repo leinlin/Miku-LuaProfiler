@@ -110,7 +110,6 @@ namespace MikuLuaProfiler
             }
             try
             {
-                HookLuaSetup.OnStartGame();
                 var setting = LuaDeepProfilerSetting.Instance;
                 if (setting == null) return;
 
