@@ -77,11 +77,11 @@ namespace MikuLuaProfiler
     public class LuaDiffInfo : NetBase
     {
         #region field
-        public Dictionary<string, int> addRef = new Dictionary<string, int>();
+        public Dictionary<string, LuaTypes> addRef = new Dictionary<string, LuaTypes>();
         public Dictionary<string, List<string>> addDetail = new Dictionary<string, List<string>>();
-        public Dictionary<string, int> rmRef = new Dictionary<string, int>();
+        public Dictionary<string, LuaTypes> rmRef = new Dictionary<string, LuaTypes>();
         public Dictionary<string, List<string>> rmDetail = new Dictionary<string, List<string>>();
-        public Dictionary<string, int> nullRef = new Dictionary<string, int>();
+        public Dictionary<string, LuaTypes> nullRef = new Dictionary<string, LuaTypes>();
         public Dictionary<string, List<string>> nullDetail = new Dictionary<string, List<string>>();
         #endregion
 

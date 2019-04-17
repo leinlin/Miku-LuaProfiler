@@ -303,12 +303,14 @@ namespace MikuLuaProfiler
                 return;
             }
             isHook = false;
+
+            ClearRecord();
             Resources.UnloadUnusedAssets();
             // 调用C# LuaTable LuaFunction WeakTable的析构 来清理掉lua的 ref
             GC.Collect();
             // 清理掉C#强ref后，顺便清理掉很多弱引用
             LuaDLL.lua_gc(L, LuaGCOptions.LUA_GCCOLLECT, 0);
-            ClearRecord();
+
             int oldTop = LuaDLL.lua_gettop(L);
             LuaDLL.lua_getglobal(L, "miku_handle_error");
 
@@ -365,7 +367,7 @@ namespace MikuLuaProfiler
                 historyRef = -100;
             }
         }
-        private static void SetTable(int refIndex, Dictionary<string, int> dict, Dictionary<string, List<string>> detailDict)
+        private static void SetTable(int refIndex, Dictionary<string, LuaTypes> dict, Dictionary<string, List<string>> detailDict)
         {
             IntPtr L = LuaProfiler.mainL;
             if (L == IntPtr.Zero)
@@ -403,7 +405,7 @@ namespace MikuLuaProfiler
                 LuaDLL.lua_settop(L, key_t);
                 if (!string.IsNullOrEmpty(firstKey))
                 {
-                    dict[firstKey] = (int)LuaDLL.lua_type(L, -2);
+                    dict[firstKey] = (LuaTypes)LuaDLL.lua_type(L, -2);
                     detailDict[firstKey] = detailList;
                 }
 
@@ -412,12 +414,18 @@ namespace MikuLuaProfiler
             }
             LuaDLL.lua_settop(L, oldTop);
         }
-        public static void Diff()
+
+        public static void DiffServer()
+        {
+            NetWorkClient.SendMessage(Diff());
+        }
+
+        public static LuaDiffInfo Diff()
         {
             IntPtr L = LuaProfiler.mainL;
             if (L == IntPtr.Zero)
             {
-                return;
+                return null;
             }
             isHook = false;
             Resources.UnloadUnusedAssets();
@@ -428,7 +436,7 @@ namespace MikuLuaProfiler
             if (historyRef == -100)
             {
                 Debug.LogError("has no history");
-                return;
+                return null;
             }
 
             int oldTop = LuaDLL.lua_gettop(L);
@@ -441,7 +449,7 @@ namespace MikuLuaProfiler
                 Debug.LogError(LuaDLL.lua_type(L, -1));
                 LuaDLL.lua_settop(L, oldTop);
                 historyRef = -100;
-                return;
+                return null;
             }
 
             if (LuaDLL.lua_pcall(L, 1, 3, oldTop + 1) == 0)
@@ -456,14 +464,14 @@ namespace MikuLuaProfiler
             SetTable(rmRef, ld.rmRef, ld.rmDetail);
             SetTable(addRef, ld.addRef, ld.addDetail);
 
-            NetWorkClient.SendMessage(ld);
-
             LuaDLL.lua_unref(L, nullObjectRef);
             LuaDLL.lua_unref(L, rmRef);
             LuaDLL.lua_unref(L, addRef);
             LuaDLL.lua_settop(L, oldTop);
 
             isHook = true;
+
+            return ld;
         }
         #endregion
 
@@ -721,6 +729,7 @@ end
 local weak_meta_key_table = {__mode = 'k'}
 local weak_meta_value_table = {__mode = 'v'}
 local infoTb = {}
+local cache_key = 'miku_record_prefix_cache'
 
 function miku_do_record(val, prefix, key, record, history, null_list)
     if val == infoTb then
@@ -748,15 +757,6 @@ function miku_do_record(val, prefix, key, record, history, null_list)
         return
     end
 
-    if typeStr == 'table' then
-        local isEmpty = true
-        for k,v in pairs(val) do
-            isEmpty = false
-            break
-        end
-        if isEmpty then return end
-    end
-
     local strKey = tostring(key)
     if not strKey then
         strKey = 'empty'
@@ -771,6 +771,7 @@ function miku_do_record(val, prefix, key, record, history, null_list)
         tmp_prefix = prefix.. (prefix == '' and '' or '.') .. strKey
         prefixTb[strKey] = tmp_prefix
     end
+
     if null_list then
         if type(val) == 'userdata' then
             local st,ret = pcall(miku_is_null, val)
@@ -797,10 +798,26 @@ function miku_do_record(val, prefix, key, record, history, null_list)
         return
     end
 
-    if record[val] == nil then
-        record[val] = {}
+    local prefix_cache
+    if history == nil then
+        if record[cache_key] == nil then
+            record[cache_key] = {}
+        end
+        prefix_cache = record[cache_key]
+        prefix_cache[tmp_prefix] = tmp_prefix
+        if record[val] == nil then
+            record[val] = {}
+        end
+        table.insert(record[val], tmp_prefix)
+    else
+        prefix_cache = history[cache_key]
+        if prefix_cache[tmp_prefix] == nil or history[val] then
+            if record[val] == nil then
+                record[val] = {}
+            end
+            table.insert(record[val], tmp_prefix)
+        end
     end
-    table.insert(record[val], tmp_prefix)
 
     if typeStr == 'table' then
         for k,v in pairs(val) do
@@ -846,13 +863,15 @@ function miku_diff(record)
     miku_do_record(_G, '', '_G', add, record, null_list)
     miku_do_record(debug.getregistry(), '', '_R', add, record, null_list)
     local rm = { }
+
     for key, val in pairs(record) do
-        if not add[key] then
+        if not add[key] and key ~= cache_key then
             rm[key] = val
         else
             add[key] = nil
         end
     end
+
     return add,rm,null_list
 end";
 #endregion

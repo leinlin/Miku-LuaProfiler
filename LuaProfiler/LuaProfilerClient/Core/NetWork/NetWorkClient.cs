@@ -232,7 +232,7 @@ namespace MikuLuaProfiler
                                     break;
                                 case 2:
                                     {
-                                        HookLuaSetup.RegisterAction(LuaHook.Diff);
+                                        HookLuaSetup.RegisterAction(LuaHook.DiffServer);
                                     }
                                     break;
                             }
@@ -824,7 +824,7 @@ namespace MikuLuaProfiler
                 foreach (var item in addDict)
                 {
                     WriteString(bw, item.Key);
-                    bw.Write(item.Value);
+                    bw.Write((int)item.Value);
                 }
                 var addDetail = ld.addDetail;
                 bw.Write(addDetail.Count);
@@ -844,7 +844,7 @@ namespace MikuLuaProfiler
                 foreach (var item in rmDict)
                 {
                     WriteString(bw, item.Key);
-                    bw.Write(item.Value);
+                    bw.Write((int)item.Value);
                 }
                 var rmDetail = ld.rmDetail;
                 bw.Write(rmDetail.Count);
@@ -865,7 +865,7 @@ namespace MikuLuaProfiler
                 foreach (var item in nullDict)
                 {
                     WriteString(bw, item.Key);
-                    bw.Write(item.Value);
+                    bw.Write((int)item.Value);
                 }
                 var nullDetail = ld.nullDetail;
                 bw.Write(nullDetail.Count);

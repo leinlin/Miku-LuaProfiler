@@ -8,13 +8,19 @@
 */
 using UnityEngine;
 using UnityEditor;
+using MikuLuaProfiler;
 
 namespace MikuLuaProfiler_Editor
 {
     public class LuaProfilerWindowProfiler : EditorWindow
     {
+        private static LuaDiffScrollView m_luaDiffScrollView = null;
         void OnEnable()
         {
+            if (m_luaDiffScrollView == null)
+            {
+                m_luaDiffScrollView = new LuaDiffScrollView();
+            }
         }
 
         void OnGUI()
@@ -72,11 +78,6 @@ namespace MikuLuaProfiler_Editor
 
             EditorGUILayout.EndHorizontal();
 
-            //GUILayout.Space(5);
-            //if (GUILayout.Button("Inject Method", GUILayout.Height(50)))
-            //{
-            //    InjectMethods.InjectAllMethods();
-            //}
             GUILayout.Space(5);
             if (GUILayout.Button("ReCompile", GUILayout.Height(50)))
             {
@@ -107,6 +108,29 @@ namespace MikuLuaProfiler_Editor
             }
             GUILayout.Space(5);*/
 
+            GUILayout.EndVertical();
+            #endregion
+
+            #region diff
+            GUILayout.BeginVertical("Box");
+            GUILayout.Space(5);
+            GUILayout.BeginHorizontal();
+            if (GUILayout.Button("MarkLuaRecord", GUILayout.Height(30)))
+            {
+                LuaHook.Record();
+                m_luaDiffScrollView.MarkIsRecord();
+            }
+            if (GUILayout.Button("DiffRecord", GUILayout.Height(30)))
+            {
+                m_luaDiffScrollView.DelDiffInfo(LuaHook.Diff());
+            }
+            if (GUILayout.Button("ClearDiff", GUILayout.Height(30)))
+            {
+                m_luaDiffScrollView.Clear();
+            }
+            GUILayout.EndHorizontal();
+
+            m_luaDiffScrollView.DoRefScroll();
             GUILayout.EndVertical();
             #endregion
 

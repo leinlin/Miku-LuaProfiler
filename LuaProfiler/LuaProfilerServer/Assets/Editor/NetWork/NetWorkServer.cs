@@ -40,7 +40,7 @@ namespace MikuLuaProfiler
             {
                 if (isPlaying == true && EditorApplication.isPlaying == false)
                 {
-                    NetWorkServer.Close();
+                    NetWorkServer.RealClose();
                 }
 
                 isPlaying = EditorApplication.isPlaying;
@@ -55,7 +55,7 @@ namespace MikuLuaProfiler
         private static TcpClient tcpClient = null;
         private static Thread receiveThread;
         private static Thread sendThread;
-        private static Thread acceptThread;
+        public static Thread acceptThread;
         private static NetworkStream ns;
         private static BinaryReader br;
         private static BinaryWriter bw;
@@ -97,24 +97,39 @@ namespace MikuLuaProfiler
             tcpLister.Start();
             acceptThread = new Thread(AcceptThread);
             acceptThread.Start();
+
         }
 
         private static void AcceptThread()
         {
             UnityEngine.Debug.Log("<color=#00ff00>begin listerner</color>");
             tcpClient = null;
+
+            while (true)
+            {
+                AcceptAClient();
+                Thread.Sleep(100);
+            }
+        }
+
+        private static void AcceptAClient()
+        {
+            if (tcpClient != null) return;
+
             try
             {
                 if (tcpClient == null)
                 {
                     tcpClient = tcpLister.AcceptTcpClient();
                 }
-             }
+            }
             catch
             {
                 UnityEngine.Debug.Log("<color=#ff0000>start fail</color>");
                 Close();
+                return;
             }
+            LuaProfilerWindow.ClearTreeView();
 
             UnityEngine.Debug.Log("<color=#00ff00>link start</color>");
             tcpClient.ReceiveTimeout = 1000000;
@@ -131,7 +146,6 @@ namespace MikuLuaProfiler
             // 启动一个线程来发送请求
             sendThread = new Thread(DoSendMessage);
             sendThread.Start();
-            acceptThread = null;
         }
 
         // 0获取ref表，1 记录下当前全局表状态，2 diff 当前状态与历史记录, 3 执行完lua的gc在diff
@@ -215,7 +229,6 @@ namespace MikuLuaProfiler
                 catch (ThreadAbortException e) { }
                 catch (Exception e)
                 {
-                    UnityEngine.Debug.Log(e);
                     Close();
                 }
 #pragma warning restore 0168
@@ -231,15 +244,15 @@ namespace MikuLuaProfiler
                 {
                     if (ns.CanWrite)
                     {
-                        while (m_cmdQueue.Count > 0)
+                        lock (m_cmdQueue)
                         {
-                            int msgId = -1;
-                            lock (m_cmdQueue)
+                            while (m_cmdQueue.Count > 0)
                             {
+                                int msgId = -1;
                                 msgId = m_cmdQueue.Dequeue();
+                                bw.Write(PACK_HEAD);
+                                bw.Write(msgId);
                             }
-                            bw.Write(PACK_HEAD);
-                            bw.Write(msgId);
                         }
                     }
                 }
@@ -255,7 +268,7 @@ namespace MikuLuaProfiler
             }
         }
 
-        public static void Close()
+        public static void RealClose()
         {
             try
             {
@@ -270,7 +283,6 @@ namespace MikuLuaProfiler
                 UnityEngine.Debug.Log(e);
             }
             UnityEngine.Debug.Log("<color=#ff0000>disconnect</color>");
-
             if (acceptThread != null)
             {
                 try
@@ -278,9 +290,14 @@ namespace MikuLuaProfiler
                     acceptThread.Abort();
                 }
                 catch { }
-                receiveThread = null;
+                acceptThread = null;
             }
+            Close();
+        }
 
+        public static void Close()
+        {
+            tcpClient = null;
             if (receiveThread != null)
             {
                 try

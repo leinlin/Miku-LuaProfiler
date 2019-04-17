@@ -362,25 +362,23 @@ namespace MikuLuaProfiler
 
         public void DequeueSample()
         {
-            lock (this)
+            while (m_runningSamplesQueue.Count > 0)
             {
-                if (m_runningSamplesQueue.Count > 0)
+                Sample s = null;
+                lock (this)
                 {
-                    while (m_runningSamplesQueue.Count > 0)
-                    {
-                        Sample s = null;
-                        lock (this)
-                        {
-                            s = m_runningSamplesQueue.Dequeue();
-                            m_catchLuaMemory += s.costLuaGC;
-                            LoadRootSample(s, LuaDeepProfilerSetting.Instance.isRecord);
-
-                            s.Restore();
-                        }
-                    }
+                    s = m_runningSamplesQueue.Dequeue();
                 }
-            }
+                m_catchLuaMemory += s.costLuaGC;
+                LoadRootSample(s, LuaDeepProfilerSetting.Instance.isRecord);
 
+                s.Restore();
+            }
+            if (LuaProfilerWindow.DoClear != null)
+            {
+                LuaProfilerWindow.DoClear();
+                LuaProfilerWindow.DoClear = null;
+            }
         }
 
         private static MultiColumnHeader CreateDefaultMultiColumnHeaderState(float treeViewWidth)

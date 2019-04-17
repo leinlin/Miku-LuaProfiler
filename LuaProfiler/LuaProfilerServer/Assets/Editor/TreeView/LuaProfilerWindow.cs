@@ -13,6 +13,7 @@ using UnityEditor.IMGUI.Controls;
 using UnityEngine;
 using System.IO;
 using System.Collections.Generic;
+using System;
 
 namespace MikuLuaProfiler
 {
@@ -53,20 +54,20 @@ namespace MikuLuaProfiler
             }
         );
 
-        LuaProfilerTreeView m_TreeView;
+        private static LuaProfilerTreeView m_TreeView;
         SearchField m_SearchField;
         int startFrame = 0;
         int endFrame = 0;
         int sortColIndex = -1;
         bool isAscending = false;
         private int m_lastCount = 0;
-        int port = 2333;
+        public static int port = 2333;
         private bool isShowLuaChart = true;
         private bool isShowMonoChart = true;
         private bool isShowFpsChart = true;
         private bool isShowPssChart = false;
         private bool isShowPowerChart = false;
-        private int currentFrameIndex = 0;
+        static private int currentFrameIndex = 0;
 
         private Texture2D disableChart;
         private Texture2D luaChart;
@@ -79,10 +80,25 @@ namespace MikuLuaProfiler
         private string oldEndUrl = null;
         private Texture2D oldStartT = null;
         private Texture2D oldEndT = null;
+        public static Action DoClear;
 
-        private LuaRefScrollView m_luaRefScrollView = null;
-        private LuaDiffScrollView m_luaDiffScrollView = null;
+        private static LuaRefScrollView m_luaRefScrollView = null;
+        private static LuaDiffScrollView m_luaDiffScrollView = null;
         #endregion
+
+        private static void DoClearTreeView()
+        {
+            currentFrameIndex = 0;
+            m_TreeView.Clear(true);
+            m_luaRefScrollView.ClearRefInfo(true);
+            m_luaDiffScrollView.Clear();
+            ClearConsole();
+        }
+
+        public static void ClearTreeView()
+        {
+            DoClear = new Action(DoClearTreeView);
+        }
 
         public static void ClearConsole()
         {
@@ -271,7 +287,7 @@ namespace MikuLuaProfiler
             if (GUILayout.Button("OpenService", EditorStyles.toolbarButton, GUILayout.Height(30)))
             {
                 ClearConsole();
-                NetWorkServer.Close();
+                NetWorkServer.RealClose();
                 currentFrameIndex = 0;
                 m_TreeView.Clear(true);
                 NetWorkServer.RegisterOnReceiveSample(m_TreeView.LoadRootSample);
@@ -285,7 +301,7 @@ namespace MikuLuaProfiler
             if (GUILayout.Button("CloseService", EditorStyles.toolbarButton, GUILayout.Height(30)))
             {
                 ClearConsole();
-                NetWorkServer.Close();
+                NetWorkServer.RealClose();
             }
 
             GUILayout.Space(25);
@@ -298,13 +314,17 @@ namespace MikuLuaProfiler
             {
                 NetWorkServer.SendCmd(2);
             }
-            //if (GUILayout.Button("GCDiff", EditorStyles.toolbarButton, GUILayout.Height(30)))
-            //{
-            //    NetWorkServer.SendCmd(3);
-            //}
             if (GUILayout.Button("ClearDiff", EditorStyles.toolbarButton, GUILayout.Height(30)))
             {
                 m_luaDiffScrollView.Clear();
+            }
+            GUILayout.Space(10);
+            if (NetWorkServer.acceptThread != null)
+            {
+                Color c = GUI.color;
+                GUI.color = Color.green;
+                GUILayout.Label("listerning..");
+                GUI.color = c;
             }
             #endregion
 
@@ -607,7 +627,7 @@ namespace MikuLuaProfiler
             }
         }
 
-            #region chart
+        #region chart
         private void DrawChart(Rect rect)
         {
             if (m_TreeView == null) return;
