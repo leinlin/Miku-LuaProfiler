@@ -289,10 +289,7 @@ namespace MikuLuaProfiler
         {
             if (isHook)
             {
-                HookLuaSetup.RegisterAction(() =>
-                {
-                    LuaLib.DoRefLuaFun(L, "lua_miku_remove_ref_fun_info", reference);
-                });
+                LuaLib.DoRefLuaFun(L, "lua_miku_remove_ref_fun_info", reference);
             }
         }
 
