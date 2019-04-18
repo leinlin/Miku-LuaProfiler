@@ -1,7 +1,7 @@
 ## Lua Profiler For Unity
 <br/>
 
-[中文说明](#jump)
+[中文说明](#zh)
 
 ### Purpose
 **Unity + Lua** script is now most popular incremental update frameWork for mobile game in China,However, since there haven't been good tool to monitor the cpu and memory usage of lua vm, lots of developers have no idea to optimize their code,so there are many potential risks in lua codes.<br>
@@ -166,13 +166,13 @@ InjectLua.exe "inpath" "outpath"
 ```
 
 ------
-<span id="jump"></span>
+<span id="zh"></span>
 
 ## 大纲
 [部署和安装](#installe_zh)</br>
 [使用教程](#turtor_zh)</br>
 [数据说明](#data_zh)</br>
-[Record模式](#record_zh)</br>
+[记录模式](#record_zh)</br>
 [DIFF 两个不同时期的Lua变量](#diff_zh)</br>
 [联系我们](#contact_zh)</br>
 
@@ -186,7 +186,7 @@ InjectLua.exe "inpath" "outpath"
 ##
 
 <span id="installe_zh"></span>
-### [部署和安装](#jump)
+### [部署和安装](#zh)
 Lua Profiler For Unity支持 **XLua**、**SLua**、**ToLua** ，本工具是基于远程Socket的Profiler工具，因此它支持Android，IOS 的真机 Profiler。
 
 - 您必须打开两个Unity项目，一个放进游戏客户端，一个用于展示数据
@@ -204,7 +204,7 @@ MikuLuaProfiler.HookLuaSetup.OnStartGame();
 ## 
 
 <span id="turtor_zh"></span>
-### 使用教程
+### [使用教程](#zh)
 
 #### 配置客户端
 
@@ -214,7 +214,7 @@ MikuLuaProfiler.HookLuaSetup.OnStartGame();
 
 选择想要分析器的代码类型，C＃代码颜色为绿色，lua代码颜色为蓝色。<br/>
 
-#### Open server
+#### 打开展示Editor的监听端口
 同理可以通过 **Window->Lua Profiler Window**打开窗口，然后单击 **OpenService**，等待客户端连接
 ## 
 ![](doc/config_server.png)
@@ -224,7 +224,7 @@ MikuLuaProfiler.HookLuaSetup.OnStartGame();
 ## 
 
 <span id="data_zh"></span>
-### 数据说明
+### [数据说明](#zh)
 
 | Name                    | Descriptions                                                                                              |
 | ----------------------- | -------------------------------------------------------------------------------------------------------   |
@@ -287,7 +287,7 @@ CS.UIBehaviour.loginUI = { __name = "LoginUI" }
 - 点击 `PowerChart` 打开电量图表，线条颜色为棕色。
 
 <span id="record_zh"></span>
-#### Record mode
+#### [记录模式](#zh)
 单击 **Record** 按钮，当游戏连接到服务器时，切换 **StartRecord** 以开始或停止录制。
 
 ##
@@ -303,7 +303,7 @@ CS.UIBehaviour.loginUI = { __name = "LoginUI" }
 ![](doc/record.gif)
 
 <span id="diff_zh"></span>
-### DIFF 两个不同时期的Lua变量
+### [DIFF 两个不同时期的Lua变量](#zh)
 选取一个适当的时机,比如配置表加载完后，准备打开一个新的UI的时候点击**MarkLuaRecord**按钮
 ##
 ![](doc/mark.png)<br/>
@@ -350,5 +350,5 @@ and all members in qq group [LuaProfiler](https://jq.qq.com/?_wv=1027&k=5QkOBSc)
 ![](doc/meizi.gif)
 
 <span id="contact_zh"></span>
-### 联系
+### [联系](#zh)
 如果您发现任何错误或有任何建议加入QQ群：[882425563](https://jq.qq.com/?_wv=1027&k=5QkOBSc) 与我们联系
