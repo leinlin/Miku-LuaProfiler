@@ -186,7 +186,7 @@ InjectLua.exe "inpath" "outpath"
 ##
 
 <span id="installe_zh"></span>
-### 部署和安装
+### [部署和安装](#jump)
 Lua Profiler For Unity支持 **XLua**、**SLua**、**ToLua** ，本工具是基于远程Socket的Profiler工具，因此它支持Android，IOS 的真机 Profiler。
 
 - 您必须打开两个Unity项目，一个放进游戏客户端，一个用于展示数据
