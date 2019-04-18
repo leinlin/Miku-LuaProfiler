@@ -338,7 +338,7 @@ CS.UIBehaviour.loginUI = { __name = "LoginUI" }
 ![](doc/search.png)<br/>
 
 <span id="device_zh"></span>
-### [真机Profiler](#en)
+### [真机Profiler](#zh)
 设置宏 **USE_LUA_PROFILER** 以在App中注入探查器代码。</br>
 
 #### Android
