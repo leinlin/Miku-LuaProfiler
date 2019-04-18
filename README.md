@@ -275,6 +275,18 @@ CS.UIBehaviour.loginUI = { __name = "LoginUI" }
 ##
 ![](doc/record.gif)
 
+### DIFF 两个不同时期的Lua变量
+选取一个适当的时机,比如配置表加载完后，准备打开一个新的UI的时候点击**MarkLuaRecord**按钮
+![](doc/mark.png)<br/>
+之后打开UI然后卸载掉UI资源，点击**DiffRecord**，工具将会对Mark时候的Lua变量与**DiffRecord**时候的变量进行差异比较
+![](doc/mark.png)<br/>
+点击**ShowLog**按钮，将会把文件存盘打开之后将把对于变量的类型以及引用路径打印出来。
+![](doc/diff_log.png)<br/>
+**Destroy null values**为Unity已经将资源释放，而Lua仍然引用的变量，这个是主要的资源泄漏要重点关注。
+![](doc/null_object.png)<br/>
+![](doc/search.png)<br/>
+
+
 ### 真机Profiler
 设置宏 **USE_LUA_PROFILER** 以在App中注入探查器代码。</br>
 
