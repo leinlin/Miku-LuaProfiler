@@ -168,6 +168,14 @@ InjectLua.exe "inpath" "outpath"
 ------
 <span id="jump"></span>
 
+##大纲
+[部署和安装](#installe_zh)
+[使用教程](#turtor_zh)
+[数据说明](#data_zh)
+[Record模式](#record_zh)
+[DIFF 两个不同时期的Lua变量](#diff_zh)
+[联系我们](#contact_zh)
+
 ### 目的
 **Unity + Lua** 脚本现在是中国最流行的增量更新框架，但是，由于没有很好的工具来监控lua vm的cpu和内存使用情况，很多开发人员都不知道如何优化他们的代码，所以在lua代码中存在许多潜在的风险。
 此工具旨给Unity 提供一个易于使用的lua性能分析器用于查找代码中的性能瓶颈并使您的游戏更快速、稳定。
@@ -177,9 +185,7 @@ InjectLua.exe "inpath" "outpath"
 
 ##
 
-### 联系
-如果您发现任何错误或有任何建议加入QQ群：[882425563](https://jq.qq.com/?_wv=1027&k=5QkOBSc) 与我们联系
-
+<span id="installe_zh"></span>
 ### 部署和安装
 Lua Profiler For Unity支持 **XLua**、**SLua**、**ToLua** ，本工具是基于远程Socket的Profiler工具，因此它支持Android，IOS 的真机 Profiler。
 
@@ -192,28 +198,12 @@ Lua Profiler For Unity支持 **XLua**、**SLua**、**ToLua** ，本工具是基�
 MikuLuaProfiler.HookLuaSetup.OnStartGame();
 ```
 
-### 数据说明
-
-| Name                    | Descriptions                                                                                              |
-| ----------------------- | -------------------------------------------------------------------------------------------------------   |
-| `Overview`              | 函数名称                                                                                                  |
-| `totalLuaMemory`        | 此函数生成的所有Lua GC的总和                                                                              |
-| `self`                  | 函数本身产生的GC量                                                                                        |
-| `totalMonoMemory`       | 此函数生成的所有Mono GC的总和                                                                             |
-| `self`                  | 函数本身产生的GC量                                                                                        |
-| `currentTime`           | 函数在当前帧中运行所需的时间                                                                              |
-| `averageTime`           | 计算在函数上花费的时间的平均值                                                                            |
-| `totalTime`             | 此功能消耗的所有时间                                                                                      |
-| `LuaGC`                 | 由当前帧生成的Lua GC                                                                                      |
-| `MonoGC`                | 由当前帧生成的Mono GC                                                                                     |
-| `totalCalls`            | 游戏开始后此功能的运行次数                                                                                |
-| `Calls`                 | 函数当前帧的执行次数                                                                                      |
-
 ### 理论
 它使用mono.ceil的IL注入功能（也用于XLua），将profiler代码注入游戏代码
 
 ## 
 
+<span id="turtor_zh"></span>
 ### 使用教程
 
 #### 配置客户端
@@ -232,6 +222,24 @@ MikuLuaProfiler.HookLuaSetup.OnStartGame();
 ## 
 ![](doc/profiler.gif)
 ## 
+
+<span id="data_zh"></span>
+### 数据说明
+
+| Name                    | Descriptions                                                                                              |
+| ----------------------- | -------------------------------------------------------------------------------------------------------   |
+| `Overview`              | 函数名称                                                                                                  |
+| `totalLuaMemory`        | 此函数生成的所有Lua GC的总和                                                                              |
+| `self`                  | 函数本身产生的GC量                                                                                        |
+| `totalMonoMemory`       | 此函数生成的所有Mono GC的总和                                                                             |
+| `self`                  | 函数本身产生的GC量                                                                                        |
+| `currentTime`           | 函数在当前帧中运行所需的时间                                                                              |
+| `averageTime`           | 计算在函数上花费的时间的平均值                                                                            |
+| `totalTime`             | 此功能消耗的所有时间                                                                                      |
+| `LuaGC`                 | 由当前帧生成的Lua GC                                                                                      |
+| `MonoGC`                | 由当前帧生成的Mono GC                                                                                     |
+| `totalCalls`            | 游戏开始后此功能的运行次数                                                                                |
+| `Calls`                 | 函数当前帧的执行次数                                                                                      |
 
 #### 游戏中的菜单
 按 `DEL` 或 四手指触碰屏幕 以显示此菜单，您可以在游戏中随时中断或者重启连接 以及更换IP地址</br>
@@ -278,6 +286,7 @@ CS.UIBehaviour.loginUI = { __name = "LoginUI" }
 - 点击 `PssChart` 打开pss图表，线条颜色为红色。
 - 点击 `PowerChart` 打开电量图表，线条颜色为棕色。
 
+<span id="record_zh"></span>
 #### Record mode
 单击 **Record** 按钮，当游戏连接到服务器时，切换 **StartRecord** 以开始或停止录制。
 
@@ -293,6 +302,7 @@ CS.UIBehaviour.loginUI = { __name = "LoginUI" }
 ##
 ![](doc/record.gif)
 
+<span id="diff_zh"></span>
 ### DIFF 两个不同时期的Lua变量
 选取一个适当的时机,比如配置表加载完后，准备打开一个新的UI的时候点击**MarkLuaRecord**按钮
 ##
@@ -338,3 +348,7 @@ and all members in qq group [LuaProfiler](https://jq.qq.com/?_wv=1027&k=5QkOBSc)
 
 ## 
 ![](doc/meizi.gif)
+
+<span id="contact_zh"></span>
+### 联系
+如果您发现任何错误或有任何建议加入QQ群：[882425563](https://jq.qq.com/?_wv=1027&k=5QkOBSc) 与我们联系
