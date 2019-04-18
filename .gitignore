@@ -61,3 +61,7 @@ manifest.json
 /ToLuaClient
 /Server
 /LuaProfiler/LuaProfilerServer/*.userprefs
+/LuaProfiler/LuaProfilerServer/Assets/Diff.meta
+/LuaProfiler/LuaProfilerServer/Assets/Diff
+/LuaProfiler/Tools/monohook_runtime/.vscode/ipch
+/LuaProfiler/LuaProfilerServer/Diff

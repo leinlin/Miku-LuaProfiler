@@ -1,6 +1,12 @@
-﻿using System;
+﻿/*
+ Desc: 一个可以运行时 Hook Mono 方法的工具，让你可以无需修改 UnityEditor.dll 等文件就可以重写其函数功能
+ Author: Misaka Mikoto
+ Github: https://github.com/easy66/MonoHooker
+ */
+using System;
+using System.Runtime.InteropServices;
 
-namespace DotNetDetour
+namespace MonoHooker
 {
     /// <summary>
     /// 用于计算汇编指令长度，使用的是BlackBone的LDasm.c中的算法，我把他翻译成C#了
@@ -609,12 +615,9 @@ namespace DotNetDetour
         /// <returns></returns>
         public static uint SizeofMinNumByte(void* code, int size)
         {
-            if (IsAndroidARM())
+            if (NativeAPI.IsAndroidARM())
             {
-                if (IsIL2CPP())
-                    return CalcARMThumbMinLen(code, size);
-                else
-                    return (uint)((size + 3) / 4) * 4; // 此为 jit 模式下的长度
+                return (uint)((size + 3) / 4) * 4; // 此为 jit 模式下的长度
             }
 
             UInt32 Length;
@@ -625,7 +628,6 @@ namespace DotNetDetour
             do
             {
                 Length = ldasm(code, data, is64);
-
                 pOpcode = (byte*)code + data.opcd_offset;
                 Result += Length;
                 if (Result >= size)
@@ -635,65 +637,9 @@ namespace DotNetDetour
 
                 code = (void*)((ulong)code + Length);
 
-            } while (Length>0);
+            } while (Length > 0);
 
             return Result;
-        }
-
-        public static bool IsAndroidARM()
-        {
-            return UnityEngine.SystemInfo.operatingSystem.Contains("Android")
-                && UnityEngine.SystemInfo.processorType.Contains("ARM");
-        }
-
-        public static bool IsiOS()
-        {
-            return UnityEngine.SystemInfo.operatingSystem.ToLower().Contains("ios");
-        }
-
-        public static bool IsIL2CPP()
-        {
-            bool isIL2CPP = false;
-            try
-            {
-                byte[] ilBody = typeof(LDasm).GetMethod("IsIL2CPP").GetMethodBody().GetILAsByteArray();
-                if (ilBody == null || ilBody.Length == 0)
-                    isIL2CPP = true;
-            }
-            catch
-            {
-                isIL2CPP = true;
-            }
-            return isIL2CPP;
-        }
-
-        /// <summary>
-        /// 计算 thumb 指令长度
-        /// </summary>
-        /// <param name="code"></param>
-        /// <param name="size"></param>
-        /// <returns></returns>
-        public static uint CalcARMThumbMinLen(void* code, int size)
-        {
-            uint len = 0;
-
-            ushort* ins = (ushort*)code;
-            while (true)
-            {
-                if (len >= size)
-                    return len;
-
-                if (((*ins >> 13) & 3) == 3)
-                {
-                    ins += 2;
-                    len += 4;
-                }
-                else
-                {
-                    ins++;
-                    len += 2;
-                }
-            }
         }
 
         static uint ldasm(void* code, ldasm_data ld, bool is64)
@@ -705,14 +651,14 @@ namespace DotNetDetour
             s = rexw = pr_66 = pr_67 = 0;
 
             /* dummy check */
-            if ((int)code==0)
+            if ((int)code == 0)
                 return 0;
 
             /* init output data */
             //memset(ld, 0, sizeof(ldasm_data));
 
             /* phase 1: parse prefixies */
-            while ((cflags(*p) & OP_PREFIX)!=0)
+            while ((cflags(*p) & OP_PREFIX) != 0)
             {
                 if (*p == 0x66)
                     pr_66 = 1;
@@ -755,19 +701,20 @@ namespace DotNetDetour
                 op = *p++; s++;
                 ld.opcd_size++;
                 f = cflags_ex(op);
-                if ((f & OP_INVALID)!=0)
+                if ((f & OP_INVALID) != 0)
                 {
                     ld.flags |= F_INVALID;
                     return s;
                 }
                 /* for SSE instructions */
-                if ((f & OP_EXTENDED)!=0)
+                if ((f & OP_EXTENDED) != 0)
                 {
                     op = *p++; s++;
                     ld.opcd_size++;
                 }
             }
-            else {
+            else
+            {
                 f = cflags(op);
                 /* pr_66 = pr_67 for opcodes A0-A3 */
                 if (op >= 0xA0 && op <= 0xA3)
@@ -775,7 +722,7 @@ namespace DotNetDetour
             }
 
             /* phase 3: parse ModR/M, SIB and DISP */
-            if ((f & OP_MODRM)!=0)
+            if ((f & OP_MODRM) != 0)
             {
                 byte mod = (byte)(*p >> 6);
                 byte ro = (byte)((*p & 0x38) >> 3);
@@ -791,7 +738,7 @@ namespace DotNetDetour
                     f |= OP_DATA_I16_I32_I64;
 
                 /* is SIB byte exist? */
-                if (mod != 3 && rm == 4 && !(!is64 && pr_67!=0))
+                if (mod != 3 && rm == 4 && !(!is64 && pr_67 != 0))
                 {
                     ld.sib = *p++; s++;
                     ld.flags |= F_SIB;
@@ -815,12 +762,13 @@ namespace DotNetDetour
                                     ld.flags |= F_RELATIVE;
                             }
                         }
-                        else if (pr_67!=0)
+                        else if (pr_67 != 0)
                         {
                             if (rm == 6)
                                 ld.disp_size = 2;
                         }
-                        else {
+                        else
+                        {
                             if (rm == 5)
                                 ld.disp_size = 4;
                         }
@@ -831,14 +779,14 @@ namespace DotNetDetour
                     case 2:
                         if (is64)
                             ld.disp_size = 4;
-                        else if (pr_67!=0)
+                        else if (pr_67 != 0)
                             ld.disp_size = 2;
                         else
                             ld.disp_size = 4;
                         break;
                 }
 
-                if (ld.disp_size>0)
+                if (ld.disp_size > 0)
                 {
                     ld.disp_offset = (byte)(p - (byte*)code);
                     p += ld.disp_size;
@@ -848,20 +796,20 @@ namespace DotNetDetour
             }
 
             /* phase 4: parse immediate data */
-            if (rexw!=0 && (f & OP_DATA_I16_I32_I64)!=0)
+            if (rexw != 0 && (f & OP_DATA_I16_I32_I64) != 0)
                 ld.imm_size = 8;
-            else if ((f & OP_DATA_I16_I32)!=0 || (f & OP_DATA_I16_I32_I64)!=0)
+            else if ((f & OP_DATA_I16_I32) != 0 || (f & OP_DATA_I16_I32_I64) != 0)
                 ld.imm_size = (byte)(4 - (pr_66 << 1));
 
             /* if exist, add OP_DATA_I16 and OP_DATA_I8 size */
             ld.imm_size += (byte)(f & 3);
 
-            if ((ld.imm_size)!=0)
+            if ((ld.imm_size) != 0)
             {
                 s += ld.imm_size;
                 ld.imm_offset = (byte)(p - (byte*)code);
                 ld.flags |= F_IMM;
-                if ((f & OP_RELATIVE)!=0)
+                if ((f & OP_RELATIVE) != 0)
                     ld.flags |= F_RELATIVE;
             }
 

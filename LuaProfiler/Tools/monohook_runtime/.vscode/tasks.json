@@ -1,0 +1,19 @@
+{
+  "tasks": [
+    {
+      "type": "shell",
+      "label": "gcc.exe build active file",
+      "command": "E:/cygwin64/bin/gcc.exe",
+      "args": [
+        "-g",
+        "${file}",
+        "-o",
+        "${fileDirname}\\${fileBasenameNoExtension}.exe"
+      ],
+      "options": {
+        "cwd": "E:/cygwin64/bin"
+      }
+    }
+  ],
+  "version": "2.0.0"
+}
