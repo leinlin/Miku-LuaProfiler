@@ -131,6 +131,24 @@ Click **Record** button, when game connect to server, toggle **StartRecord** to 
 ##
 ![](doc/record.gif)
 
+### DIFF two different periods of Lua variables
+Choose an appropriate time, such as you are ready to open a new UI after the configuration table is loaded, click **MarkLuaRecord** button
+##
+![](doc/mark.png)<br/>
+Open the UI then close and unload the UI resources. Click **DiffRecord**. The tool will compare the difference between the Lua variable at the time of Mark and the variable when you click **DiffRecord**.
+
+##
+![](doc/diff.png)<br/>
+Clicking the **ShowLog** button will save the type of the variable and the reference path after the file is saved. Note that _G represents the global table and _R represents the object referenced by C#.
+
+##
+![](doc/diff_log.png)<br/>
+**Destroy null values** for Unity has released resources, while Lua still references variables, this is the main resource leak to focus on.
+
+##
+![](doc/null_object.png)<br/>
+![](doc/search.png)<br/>
+
 ### On-device Profiler
 Set macro **USE_LUA_PROFILER** to inject profiler code in you App.</br>
 
