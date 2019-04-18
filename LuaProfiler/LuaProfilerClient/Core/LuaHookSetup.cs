@@ -757,6 +757,15 @@ function miku_do_record(val, prefix, key, record, history, null_list)
         return
     end
 
+    if typeStr == 'table' then
+        local isEmpty = true
+        for k,v in pairs(val) do
+            isEmpty = false
+            break
+        end
+        if isEmpty then return end
+    end
+
     local strKey = tostring(key)
     if not strKey then
         strKey = 'empty'
@@ -813,7 +822,7 @@ function miku_do_record(val, prefix, key, record, history, null_list)
         prefix_cache = history[cache_key]
         if prefix_cache[tmp_prefix] == nil or history[val] then
             if record[val] == nil then
-                record[val] = {}
+                record[val] = { }
             end
             table.insert(record[val], tmp_prefix)
         end
