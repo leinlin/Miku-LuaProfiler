@@ -144,7 +144,7 @@ Click **Record** button, when game connect to server, toggle **StartRecord** to 
 ![](doc/record.gif)
 
 <span id="diff_en"></span>
-### DIFF two different periods of Lua variables
+### [DIFF two different periods of Lua variables](#en)
 Choose an appropriate time, such as you are ready to open a new UI after the configuration table is loaded, click **MarkLuaRecord** button
 ##
 ![](doc/mark.png)<br/>
