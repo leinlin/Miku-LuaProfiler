@@ -727,8 +727,8 @@ namespace MikuLuaProfiler
                     {
                         continue;
                     }
-                    Vector3 currentPos = PointFromRect(0, len, i, minValue, maxValue, currentMetric, rect);
-                    Vector3 lastPos = PointFromRect(0, len, i - 1, minValue, maxValue, lastPoint, rect);
+                    Vector3 currentPos = PointFromRect(0, len, len - count + 1 + i, minValue, maxValue, currentMetric, rect);
+                    Vector3 lastPos = PointFromRect(0, len, len - count + i, minValue, maxValue, lastPoint, rect);
                     lastPoint = currentMetric;
                     CachedVec[0].Set(lastPos.x, lastPos.y, 0);
                     CachedVec[1].Set(currentPos.x, currentPos.y, 0f);
@@ -770,8 +770,8 @@ namespace MikuLuaProfiler
                     {
                         continue;
                     }
-                    Vector3 currentPos = PointFromRect(0, len, i, minValue, maxValue, currentMetric, rect);
-                    Vector3 lastPos = PointFromRect(0, len, i - 1, minValue, maxValue, lastPoint, rect);
+                    Vector3 currentPos = PointFromRect(0, len, len - count + 1 + i, minValue, maxValue, currentMetric, rect);
+                    Vector3 lastPos = PointFromRect(0, len, len - count + i, minValue, maxValue, lastPoint, rect);
                     lastPoint = currentMetric;
                     CachedVec[0].Set(lastPos.x, lastPos.y, 0);
                     CachedVec[1].Set(currentPos.x, currentPos.y, 0f);
@@ -812,8 +812,8 @@ namespace MikuLuaProfiler
                     {
                         continue;
                     }
-                    Vector3 currentPos = PointFromRect(0, len, i, minValue, maxValue, currentMetric, rect);
-                    Vector3 lastPos = PointFromRect(0, len, i - 1, minValue, maxValue, lastPoint, rect);
+                    Vector3 currentPos = PointFromRect(0, len, len - count + 1 + i, minValue, maxValue, currentMetric, rect);
+                    Vector3 lastPos = PointFromRect(0, len, len - count + i, minValue, maxValue, lastPoint, rect);
                     lastPoint = currentMetric;
                     CachedVec[0].Set(lastPos.x, lastPos.y, 0);
                     CachedVec[1].Set(currentPos.x, currentPos.y, 0f);
@@ -854,8 +854,8 @@ namespace MikuLuaProfiler
                     {
                         continue;
                     }
-                    Vector3 currentPos = PointFromRect(0, len, i, minValue, maxValue, currentMetric, rect);
-                    Vector3 lastPos = PointFromRect(0, len, i - 1, minValue, maxValue, lastPoint, rect);
+                    Vector3 currentPos = PointFromRect(0, len, len - count + 1 + i, minValue, maxValue, currentMetric, rect);
+                    Vector3 lastPos = PointFromRect(0, len, len - count + i, minValue, maxValue, lastPoint, rect);
                     lastPoint = currentMetric;
                     CachedVec[0].Set(lastPos.x, lastPos.y, 0);
                     CachedVec[1].Set(currentPos.x, currentPos.y, 0f);
@@ -896,8 +896,8 @@ namespace MikuLuaProfiler
                     {
                         continue;
                     }
-                    Vector3 currentPos = PointFromRect(0, len, i, minValue, maxValue, currentMetric, rect);
-                    Vector3 lastPos = PointFromRect(0, len, i - 1, minValue, maxValue, lastPoint, rect);
+                    Vector3 currentPos = PointFromRect(0, len, len - count + 1 + i, minValue, maxValue, currentMetric, rect);
+                    Vector3 lastPos = PointFromRect(0, len, len - count + i, minValue, maxValue, lastPoint, rect);
                     lastPoint = currentMetric;
                     CachedVec[0].Set(lastPos.x, lastPos.y, 0);
                     CachedVec[1].Set(currentPos.x, currentPos.y, 0f);

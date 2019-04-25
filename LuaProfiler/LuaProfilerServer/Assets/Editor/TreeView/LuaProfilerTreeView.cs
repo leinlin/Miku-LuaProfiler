@@ -642,7 +642,7 @@ namespace MikuLuaProfiler
             return result;
         }
 
-        public static Dictionary<string, LuaProfilerTreeViewItem> m_nodeDict = new Dictionary<string, LuaProfilerTreeViewItem>();
+        public static Dictionary<object, LuaProfilerTreeViewItem> m_nodeDict = new Dictionary<object, LuaProfilerTreeViewItem>();
 
         public int GetFrameCount(int frame)
         {

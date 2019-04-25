@@ -211,10 +211,10 @@ namespace MikuLuaProfiler
 
                 if (_fullName == null)
                 {
-                    Dictionary<string, string> childDict;
+                    Dictionary<object, string> childDict;
                     if (!m_fullNamePool.TryGetValue(_father.fullName, out childDict))
                     {
-                        childDict = new Dictionary<string, string>();
+                        childDict = new Dictionary<object, string>();
                         m_fullNamePool.Add(_father.fullName, childDict);
                     }
 
@@ -258,7 +258,7 @@ namespace MikuLuaProfiler
 
         #region pool
         private static string capturePath = "";
-        private static Dictionary<string, Dictionary<string, string>> m_fullNamePool = new Dictionary<string, Dictionary<string, string>>();
+        private static Dictionary<object, Dictionary<object, string>> m_fullNamePool = new Dictionary<object, Dictionary<object, string>>();
         private static ObjectPool<Sample> samplePool = new ObjectPool<Sample>(256);
         public static Sample Create()
         {

@@ -243,6 +243,10 @@ namespace MikuLuaProfiler
             {
                 return buff;
             }
+            if (buff.Length < 2)
+            {
+                return buff;
+            }
             if (buff[0] == 0x1b && buff[1] == 0x4c)
             {
                 return buff;
@@ -476,12 +480,12 @@ namespace MikuLuaProfiler
         #endregion
 
         #region luastring
-        public static readonly Dictionary<long, string> stringDict = new Dictionary<long, string>();
-        public static bool TryGetLuaString(IntPtr p, out string result)
+        public static readonly Dictionary<long, object> stringDict = new Dictionary<long, object>();
+        public static bool TryGetLuaString(IntPtr p, out object result)
         {
             return stringDict.TryGetValue(p.ToInt64(), out result);
         }
-        public static void RefString(IntPtr strPoint, int index, string s, IntPtr L)
+        public static void RefString(IntPtr strPoint, int index, object s, IntPtr L)
         {
             int oldTop = LuaDLL.lua_gettop(L);
             //把字符串ref了之后就不GC了
@@ -496,17 +500,17 @@ namespace MikuLuaProfiler
         {
             IntPtr len;
             IntPtr intPtr = LuaDLL.lua_tolstring(L, index, out len);
-            string text;
+            object text;
             if (!TryGetLuaString(intPtr, out text))
             {
-                text = LuaDLL.lua_tostring(L, index);
-                if (!string.IsNullOrEmpty(text))
+                string tmpText = LuaDLL.lua_tostring(L, index);
+                if (!string.IsNullOrEmpty(tmpText))
                 {
-                    text = string.Intern(text);
+                    text = string.Intern(tmpText);
                 }
                 RefString(intPtr, index, text, L);
             }
-            return text;
+            return (string)text;
         }
         #endregion
     }

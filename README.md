@@ -371,3 +371,6 @@ and all members in qq group [LuaProfiler](https://jq.qq.com/?_wv=1027&k=5QkOBSc)
 <span id="contact_zh"></span>
 ### [联系](#zh)
 如果您发现任何错误或有任何建议加入QQ群：[882425563](https://jq.qq.com/?_wv=1027&k=5QkOBSc) 与我们联系
+
+### 觉得插件好用，想支持作者继续开发这款插件可以选择捐赠
+![](doc/zfb.png)
