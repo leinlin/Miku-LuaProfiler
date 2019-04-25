@@ -313,10 +313,10 @@ CS.UIBehaviour.loginUI = { __name = "LoginUI" }
 ![](doc/use3.gif)<br/>
 
 - 拖动滑块以修改样本
-- 单击 __'<'__ 、 __'>'__ 逐个增加或分离帧
+- 单击 __'<'__ 、 __'>'__ 逐个增加或减少帧
 - 单击 __'<<'__ 、 __'>>'__ 以快速定位
 **Capture Lua GC**、**Capture Mono GC**、**Frame Count**
-- 停止记录并按左或右箭头键盘逐个增加或分离帧
+- 停止记录并按左或右箭头键盘逐个增加或减少帧
 
 ##
 ![](doc/record.gif)
