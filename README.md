@@ -227,7 +227,7 @@ MikuLuaProfiler.HookLuaSetup.OnStartGame();
 
 #### 配置客户端
 
-通过 **"Window->Lua Profiler Window"**打开窗口，切换分析器的功能并配置服务器IP地址。
+通过**"Window->Lua Profiler Window"**打开设置窗口
 ## 
 ![](doc/config_client.png)<br/>
 
