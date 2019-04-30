@@ -199,7 +199,7 @@ If you find any bug or have any suggests join the QQ group：[882425563](https:/
 **Unity + Lua** 脚本现在是中国最流行的增量更新框架，但是，由于没有很好的工具来监控lua vm的cpu和内存使用情况，很多开发人员都不知道如何优化他们的代码，所以在lua代码中存在许多潜在的风险。
 此工具旨给Unity 提供一个易于使用的lua性能分析器用于查找代码中的性能瓶颈并使您的游戏更快速、稳定。
 
-<div align=center>![](doc/star.gif)
+<div align="center">![](doc/star.gif)</div>
 
 ##
 
