@@ -4,6 +4,7 @@ namespace MikuLuaProfiler
 {
     using System;
     using System.Collections.Generic;
+    using System.IO;
     using System.Text;
     using UnityEditor;
     using UnityEngine;
@@ -16,6 +17,8 @@ namespace MikuLuaProfiler
         private Vector2 scrollPosition;
         private Vector2 scrollPositionFun;
         private Vector2 scrollPositionTb;
+        private int dictCount = 0;
+        private string showStr = "";
         public void DoRefScroll()
         {
             if (Event.current.type == EventType.MouseUp || Event.current.type == EventType.KeyDown)
@@ -40,20 +43,18 @@ namespace MikuLuaProfiler
                     scrollPositionTb = GUILayout.BeginScrollView(scrollPositionTb, EditorStyles.helpBox);
                 }
                 GUILayout.BeginVertical();
-                int drawedCount = 0;
-                foreach (var item in dictItem)
+                if (dictCount != dictItem.Count)
                 {
-                    GUILayout.BeginHorizontal();
-                    int count = item.Value.Count;
-                    GUILayout.Label(item.Key + " count:" + count);
-                    GUILayout.EndHorizontal();
-                    drawedCount++;
-                    if (drawedCount > 100)
+                    StringBuilder sb = new StringBuilder();
+                    foreach (var item in dictItem)
                     {
-                        GUILayout.Label("more");
-                        break;
+                        sb.AppendLine(string.Format("{0} count:{1}", item.Key, item.Value.Count));
                     }
+                    showStr = sb.ToString();
                 }
+
+                GUILayout.Label(showStr);
+                dictCount = dictItem.Count;
                 GUILayout.EndVertical();
                 GUILayout.EndScrollView();
             }
@@ -85,6 +86,48 @@ namespace MikuLuaProfiler
                     break;
                 }
             }
+        }
+        public void LogToFile()
+        {
+            if (m_refDict == null) return;
+            for (byte i = 1, imax = 2; i <= imax; i++)
+            {
+                RefDict dictItem = m_refDict[i];
+                StringBuilder sb = new StringBuilder();
+                List<KeyValuePair<string, int>> list = new List<KeyValuePair<string, int>>();
+                foreach (var item in dictItem)
+                {
+                    list.Add(new KeyValuePair<string, int>(item.Key, item.Value.Count));
+                }
+
+                list.Sort((a, b) =>
+                {
+                    return b.Value - a.Value;
+                });
+
+                foreach (var item in list)
+                {
+                    sb.AppendLine(string.Format("{0} count:{1}", item.Key, item.Value));
+                }
+                showStr = sb.ToString();
+
+                LuaProfilerWindow.ClearConsole();
+                if (!Directory.Exists(Application.dataPath.Replace("Assets", "Ref")))
+                {
+                    Directory.CreateDirectory(Application.dataPath.Replace("Assets", "Ref"));
+                }
+                if (i == 1)
+                {
+                    string path = Application.dataPath.Replace("Assets", "Ref/" + "function" + ".txt");
+                    File.WriteAllText(path, sb.ToString());
+                }
+                else
+                {
+                    string path = Application.dataPath.Replace("Assets", "Ref/" + "table" + ".txt");
+                    File.WriteAllText(path, sb.ToString());
+                }
+            }
+            System.Diagnostics.Process.Start("explorer.exe", Application.dataPath.Replace("Assets", "Ref").Replace("/", "\\"));
         }
         public void LogRefHistory(int startFrame, int endFrame)
         {

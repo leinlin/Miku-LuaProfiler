@@ -212,6 +212,10 @@ namespace MikuLuaProfiler
         {
             return lua_type(luaState, n) == LuaTypes.LUA_TFUNCTION;
         }
+        public static bool lua_isnil(IntPtr luaState, int n)
+        {
+            return lua_type(luaState, n) == LuaTypes.LUA_TNIL;
+        }
         public static bool lua_istable(IntPtr luaState, int n)
         {
             return lua_type(luaState, n) == LuaTypes.LUA_TTABLE;

@@ -508,6 +508,10 @@ namespace MikuLuaProfiler
                 {
                     text = string.Intern(tmpText);
                 }
+                else
+                {
+                    text = "nil";
+                }
                 RefString(intPtr, index, text, L);
             }
             return (string)text;

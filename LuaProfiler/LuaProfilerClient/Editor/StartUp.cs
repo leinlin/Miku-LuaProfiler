@@ -644,6 +644,33 @@ namespace MikuLuaProfiler_Editor
 #if SLUA
             profilerType = luaAssembly.MainModule.GetType("SLua.LuaDLLWrapper");
             HookDllFun(profilerType, hookExternfunDict, luaAssembly);
+#elif TOLUA
+            MethodDefinition refFun = null;
+            MethodDefinition toluaRefFun = null;
+            MethodDefinition unRefFun = null;
+            MethodDefinition toluaUnRefFun = null;
+            var methods = new List<MethodDefinition>(profilerType.Methods);
+            foreach (var m in methods)
+            {
+                if (m.Name == LUA_REF)
+                {
+                    refFun = m;
+                }
+                else if (m.Name == LUA_UNREF)
+                {
+                    unRefFun = m;
+                }
+                else if (m.Name == "toluaL_ref")
+                {
+                    toluaRefFun = m;
+                }
+                else if (m.Name == "toluaL_unref")
+                {
+                    toluaUnRefFun = m;
+                }
+            }
+            InjectToLuaRef(toluaRefFun, luaAssembly.MainModule, refFun);
+            InjectToLuaUnRef(toluaUnRefFun, luaAssembly.MainModule, unRefFun);
 #endif
 
             luaAssembly.Write(luaPath);
@@ -827,6 +854,36 @@ namespace MikuLuaProfiler_Editor
             il.Append(il.Create(OpCodes.Ldarg_1));
             il.Append(il.Create(OpCodes.Ldarg_2));
             il.Append(il.Create(OpCodes.Call, module.ImportReference(newMethod)));
+            il.Append(il.Create(OpCodes.Ret));
+        }
+
+        private static void InjectToLuaRef(MethodDefinition method, ModuleDefinition module, MethodDefinition luaRef)
+        {
+            method.ImplAttributes = MethodImplAttributes.IL;
+            method.Attributes = MethodAttributes.Public | MethodAttributes.Static | MethodAttributes.HideBySig;
+
+            if (method.Body == null) return;
+            var il = method.Body.GetILProcessor();
+            il.Append(il.Create(OpCodes.Ldarg_0));
+            il.Append(il.Create(OpCodes.Ldc_I4, -10000));
+            il.Append(il.Create(OpCodes.Call, module.ImportReference(luaRef)));
+            il.Append(il.Create(OpCodes.Stloc_0));
+            il.Append(il.Create(OpCodes.Ldloc_0));
+            il.Append(il.Create(OpCodes.Ret));
+        }
+
+        private static void InjectToLuaUnRef(MethodDefinition method, ModuleDefinition module, MethodDefinition luaUnRef)
+        {
+            method.ImplAttributes = MethodImplAttributes.IL;
+            method.Attributes = MethodAttributes.Public | MethodAttributes.Static | MethodAttributes.HideBySig;
+
+            if (method.Body == null) return;
+
+            var il = method.Body.GetILProcessor();
+            il.Append(il.Create(OpCodes.Ldarg_0));
+            il.Append(il.Create(OpCodes.Ldc_I4, -10000));
+            il.Append(il.Create(OpCodes.Ldarg_1));
+            il.Append(il.Create(OpCodes.Call, module.ImportReference(luaUnRef)));
             il.Append(il.Create(OpCodes.Ret));
         }
 

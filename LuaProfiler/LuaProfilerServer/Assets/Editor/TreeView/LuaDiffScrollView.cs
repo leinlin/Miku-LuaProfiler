@@ -18,10 +18,6 @@
         private Vector2 scrollPositionDetail;
         public void DoRefScroll()
         {
-            if (!Directory.Exists(Application.dataPath.Replace("Assets", "Diff")))
-            {
-                Directory.CreateDirectory(Application.dataPath.Replace("Assets", "Diff"));
-            }
             if (m_isRecord)
             {
                 EditorGUILayout.LabelField(m_dateTime);
@@ -144,6 +140,10 @@
                 }
             }
             LuaProfilerWindow.ClearConsole();
+            if (!Directory.Exists(Application.dataPath.Replace("Assets", "Diff")))
+            {
+                Directory.CreateDirectory(Application.dataPath.Replace("Assets", "Diff"));
+            }
             string path = Application.dataPath.Replace("Assets", "Diff/" + fileName + ".txt");
             File.WriteAllText(path, sb.ToString());
             System.Diagnostics.Process.Start("explorer.exe", Application.dataPath.Replace("Assets", "Diff").Replace("/", "\\"));
