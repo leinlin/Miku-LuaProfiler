@@ -863,6 +863,11 @@ namespace MikuLuaProfiler_Editor
             method.Attributes = MethodAttributes.Public | MethodAttributes.Static | MethodAttributes.HideBySig;
 
             if (method.Body == null) return;
+            VariableDefinition injection = null;
+            method.Body.Variables.Clear();
+            injection = new VariableDefinition(module.ImportReference(module.TypeSystem.Int32));
+            method.Body.Variables.Add(injection);
+
             var il = method.Body.GetILProcessor();
             il.Append(il.Create(OpCodes.Ldarg_0));
             il.Append(il.Create(OpCodes.Ldc_I4, -10000));
