@@ -938,6 +938,9 @@ namespace MikuLuaProfiler
             if (metricCount == 0) return;
 
             bool isEvent = false;
+            bool isLeft = false;
+            bool isRight = false;
+
             if (Event.current.type == EventType.MouseDrag || Event.current.type == EventType.MouseUp)
             {
                 Vector2 mousePosition = Event.current.mousePosition;
@@ -958,25 +961,31 @@ namespace MikuLuaProfiler
             {
                 if (Event.current.keyCode == KeyCode.RightArrow)
                 {
-                    if (currentFrameIndex + 1 <= metricCount)
-                    {
-                        currentFrameIndex++;
-                        isEvent = true;
-                    }
+                    isEvent = true;
+                    isRight = true;
                 }
                 if (Event.current.keyCode == KeyCode.LeftArrow)
                 {
-                    if (currentFrameIndex - 1 >= 0)
-                    {
-                        currentFrameIndex--;
-                        isEvent = true;
-                    }
+                    isEvent = true;
+                    isLeft = true;
                 }
             }
             if (isEvent)
             {
-                startFrame = currentFrameIndex;
-                endFrame = currentFrameIndex;
+                if (isLeft)
+                {
+                    startFrame--;
+                }
+                else if (isRight)
+                {
+                    endFrame++;
+                }
+                else
+                {
+                    startFrame = currentFrameIndex;
+                    endFrame = currentFrameIndex;
+                }
+
                 m_TreeView.ReLoadSamples(startFrame, endFrame);
                 int startGameFrame = m_TreeView.GetFrameCount(startFrame);
                 int endGameFrame = m_TreeView.GetFrameCount(endFrame);
