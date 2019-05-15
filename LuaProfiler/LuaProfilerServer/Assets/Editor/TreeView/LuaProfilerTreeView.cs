@@ -369,7 +369,11 @@ namespace MikuLuaProfiler
                 {
                     s = m_runningSamplesQueue.Dequeue();
                 }
-                m_catchLuaMemory += s.costLuaGC;
+                var instance = LuaDeepProfilerSetting.Instance;
+                if (!(instance.isRecord && !instance.isStartRecord))
+                {
+                    m_catchLuaMemory += s.costLuaGC;
+                }
                 LoadRootSample(s, LuaDeepProfilerSetting.Instance.isRecord);
 
                 s.Restore();
@@ -667,6 +671,7 @@ namespace MikuLuaProfiler
             endUrl = history[end].captureUrl;
 
             end = Mathf.Min(history.Count - 1, end);
+            m_catchLuaMemory = 0;
             for (int i = start; i <= end; i++)
             {
                 LoadHistoryRootSample(history[i]);

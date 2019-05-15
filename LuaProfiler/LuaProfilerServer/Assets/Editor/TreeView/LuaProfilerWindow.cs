@@ -67,6 +67,7 @@ namespace MikuLuaProfiler
         private bool isShowFpsChart = true;
         private bool isShowPssChart = false;
         private bool isShowPowerChart = false;
+        private bool isTouchInChart = false;
         static private int currentFrameIndex = 0;
 
         private Texture2D disableChart;
@@ -946,9 +947,14 @@ namespace MikuLuaProfiler
                     currentFrameIndex = (int)(metricCount * (mousePosition.x - expandRect.xMin) / (expandRect.xMax - expandRect.xMin));
                     GUIUtility.keyboardControl = 0;
                     isEvent = true;
+                    isTouchInChart = true;
+                }
+                else
+                {
+                    isTouchInChart = false;
                 }
             }
-            else if (Event.current.type == EventType.KeyDown)
+            else if (isTouchInChart && Event.current.type == EventType.KeyDown)
             {
                 if (Event.current.keyCode == KeyCode.RightArrow)
                 {
@@ -967,14 +973,6 @@ namespace MikuLuaProfiler
                     }
                 }
             }
-            Vector3 upPos = PointFromRect(0, metricCount, currentFrameIndex, 0, 1, 0, expandRect);
-            Vector3 downPos = PointFromRect(0, metricCount, currentFrameIndex, 0, 1, 1, expandRect);
-
-            Handles.color = new Color(0.8f, 0.2f, 0.5f, 1f);
-            CachedVec[0].Set(upPos.x, upPos.y, 0f);
-            CachedVec[1].Set(downPos.x, downPos.y, 0f);
-            Handles.DrawAAPolyLine(3.5f, CachedVec);
-
             if (isEvent)
             {
                 startFrame = currentFrameIndex;
@@ -984,6 +982,22 @@ namespace MikuLuaProfiler
                 int endGameFrame = m_TreeView.GetFrameCount(endFrame);
                 m_luaRefScrollView.LoadHistory(startGameFrame, endGameFrame);
             }
+
+            Vector3 upPos = PointFromRect(0, metricCount, startFrame, 0, 1, 0, expandRect);
+            Vector3 downPos = PointFromRect(0, metricCount, startFrame, 0, 1, 1, expandRect);
+
+            Handles.color = new Color(0.8f, 0.2f, 0.5f, 1f);
+            CachedVec[0].Set(upPos.x, upPos.y, 0f);
+            CachedVec[1].Set(downPos.x, downPos.y, 0f);
+            Handles.DrawAAPolyLine(3.5f, CachedVec);
+
+            upPos = PointFromRect(0, metricCount, endFrame, 0, 1, 0, expandRect);
+            downPos = PointFromRect(0, metricCount, endFrame, 0, 1, 1, expandRect);
+
+            Handles.color = new Color(0.8f, 0.2f, 0.5f, 1f);
+            CachedVec[0].Set(upPos.x, upPos.y, 0f);
+            CachedVec[1].Set(downPos.x, downPos.y, 0f);
+            Handles.DrawAAPolyLine(3.5f, CachedVec);
         }
             #endregion
 
