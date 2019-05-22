@@ -661,11 +661,11 @@ namespace MikuLuaProfiler
             end = Mathf.Max(Mathf.Min(end, history.Count - 1), 0);
             start = Mathf.Max(Mathf.Min(start, history.Count - 1), 0);
 
-            if (end == start)
-            {
-                LoadRootSample(history[start], false, true);
-                return;
-            }
+            //if (end == start)
+            //{
+            //    LoadRootSample(history[start], false, true);
+            //    return;
+            //}
 
             startUrl = history[start].captureUrl;
             endUrl = history[end].captureUrl;
@@ -867,10 +867,10 @@ namespace MikuLuaProfiler
             m_pssMemory = sample.pss;
             m_fps = sample.fps;
             m_power = sample.power;
-            if (isHistory)
-            {
-                m_catchLuaMemory = sample.costLuaGC;
-            }
+            //if (isHistory)
+            //{
+            //    m_catchLuaMemory = sample.costLuaGC;
+            //}
 
             if (!(instance.isRecord && !instance.isStartRecord))
             {

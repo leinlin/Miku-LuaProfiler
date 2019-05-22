@@ -51,17 +51,6 @@ namespace MikuLuaProfiler_Editor
                 InjectMethods.Recompile();
             }
 
-            flag = GUILayout.Toggle(setting.isCleanMode, "PreCompile Lua");
-            if (flag != setting.isCleanMode)
-            {
-                setting.isCleanMode = flag;
-                if (setting.isCleanMode)
-                {
-                    setting.isDeepLuaProfiler = true;
-                }
-                EditorApplication.isPlaying = false;
-            }
-
             flag = GUILayout.Toggle(setting.isDeepMonoProfiler, "Deep Profiler Mono");
             if (flag != setting.isDeepMonoProfiler)
             {
@@ -74,6 +63,17 @@ namespace MikuLuaProfiler_Editor
             if (flag != setting.discardInvalid)
             {
                 setting.discardInvalid = flag;
+            }
+
+            flag = GUILayout.Toggle(setting.isCleanMode, "PreCompile Lua(Use InjectLua.exe)");
+            if (flag != setting.isCleanMode)
+            {
+                setting.isCleanMode = flag;
+                if (setting.isCleanMode)
+                {
+                    setting.isDeepLuaProfiler = true;
+                }
+                EditorApplication.isPlaying = false;
             }
 
             EditorGUILayout.EndHorizontal();

@@ -38,6 +38,7 @@ namespace MikuLuaProfiler_Editor
 {
     using System.Diagnostics;
     using System.IO;
+    using System.Runtime.InteropServices;
     using System.Text;
     using UnityEngine;
     public class LuaDeepProfilerSetting
@@ -61,14 +62,37 @@ namespace MikuLuaProfiler_Editor
             }
         }
 
+#if UNITY_EDITOR
+        const string PROFILER_DLL = "miku_profiler";
+
+        [DllImport(PROFILER_DLL, CallingConvention = CallingConvention.Cdecl)]
+        public static extern bool miku_profiler_get_is_enable_lua();
+
+        [DllImport(PROFILER_DLL, CallingConvention = CallingConvention.Cdecl)]
+        public static extern void miku_profiler_set_is_enable_lua(bool value);
+
+        [DllImport(PROFILER_DLL, CallingConvention = CallingConvention.Cdecl)]
+        public static extern bool miku_profiler_get_is_enable_mono();
+
+        [DllImport(PROFILER_DLL, CallingConvention = CallingConvention.Cdecl)]
+        public static extern void miku_profiler_set_is_enable_mono(bool value);
+#endif
+
         public bool isDeepMonoProfiler
         {
             get
             {
+#if UNITY_EDITOR_WIN
+                return miku_profiler_get_is_enable_mono();
+#else
                 return this.m_isDeepMonoProfiler;
+#endif
             }
             set
             {
+#if UNITY_EDITOR_WIN
+                miku_profiler_set_is_enable_mono(value);
+#endif
                 if (this.m_isDeepMonoProfiler != value)
                 {
                     this.m_isDeepMonoProfiler = value;
@@ -81,10 +105,17 @@ namespace MikuLuaProfiler_Editor
         {
             get
             {
+#if UNITY_EDITOR_WIN
+                return miku_profiler_get_is_enable_lua();
+#else
                 return this.m_isDeepLuaProfiler;
+#endif
             }
             set
             {
+#if UNITY_EDITOR_WIN
+                miku_profiler_set_is_enable_lua(value);
+#endif
                 if (this.m_isDeepLuaProfiler != value)
                 {
                     this.m_isDeepLuaProfiler = value;
