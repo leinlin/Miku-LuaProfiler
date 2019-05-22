@@ -461,6 +461,34 @@ namespace MikuLuaProfiler
                 },
                 new MultiColumnHeaderState.Column
                 {
+                    headerContent = new GUIContent("LuaGC"),
+                    contextMenuText = "LuaGC",
+                    headerTextAlignment = TextAlignment.Center,
+                    sortedAscending = false,
+                    sortingArrowAlignment = TextAlignment.Right,
+                    width = 80,
+                    minWidth = 80,
+                    maxWidth = 120,
+                    autoResize = true,
+                    canSort = true,
+                    allowToggleVisibility = false
+                },
+                new MultiColumnHeaderState.Column
+                {
+                    headerContent = new GUIContent("MonoGC"),
+                    contextMenuText = "MonoGC",
+                    headerTextAlignment = TextAlignment.Center,
+                    sortedAscending = false,
+                    sortingArrowAlignment = TextAlignment.Right,
+                    width = 80,
+                    minWidth = 80,
+                    maxWidth = 120,
+                    autoResize = true,
+                    canSort = true,
+                    allowToggleVisibility = false
+                },
+                new MultiColumnHeaderState.Column
+                {
                     headerContent = new GUIContent("currentTime"),
                     contextMenuText = "currentTime",
                     headerTextAlignment = TextAlignment.Center,
@@ -496,34 +524,6 @@ namespace MikuLuaProfiler
                     sortingArrowAlignment = TextAlignment.Right,
                     width = 120,
                     minWidth = 120,
-                    maxWidth = 120,
-                    autoResize = true,
-                    canSort = true,
-                    allowToggleVisibility = false
-                },
-                new MultiColumnHeaderState.Column
-                {
-                    headerContent = new GUIContent("LuaGC"),
-                    contextMenuText = "LuaGC",
-                    headerTextAlignment = TextAlignment.Center,
-                    sortedAscending = false,
-                    sortingArrowAlignment = TextAlignment.Right,
-                    width = 80,
-                    minWidth = 80,
-                    maxWidth = 120,
-                    autoResize = true,
-                    canSort = true,
-                    allowToggleVisibility = false
-                },
-                new MultiColumnHeaderState.Column
-                {
-                    headerContent = new GUIContent("MonoGC"),
-                    contextMenuText = "MonoGC",
-                    headerTextAlignment = TextAlignment.Center,
-                    sortedAscending = false,
-                    sortingArrowAlignment = TextAlignment.Right,
-                    width = 80,
-                    minWidth = 80,
                     maxWidth = 120,
                     autoResize = true,
                     canSort = true,
@@ -1081,19 +1081,19 @@ namespace MikuLuaProfiler
             GUI.Label(r, GetMemoryString(item.selfMonoMemory), m_gs);
 
             r = args.GetCellRect(5);
-            GUI.Label(r, ((float)item.currentTime / 10000).ToString("f2") + "ms", m_gs);
-
-            r = args.GetCellRect(6);
-            GUI.Label(r, ((float)item.averageTime / 10000).ToString("f2") + "ms", m_gs);
-
-            r = args.GetCellRect(7);
-            GUI.Label(r, ((float)item.totalTime / 10000000).ToString("f6") + "s", m_gs);
-
-            r = args.GetCellRect(8);
             GUI.Label(r, GetMemoryString(item.showLuaGC), m_gs);
 
-            r = args.GetCellRect(9);
+            r = args.GetCellRect(6);
             GUI.Label(r, GetMemoryString(item.showMonoGC), m_gs);
+
+            r = args.GetCellRect(7);
+            GUI.Label(r, ((float)item.currentTime / 10000).ToString("f2") + "ms", m_gs);
+
+            r = args.GetCellRect(8);
+            GUI.Label(r, ((float)item.averageTime / 10000).ToString("f2") + "ms", m_gs);
+
+            r = args.GetCellRect(9);
+            GUI.Label(r, ((float)item.totalTime / 10000000).ToString("f6") + "s", m_gs);
 
             r = args.GetCellRect(10);
             GUI.Label(r, GetMemoryString(item.totalCallTime, ""), m_gs);
