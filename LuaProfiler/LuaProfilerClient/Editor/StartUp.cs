@@ -60,10 +60,7 @@ namespace MikuLuaProfiler_Editor
         //private static int tickNum = 0;
         static StartUp()
         {
-            if (LuaDeepProfilerSetting.Instance.isDeepLuaProfiler)
-            {
-                InjectMethods.HookLuaFun();
-            }
+
             if (LuaDeepProfilerSetting.Instance.isDeepMonoProfiler)
             {
                 InjectMethods.InjectAllMethods();

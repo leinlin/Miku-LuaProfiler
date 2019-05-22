@@ -48,7 +48,6 @@ namespace MikuLuaProfiler_Editor
                     setting.isCleanMode = false;
                 }
                 EditorApplication.isPlaying = false;
-                InjectMethods.Recompile();
             }
 
             flag = GUILayout.Toggle(setting.isDeepMonoProfiler, "Deep Profiler Mono");

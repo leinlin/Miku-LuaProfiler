@@ -57,7 +57,7 @@ namespace MikuLuaProfiler
                 {
                     return totalLuaMemory / totalCallTime;
                 }
-                else if (s_frameCount - _frameCount <= 30)
+                else if (s_frameCount - _frameCount <= 10)
                 {
                     return _showLuaGC / frameCalls;
                 }
@@ -76,7 +76,7 @@ namespace MikuLuaProfiler
                 {
                     return totalMonoMemory / totalCallTime;
                 }
-                else if (s_frameCount - _frameCount <= 30)
+                else if (s_frameCount - _frameCount <= 10)
                 {
                     return _showMonoGC;
                 }
@@ -86,7 +86,7 @@ namespace MikuLuaProfiler
                 }
             }
         }
-        private static int s_frameCount = 0;
+        public static int s_frameCount = 0;
         public long totalMonoMemory { private set; get; }
         public long selfMonoMemory { private set; get; }
         public long totalLuaMemory { private set; get; }
@@ -192,7 +192,6 @@ namespace MikuLuaProfiler
                     }
                 }
                 _frameCount = sample.frameCount;
-                s_frameCount = sample.frameCount;
             }
             this.father = father;
         }
@@ -369,6 +368,7 @@ namespace MikuLuaProfiler
                 {
                     s = m_runningSamplesQueue.Dequeue();
                 }
+                LuaProfilerTreeViewItem.s_frameCount = s.frameCount;
                 var instance = LuaDeepProfilerSetting.Instance;
                 if (!(instance.isRecord && !instance.isStartRecord))
                 {
@@ -883,6 +883,7 @@ namespace MikuLuaProfiler
 
             if (string.IsNullOrEmpty(sample.name))
             {
+                
                 return;
             }
 
@@ -933,11 +934,11 @@ namespace MikuLuaProfiler
                 case 2: rootList.Sort((a, b) => { return sign * Math.Sign(a.selfLuaMemory - b.selfLuaMemory); }); break;
                 case 3: rootList.Sort((a, b) => { return sign * Math.Sign(a.totalMonoMemory - b.totalMonoMemory); }); break;
                 case 4: rootList.Sort((a, b) => { return sign * Math.Sign(a.selfMonoMemory - b.selfMonoMemory); }); break;
-                case 5: rootList.Sort((a, b) => { return sign * Math.Sign(a.currentTime - b.currentTime); }); break;
-                case 6: rootList.Sort((a, b) => { return sign * Math.Sign(a.averageTime - b.averageTime); }); break;
-                case 7: rootList.Sort((a, b) => { return sign * Math.Sign(a.totalTime - b.totalTime); }); break;
-                case 8: rootList.Sort((a, b) => { return sign * Math.Sign(a.showLuaGC - b.showLuaGC); }); break;
-                case 9: rootList.Sort((a, b) => { return sign * Math.Sign(a.showMonoGC - b.showMonoGC); }); break;
+                case 5: rootList.Sort((a, b) => { return sign * Math.Sign(a.showLuaGC - b.showLuaGC); }); break;
+                case 6: rootList.Sort((a, b) => { return sign * Math.Sign(a.showMonoGC - b.showMonoGC); }); break;
+                case 7: rootList.Sort((a, b) => { return sign * Math.Sign(a.currentTime - b.currentTime); }); break;
+                case 8: rootList.Sort((a, b) => { return sign * Math.Sign(a.averageTime - b.averageTime); }); break;
+                case 9: rootList.Sort((a, b) => { return sign * Math.Sign(a.totalTime - b.totalTime); }); break;
                 case 10: rootList.Sort((a, b) => { return sign * Math.Sign(a.totalCallTime - b.totalCallTime); }); break;
                 case 11: rootList.Sort((a, b) => { return sign * Math.Sign(a.frameCalls - b.frameCalls); }); break;
             }
@@ -963,11 +964,11 @@ namespace MikuLuaProfiler
                     case 2: rootList.Sort((a, b) => { return sign * Math.Sign(a.selfLuaMemory - b.selfLuaMemory); }); break;
                     case 3: rootList.Sort((a, b) => { return sign * Math.Sign(a.totalMonoMemory - b.totalMonoMemory); }); break;
                     case 4: rootList.Sort((a, b) => { return sign * Math.Sign(a.selfMonoMemory - b.selfMonoMemory); }); break;
-                    case 5: rootList.Sort((a, b) => { return sign * Math.Sign(a.currentTime - b.currentTime); }); break;
-                    case 6: rootList.Sort((a, b) => { return sign * Math.Sign(a.averageTime - b.averageTime); }); break;
-                    case 7: rootList.Sort((a, b) => { return sign * Math.Sign(a.totalTime - b.totalTime); }); break;
-                    case 8: rootList.Sort((a, b) => { return sign * Math.Sign(a.showLuaGC - b.showLuaGC); }); break;
-                    case 9: rootList.Sort((a, b) => { return sign * Math.Sign(a.showMonoGC - b.showMonoGC); }); break;
+                    case 5: rootList.Sort((a, b) => { return sign * Math.Sign(a.showLuaGC - b.showLuaGC); }); break;
+                    case 6: rootList.Sort((a, b) => { return sign * Math.Sign(a.showMonoGC - b.showMonoGC); }); break;
+                    case 7: rootList.Sort((a, b) => { return sign * Math.Sign(a.currentTime - b.currentTime); }); break;
+                    case 8: rootList.Sort((a, b) => { return sign * Math.Sign(a.averageTime - b.averageTime); }); break;
+                    case 9: rootList.Sort((a, b) => { return sign * Math.Sign(a.totalTime - b.totalTime); }); break;
                     case 10: rootList.Sort((a, b) => { return sign * Math.Sign(a.totalCallTime - b.totalCallTime); }); break;
                     case 11: rootList.Sort((a, b) => { return sign * Math.Sign(a.frameCalls - b.frameCalls); }); break;
                 }

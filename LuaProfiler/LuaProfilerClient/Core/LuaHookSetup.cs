@@ -87,6 +87,14 @@ namespace MikuLuaProfiler
                 Screen.SetResolution(480, 270, true);
             }
 
+#if UNITY_EDITOR
+			if (setting.isDeepLuaProfiler)
+			{
+	            LuaDLL.UnInstall();
+	            LuaDLL.Install();			
+			}
+#endif
+
             if (setting.isDeepLuaProfiler || setting.isDeepMonoProfiler || setting.isCleanMode)
             {
                 GameObject go = new GameObject();
@@ -576,6 +584,7 @@ namespace MikuLuaProfiler
 
     public class MikuLuaProfilerLuaProfilerWrap
     {
+        public static LuaDeepProfilerSetting setting = LuaDeepProfilerSetting.Instance;
         public static LuaCSFunction beginSample = new LuaCSFunction(BeginSample);
         public static LuaCSFunction endSample = new LuaCSFunction(EndSample);
         public static LuaCSFunction unpackReturnValue = new LuaCSFunction(UnpackReturnValue);
@@ -960,7 +969,7 @@ end";
             return 0;
         }
     }
-#endregion
+    #endregion
 
 }
 #endif

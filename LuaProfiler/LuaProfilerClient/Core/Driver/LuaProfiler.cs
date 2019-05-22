@@ -110,9 +110,6 @@ namespace MikuLuaProfiler
             }
             try
             {
-                var setting = LuaDeepProfilerSetting.Instance;
-                if (setting == null) return;
-
                 int frameCount = HookLuaSetup.frameCount;
 
                 if (m_currentFrame != frameCount)
@@ -178,8 +175,6 @@ namespace MikuLuaProfiler
             {
                 return;
             }
-            var setting = LuaDeepProfilerSetting.Instance;
-            if (setting == null) return;
 
             if (beginSampleMemoryStack.Count <= 0)
             {
@@ -221,6 +216,8 @@ namespace MikuLuaProfiler
             //UnityEngine.Debug.Log(sample.name);
             if (beginSampleMemoryStack.Count == 0)
             {
+                var setting = LuaDeepProfilerSetting.Instance;
+                if (setting == null) return;
                 if (setting != null && setting.isNeedCapture)
                 {
                     //迟钝了
