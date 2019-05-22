@@ -669,8 +669,10 @@ namespace MikuLuaProfiler_Editor
                     toluaUnRefFun = m;
                 }
             }
+#if !(UNITY_ANDROID || UNITY_IOS)
             InjectToLuaRef(toluaRefFun, luaAssembly.MainModule, refFun);
             InjectToLuaUnRef(toluaUnRefFun, luaAssembly.MainModule, unRefFun);
+#endif
 #endif
 
             luaAssembly.Write(luaPath);
