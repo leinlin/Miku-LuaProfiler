@@ -926,7 +926,7 @@ namespace MikuLuaProfiler_Editor
 #if XLUA || TOLUA || SLUA
             var luaPath = (typeof(LuaDLL).Assembly).ManifestModule.FullyQualifiedName;
             var projectPath = System.Reflection.Assembly.Load("Assembly-CSharp").ManifestModule.FullyQualifiedName;
-            var profilerPath = (typeof(LuaProfiler).Assembly).ManifestModule.FullyQualifiedName;
+            var profilerPath = (typeof(MikuLuaProfiler.LuaProfiler).Assembly).ManifestModule.FullyQualifiedName;
             if (LuaDeepProfilerSetting.Instance.isDeepLuaProfiler)
             {
                 DoHookLuaFun(luaPath, profilerPath);
