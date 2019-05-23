@@ -919,7 +919,7 @@ namespace MikuLuaProfiler_Editor
 
         #endregion
 
-#if USE_LUA_PROFILER || UNITY_EDITOR
+#if USE_LUA_PROFILER
         [UnityEditor.Callbacks.PostProcessScene]
         private static void OnPostprocessScene()
         {
