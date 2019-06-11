@@ -1,6 +1,6 @@
 fileFormatVersion: 2
-guid: 68714ea40cbe0f24b983022b464df50c
-timeCreated: 1560235322
+guid: 3c43531c065ba0b4ab4dfd0df234f6ab
+timeCreated: 1560231282
 licenseType: Pro
 PluginImporter:
   serializedVersion: 2
@@ -15,7 +15,7 @@ PluginImporter:
       second:
         enabled: 0
         settings:
-          Exclude Android: 1
+          Exclude Android: 0
           Exclude Editor: 0
           Exclude Linux: 0
           Exclude Linux64: 0
@@ -38,7 +38,7 @@ PluginImporter:
       first:
         Android: Android
       second:
-        enabled: 0
+        enabled: 1
         settings:
           CPU: ARMv7
     data:
@@ -53,78 +53,78 @@ PluginImporter:
       second:
         enabled: 1
         settings:
-          CPU: x86
+          CPU: x86_64
           DefaultValueInitialized: true
     data:
       first:
         Facebook: Win
-      second:
-        enabled: 1
-        settings:
-          CPU: AnyCPU
-    data:
-      first:
-        Facebook: Win64
       second:
         enabled: 0
         settings:
           CPU: None
     data:
       first:
+        Facebook: Win64
+      second:
+        enabled: 1
+        settings:
+          CPU: AnyCPU
+    data:
+      first:
         Standalone: Linux
       second:
         enabled: 1
         settings:
-          CPU: x86
+          CPU: None
     data:
       first:
         Standalone: Linux64
       second:
         enabled: 1
         settings:
-          CPU: None
+          CPU: x86_64
     data:
       first:
         Standalone: LinuxUniversal
       second:
         enabled: 1
         settings:
-          CPU: x86
+          CPU: x86_64
     data:
       first:
         Standalone: OSXIntel
       second:
         enabled: 1
         settings:
-          CPU: AnyCPU
+          CPU: None
     data:
       first:
         Standalone: OSXIntel64
       second:
         enabled: 1
         settings:
-          CPU: None
+          CPU: AnyCPU
     data:
       first:
         Standalone: OSXUniversal
       second:
         enabled: 1
         settings:
-          CPU: x86
+          CPU: x86_64
     data:
       first:
         Standalone: Win
       second:
         enabled: 1
         settings:
-          CPU: AnyCPU
+          CPU: None
     data:
       first:
         Standalone: Win64
       second:
         enabled: 1
         settings:
-          CPU: None
+          CPU: AnyCPU
     data:
       first:
         Windows Store Apps: WindowsStoreApps

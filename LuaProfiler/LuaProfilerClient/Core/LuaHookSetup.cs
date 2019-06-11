@@ -88,11 +88,10 @@ namespace MikuLuaProfiler
             }
 
 #if UNITY_EDITOR
-			if (setting.isDeepLuaProfiler)
-			{
-	            LuaDLL.UnInstall();
-	            LuaDLL.Install();			
-			}
+            if (setting.isDeepLuaProfiler)
+            {
+                 LuaDLL.Install();
+            }
 #endif
 
             if (setting.isDeepLuaProfiler || setting.isDeepMonoProfiler || setting.isCleanMode)
@@ -687,7 +686,7 @@ local function get_table_info(tb)
         if tostringFun then
             rawset(getmetatable(tb), '__tostring', tostringFun)
         end
-        result = rawget(tb, '__name') or rawget(tb, 'name') or rawget(tb, '__cname')
+        result = rawget(tb, '__name') or rawget(tb, 'name') or rawget(tb, '__cname') or rawget(tb, '.name')
         if not result then
             result = serialize(tb)
         end

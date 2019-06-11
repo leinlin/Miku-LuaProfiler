@@ -1,6 +1,6 @@
 fileFormatVersion: 2
-guid: d3e116b6982f2e347a97f1b0f8e2ef8b
-timeCreated: 1558539367
+guid: c3b72e19c9fdc2d4eb9e0fc37a592b11
+timeCreated: 1560235322
 licenseType: Pro
 PluginImporter:
   serializedVersion: 2
@@ -17,14 +17,14 @@ PluginImporter:
         settings:
           Exclude Android: 1
           Exclude Editor: 0
-          Exclude Linux: 1
-          Exclude Linux64: 1
-          Exclude LinuxUniversal: 1
-          Exclude OSXIntel: 1
-          Exclude OSXIntel64: 1
-          Exclude OSXUniversal: 1
-          Exclude Win: 1
-          Exclude Win64: 1
+          Exclude Linux: 0
+          Exclude Linux64: 0
+          Exclude LinuxUniversal: 0
+          Exclude OSXIntel: 0
+          Exclude OSXIntel64: 0
+          Exclude OSXUniversal: 0
+          Exclude Win: 0
+          Exclude Win64: 0
           Exclude WindowsStoreApps: 1
     data:
       first:
@@ -32,8 +32,8 @@ PluginImporter:
       second:
         enabled: 0
         settings:
-          CPU: x86_64
-          OS: Windows
+          CPU: AnyCPU
+          OS: AnyOS
     data:
       first:
         Android: Android
@@ -73,56 +73,56 @@ PluginImporter:
       first:
         Standalone: Linux
       second:
-        enabled: 0
+        enabled: 1
         settings:
           CPU: None
     data:
       first:
         Standalone: Linux64
       second:
-        enabled: 0
+        enabled: 1
         settings:
           CPU: x86_64
     data:
       first:
         Standalone: LinuxUniversal
       second:
-        enabled: 0
+        enabled: 1
         settings:
-          CPU: None
+          CPU: x86_64
     data:
       first:
         Standalone: OSXIntel
       second:
-        enabled: 0
+        enabled: 1
         settings:
           CPU: None
     data:
       first:
         Standalone: OSXIntel64
       second:
-        enabled: 0
+        enabled: 1
         settings:
           CPU: AnyCPU
     data:
       first:
         Standalone: OSXUniversal
       second:
-        enabled: 0
+        enabled: 1
         settings:
-          CPU: None
+          CPU: x86_64
     data:
       first:
         Standalone: Win
       second:
-        enabled: 0
+        enabled: 1
         settings:
           CPU: None
     data:
       first:
         Standalone: Win64
       second:
-        enabled: 0
+        enabled: 1
         settings:
           CPU: AnyCPU
     data:
