@@ -1,14 +1,41 @@
 ﻿/*
- Desc: 一个可以运行时 Hook Mono 方法的工具，让你可以无需修改 UnityEditor.dll 等文件就可以重写其函数功能
- Author: Misaka Mikoto
- Github: https://github.com/easy66/MonoHooker
- */
+               #########                       
+              ############                     
+              #############                    
+             ##  ###########                   
+            ###  ###### #####                  
+            ### #######   ####                 
+           ###  ########## ####                
+          ####  ########### ####               
+         ####   ###########  #####             
+        #####   ### ########   #####           
+       #####   ###   ########   ######         
+      ######   ###  ###########   ######       
+     ######   #### ##############  ######      
+    #######  #####################  ######     
+    #######  ######################  ######    
+   #######  ###### #################  ######   
+   #######  ###### ###### #########   ######   
+   #######    ##  ######   ######     ######   
+   #######        ######    #####     #####    
+    ######        #####     #####     ####     
+     #####        ####      #####     ###      
+      #####       ###        ###      #        
+        ###       ###        ###               
+         ##       ###        ###               
+__________#_______####_______####______________
+                我们的未来没有BUG              
+* ==============================================================================
+* Filename: HookerBase
+* Created:  2018/7/13 14:29:22
+* Author:   エル・プサイ・コングリィ
+* Purpose:  
+* ==============================================================================
+*/
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Runtime.InteropServices;
 
-namespace MonoHooker
+namespace MikuHook
 {
 
     public unsafe abstract class HookerBase
@@ -18,6 +45,7 @@ namespace MonoHooker
         protected IntPtr _targetPtr;          // 目标方法被 jit 后的地址指针
         protected IntPtr _replacPtr;
         protected byte* _proxyPtr;
+        protected byte[] _backupArray;
         protected int _headSize;
         protected int _proxyBuffSize;
 
@@ -27,20 +55,21 @@ namespace MonoHooker
         {
             0xE9, 0x00, 0x00, 0x00, 0x00,                 // jmp $val 目标地址 - 指令地址 - 5 = 偏移
         };
-        protected static readonly byte[] s_jmpArmBType = new byte[]
+        //protected static readonly byte[] s_jmpArmBType = new byte[]
+        //{
+        //    0x00, 0x00, 0x00, 0xEA                        // B int26 （目标地址 - 指令地址 - 8）/ 4 = 偏移
+        //};
+
+        protected static readonly byte[] s_jmpBuffArm32 = new byte[] // 8 bytes
         {
-            0x00, 0x00, 0x00, 0xEA                        // B int26 （目标地址 - 指令地址 - 8）/ 4 = 偏移
+            0x04, 0xF0, 0x1F, 0xE5,                             // LDR PC, [PC, #-4]
+            0x00, 0x00, 0x00, 0x00,                             // $val
         };
-        //protected static readonly byte[] s_jmpBuffArm32 = new byte[] // 8 bytes
-        //{
-        //    0x04, 0xF0, 0x1F, 0xE5,                             // LDR PC, [PC, #-4]
-        //    0x00, 0x00, 0x00, 0x00,                             // $val
-        //};
-        //protected static readonly byte[] s_jmpBuffArm64 = new byte[]
-        //{
-        //    0x04, 0xF0, 0x1F, 0xE5,                             // LDR PC, [PC, #-4]
-        //    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,     // $val
-        //};
+        protected static readonly byte[] s_jmpBuffArm64 = new byte[]
+        {
+            0x04, 0xF0, 0x1F, 0xE5,                             // LDR PC, [PC, #-4]
+            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,     // $val
+        };
 
         protected void Install()
         {
@@ -55,7 +84,6 @@ namespace MonoHooker
             BackupHeader();
             PatchTargetMethod();
             PatchProxyMethod();
-            UnityEngine.Debug.Log("installed");
             isHooked = true;
         }
 
@@ -69,7 +97,7 @@ namespace MonoHooker
             byte* pTarget = (byte*)_targetPtr.ToPointer();
             for (int i = 0; i < _headSize; i++)
             {
-                *pTarget++ = _proxyPtr[i];
+                *pTarget++ = _backupArray[i];
             }
             isHooked = false;
             HookerPool.RemoveHooker(_targetPtr);
@@ -83,10 +111,31 @@ namespace MonoHooker
         protected virtual void BackupHeader()
         {
             byte* pTarget = (byte*)_targetPtr.ToPointer();
-
+            _backupArray = new byte[_headSize];
             for (int i = 0; i < _headSize; i++)
             {
-                _proxyPtr[i] = pTarget[i];
+                if (_proxyPtr != null)
+                {
+                    _proxyPtr[i] = pTarget[i];
+                }
+                _backupArray[i] = pTarget[i];
+            }
+
+            if (_proxyPtr != null)
+            {
+                int index = 0;
+                if (LDasm.CheckShortCall(_proxyPtr, s_jmpBuff.Length, out index))
+                {
+                    if (!NativeAPI.IsAndroidARM())
+                    {
+                        // 目标地址 = 偏移 + 5 + 指令地址
+                        int oldOffsetAddr = *((int*)(_proxyPtr + index + 1));
+                        long targetAddr = oldOffsetAddr + 5 + (long)_targetPtr + index;
+                        // 因为指令地址发生了改变，所以要重新计算偏移 公式: 偏移 = 目标地址 - 指令地址 - 5
+                        int newOffsetAddr = (int)(targetAddr - ((long)_proxyPtr + index) - 5);
+                        *((int*)(_proxyPtr + index + 1)) = newOffsetAddr;
+                    }
+                }
             }
         }
 
@@ -97,13 +146,10 @@ namespace MonoHooker
         {
             if (NativeAPI.IsAndroidARM())
             {
-                int offset = (int)(((long)_replacPtr - (long)_targetPtr - 8) / 4);
-                UnityEngine.Debug.Log("offset is:" + offset);
-                byte[] offset_bytes = BitConverter.GetBytes(offset);
-                for (int i = 0; i < 3; i++)
+                fixed (byte* p = &s_jmpBuff[s_addrOffset])
                 {
-                    UnityEngine.Debug.Log(offset_bytes[i]);
-                    s_jmpBuff[i] = offset_bytes[i];
+                    IntPtr* ptr = (IntPtr*)p;
+                    *ptr = _replacPtr;
                 }
             }
             else
@@ -115,18 +161,13 @@ namespace MonoHooker
                 }
             }
 
-            bool ret = NativeAPI.mono_hooker_protect(_targetPtr.ToPointer(), _proxyBuffSize, 7);
+            bool ret = NativeAPI.miku_hooker_protect(_targetPtr.ToPointer(), _proxyBuffSize, 7);
             Debug.Assert(ret);
             byte* pTarget = (byte*)_targetPtr.ToPointer();
-            for (int i = 0, imax = s_jmpBuff.Length; i < imax; i++)
-            {
-                pTarget[i] = 0;
-            }
             if (pTarget != null)
             {
                 for (int i = 0, imax = s_jmpBuff.Length; i < imax; i++)
                 {
-                    UnityEngine.Debug.Log("22222222222:" + i);
                     pTarget[i] = s_jmpBuff[i];
                 }
             }
@@ -140,21 +181,17 @@ namespace MonoHooker
             if (_proxyPtr == null)
                 return;
 
-            UnityEngine.Debug.Log("33333333333333");
             if (NativeAPI.IsAndroidARM())
             {
                 int offset = (int)(((long)_targetPtr - (long)_proxyPtr - 8) / 4);
                 byte[] offset_bytes = BitConverter.GetBytes(offset);
-                UnityEngine.Debug.Log("44444444444444");
                 for (int i = 0; i < 3; i++)
                 {
                     s_jmpBuff[i] = offset_bytes[i];
-                    UnityEngine.Debug.Log("55555555555555");
                 }
             }
             else
             {
-                // 将跳转指向原函数跳过头的位置
                 fixed (byte* p = &s_jmpBuff[s_addrOffset])
                 {
                     int* ptr = (int*)p;

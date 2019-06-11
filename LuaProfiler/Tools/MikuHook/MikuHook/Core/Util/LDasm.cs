@@ -1,12 +1,40 @@
 ﻿/*
- Desc: 一个可以运行时 Hook Mono 方法的工具，让你可以无需修改 UnityEditor.dll 等文件就可以重写其函数功能
- Author: Misaka Mikoto
- Github: https://github.com/easy66/MonoHooker
- */
+               #########                       
+              ############                     
+              #############                    
+             ##  ###########                   
+            ###  ###### #####                  
+            ### #######   ####                 
+           ###  ########## ####                
+          ####  ########### ####               
+         ####   ###########  #####             
+        #####   ### ########   #####           
+       #####   ###   ########   ######         
+      ######   ###  ###########   ######       
+     ######   #### ##############  ######      
+    #######  #####################  ######     
+    #######  ######################  ######    
+   #######  ###### #################  ######   
+   #######  ###### ###### #########   ######   
+   #######    ##  ######   ######     ######   
+   #######        ######    #####     #####    
+    ######        #####     #####     ####     
+     #####        ####      #####     ###      
+      #####       ###        ###      #        
+        ###       ###        ###               
+         ##       ###        ###               
+__________#_______####_______####______________
+                我们的未来没有BUG              
+* ==============================================================================
+* Filename: LDasm
+* Created:  2018/7/13 14:29:22
+* Author:   エル・プサイ・コングリィ
+* Purpose:  
+* ==============================================================================
+*/
 using System;
-using System.Runtime.InteropServices;
 
-namespace MonoHooker
+namespace MikuHook
 {
     /// <summary>
     /// 用于计算汇编指令长度，使用的是BlackBone的LDasm.c中的算法，我把他翻译成C#了
@@ -640,6 +668,43 @@ namespace MonoHooker
             } while (Length > 0);
 
             return Result;
+        }
+
+        public static bool CheckShortCall(void* code, int size, out int index)
+        {
+            bool result = false;
+            index = -1;
+            if (NativeAPI.IsAndroidARM())
+            {
+                return result;
+            }
+
+            UInt32 oneLength;
+            byte* pOpcode;
+            UInt32 calledLength = 0;
+            ldasm_data data = new ldasm_data();
+            bool is64 = IntPtr.Size == 8;
+            do
+            {
+                oneLength = ldasm(code, data, is64);
+                pOpcode = (byte*)code + data.opcd_offset;
+                calledLength += oneLength;
+                if (calledLength >= size)
+                    break;
+                if ((oneLength == 1) && (*pOpcode == 0xCC))
+                    break;
+                byte instruct = ((byte*)code)[calledLength];
+                if (instruct == 0xE8 || instruct == 0xE9)
+                {
+                    index = (int)calledLength;
+                    result = true;
+                    break;
+                }
+                code = (void*)((ulong)code + oneLength);
+
+            } while (oneLength > 0);
+
+            return result;
         }
 
         static uint ldasm(void* code, ldasm_data ld, bool is64)
