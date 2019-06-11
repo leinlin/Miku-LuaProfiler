@@ -1,5 +1,37 @@
-﻿
-
+﻿/*
+               #########                       
+              ############                     
+              #############                    
+             ##  ###########                   
+            ###  ###### #####                  
+            ### #######   ####                 
+           ###  ########## ####                
+          ####  ########### ####               
+         ####   ###########  #####             
+        #####   ### ########   #####           
+       #####   ###   ########   ######         
+      ######   ###  ###########   ######       
+     ######   #### ##############  ######      
+    #######  #####################  ######     
+    #######  ######################  ######    
+   #######  ###### #################  ######   
+   #######  ###### ###### #########   ######   
+   #######    ##  ######   ######     ######   
+   #######        ######    #####     #####    
+    ######        #####     #####     ####     
+     #####        ####      #####     ###      
+      #####       ###        ###      #        
+        ###       ###        ###               
+         ##       ###        ###               
+__________#_______####_______####______________
+                我们的未来没有BUG              
+* ==============================================================================
+* Filename: LuaRefScrollView
+* Created:  2018/7/13 14:29:22
+* Author:   エル・プサイ・コングリィ
+* Purpose:  
+* ==============================================================================
+*/
 namespace MikuLuaProfiler
 {
     using System;
@@ -28,37 +60,41 @@ namespace MikuLuaProfiler
             scrollPosition = GUILayout.BeginScrollView(scrollPosition, EditorStyles.helpBox, GUILayout.Width(400));
 
             EditorGUILayout.LabelField("lua refs");
-            for (byte i = 1, imax = 2; i <= imax; i++)
+            try
             {
-                RefDict dictItem = m_refDict[i];
-                if (dictItem == null) continue;
-                if (i == 1)
+                for (byte i = 1, imax = 2; i <= imax; i++)
                 {
-                    EditorGUILayout.LabelField("function ref: " + dictItem.Count);
-                    scrollPositionFun = GUILayout.BeginScrollView(scrollPositionFun, EditorStyles.helpBox);
-                }
-                else
-                {
-                    EditorGUILayout.LabelField("table ref: " + dictItem.Count);
-                    scrollPositionTb = GUILayout.BeginScrollView(scrollPositionTb, EditorStyles.helpBox);
-                }
-                GUILayout.BeginVertical();
-                if (dictCount != dictItem.Count)
-                {
-                    StringBuilder sb = new StringBuilder();
-                    foreach (var item in dictItem)
+                    RefDict dictItem = m_refDict[i];
+                    if (dictItem == null) continue;
+                    if (i == 1)
                     {
-                        sb.AppendLine(string.Format("{0} count:{1}", item.Key, item.Value.Count));
+                        EditorGUILayout.LabelField("function ref: " + dictItem.Count);
+                        scrollPositionFun = GUILayout.BeginScrollView(scrollPositionFun, EditorStyles.helpBox);
                     }
-                    showStr = sb.ToString();
+                    else
+                    {
+                        EditorGUILayout.LabelField("table ref: " + dictItem.Count);
+                        scrollPositionTb = GUILayout.BeginScrollView(scrollPositionTb, EditorStyles.helpBox);
+                    }
+                    GUILayout.BeginVertical();
+                    if (dictCount != dictItem.Count)
+                    {
+                        StringBuilder sb = new StringBuilder();
+                        foreach (var item in dictItem)
+                        {
+                            sb.AppendLine(string.Format("{0} count:{1}", item.Key, item.Value.Count));
+                            if (sb.Length > 10000) break;
+                        }
+                        showStr = sb.ToString();
+                    }
+
+                    GUILayout.Label(showStr);
+                    dictCount = dictItem.Count;
+                    GUILayout.EndVertical();
+                    GUILayout.EndScrollView();
                 }
-
-                GUILayout.Label(showStr);
-                dictCount = dictItem.Count;
-                GUILayout.EndVertical();
-                GUILayout.EndScrollView();
             }
-
+            catch { }
 
             GUILayout.EndScrollView();
         }
@@ -70,6 +106,10 @@ namespace MikuLuaProfiler
             for (int i = 0,imax= m_luaRefHistory.Count; i < imax; i++)
             {
                 var r = m_luaRefHistory[i];
+                if (r.frameCount < startFrame)
+                {
+                    continue;
+                }
                 if (r.frameCount <= endFrame)
                 {
                     if (r.cmd == 1)
@@ -158,18 +198,6 @@ namespace MikuLuaProfiler
             lock (this)
             {
                 m_refQueue.Enqueue(info);
-            }
-            if (!instance.isRecord || (instance.isRecord && !instance.isStartRecord))
-            {
-                if (info.cmd == 1)
-                {
-                    Debug.Log(DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") + ":<color=#00ff00>add " + info.name + "</color>");
-                }
-                else if (info.cmd == 0)
-                {
-                    Debug.Log(DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") + ":<color=#ff0000>rm " + info.name + "</color>");
-                }
-                return;
             }
             m_luaRefHistory.Add(info.Clone());
         }
