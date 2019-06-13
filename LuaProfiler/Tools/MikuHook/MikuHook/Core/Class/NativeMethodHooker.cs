@@ -44,6 +44,7 @@ namespace MikuHook
     public unsafe class NativeMethodHooker : HookerBase, IDisposable
     {
         private bool _disposed = false;
+        public Delegate replaceDelegate;
         public Delegate GetProxy<T>()
         {
             Debug.Assert(typeof(Delegate).IsAssignableFrom(typeof(T)));
@@ -66,9 +67,10 @@ namespace MikuHook
         {
             SetupJmpBuff();
 
+            replaceDelegate = replace;
             IntPtr targetPtr = NativeAPI.miku_hooker_get_address(libraryName, symbol);
             _headSize = (int)LDasm.SizeofMinNumByte(targetPtr.ToPointer(), s_jmpBuff.Length);
-            _proxyBuffSize = _headSize + s_jmpBuff.Length;
+            _proxyBuffSize = (_headSize + s_jmpBuff.Length) * 3;
 
             _targetPtr = targetPtr;
             _replacPtr = Marshal.GetFunctionPointerForDelegate(replace);
@@ -111,8 +113,17 @@ namespace MikuHook
             }
             else
             {
-                s_jmpBuff = s_jmpBuffIntel;
-                s_addrOffset = 1;
+				if(IntPtr.Size == 8)
+				{
+	                s_jmpBuff = s_jmpBuff64;
+	                s_addrOffset = 6;				
+				}
+				else
+				{
+				    s_jmpBuff = s_jmpBuff32;
+                	s_addrOffset = 1;
+				}
+
             }
         }
 

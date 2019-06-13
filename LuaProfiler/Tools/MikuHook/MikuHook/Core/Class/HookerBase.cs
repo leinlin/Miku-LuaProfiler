@@ -51,9 +51,14 @@ namespace MikuHook
 
         protected static int s_addrOffset;
         protected static byte[] s_jmpBuff;
-        protected static byte[] s_jmpBuffIntel = new byte[] // 5 bytes
+        protected static byte[] s_jmpBuff32 = new byte[] // 5 bytes
         {
             0xE9, 0x00, 0x00, 0x00, 0x00,                 // jmp $val 目标地址 - 指令地址 - 5 = 偏移
+        };		
+        protected static byte[] s_jmpBuff64 = new byte[] // 14 bytes
+        {
+            0xFF, 0x25, 0x00, 0x00, 0x00, 0x00,                 // jmp [rip]
+            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,     // $val
         };
         //protected static readonly byte[] s_jmpArmBType = new byte[]
         //{
@@ -95,7 +100,7 @@ namespace MikuHook
                 return;
 
             byte* pTarget = (byte*)_targetPtr.ToPointer();
-            for (int i = 0; i < _headSize; i++)
+            for (int i = 0; i < _backupArray.Length; i++)
             {
                 *pTarget++ = _backupArray[i];
             }
@@ -126,15 +131,32 @@ namespace MikuHook
                 int index = 0;
                 if (LDasm.CheckShortCall(_proxyPtr, s_jmpBuff.Length, out index))
                 {
-                    if (!NativeAPI.IsAndroidARM())
-                    {
+					if(IntPtr.Size == 8)
+					{
+	                    // 目标地址 = 偏移 + 5 + 指令地址
+	                    int oldOffsetAddr = *((int*)(_proxyPtr + index + 1));
+	                    long targetAddr = oldOffsetAddr + 5 + (long)_targetPtr + index;
+	                    fixed (byte* p = &s_jmpBuff[s_addrOffset])
+	                    {
+	                        IntPtr* ptr = (IntPtr*)p;
+	                        *ptr = (IntPtr)targetAddr;
+	                    }
+	                    // 原来的跳转指令长度为5，现在为 14所以把_headsize 拓宽
+	                    _headSize = _headSize - 5 + 14;
+	                    for (int i = index; i < 14 + index; i++)
+	                    {
+	                        _proxyPtr[i] = s_jmpBuff[i - index];
+	                    }					
+					}
+					else
+					{
                         // 目标地址 = 偏移 + 5 + 指令地址
                         int oldOffsetAddr = *((int*)(_proxyPtr + index + 1));
                         long targetAddr = oldOffsetAddr + 5 + (long)_targetPtr + index;
                         // 因为指令地址发生了改变，所以要重新计算偏移 公式: 偏移 = 目标地址 - 指令地址 - 5
                         int newOffsetAddr = (int)(targetAddr - ((long)_proxyPtr + index) - 5);
                         *((int*)(_proxyPtr + index + 1)) = newOffsetAddr;
-                    }
+					}
                 }
             }
         }
@@ -156,8 +178,16 @@ namespace MikuHook
             {
                 fixed (byte* p = &s_jmpBuff[s_addrOffset])
                 {
-                    int* ptr = (int*)p;
-                    *ptr = (int)((long)_replacPtr - (long)_targetPtr - 5);
+					if(IntPtr.Size == 8)
+					{				
+	                    IntPtr* ptr = (IntPtr*)p;
+	                    *ptr = _replacPtr;
+					}
+					else
+					{
+	                    int* ptr = (int*)p;
+	                    *ptr = (int)((long)_replacPtr - (long)_targetPtr - 5);					
+					}
                 }
             }
 
@@ -194,17 +224,28 @@ namespace MikuHook
             {
                 fixed (byte* p = &s_jmpBuff[s_addrOffset])
                 {
-                    int* ptr = (int*)p;
-                    // cal offset
-                    *ptr = (int)((long)_targetPtr - (long)_proxyPtr - 5);
+					if(IntPtr.Size == 8)
+					{	
+	                    ulong* ptr = (ulong*)p;
+	                    *ptr = (ulong)_targetPtr + (ulong)_headSize;
+					}
+					else
+					{
+	                    int* ptr = (int*)p;
+	                    // cal offset
+	                    *ptr = (int)((long)_targetPtr - (long)_proxyPtr - 5);					
+					}
                 }
             }
 
             // 跳过head
             byte* pProxy = _proxyPtr + _headSize;
+
             // 再填充跳转
             for (int i = 0; i < s_jmpBuff.Length; i++)
+            {
                 pProxy[i] = s_jmpBuff[i];
+            }
         }
 
         #endregion

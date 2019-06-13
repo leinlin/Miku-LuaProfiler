@@ -345,7 +345,7 @@ end
 #if UNITY_EDITOR
 
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-        public delegate IntPtr LuaNewStateFun();
+        public delegate IntPtr LuaNewStateFun(IntPtr alloc, IntPtr ud);
         private static LuaNewStateFun luaNewStateFun;
 
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
@@ -353,7 +353,7 @@ end
         private static LuaCloseFun luaCloseFun;
 
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-        public unsafe delegate int LuaLoadbufferFun(IntPtr luaState, IntPtr buff, IntPtr size, string name);
+        public unsafe delegate int LuaLoadbufferFun(IntPtr luaState, IntPtr buff, IntPtr size, string name, string mode);
         private static LuaLoadbufferFun luaLoadbufferFun;
 
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
@@ -378,12 +378,12 @@ end
 
             if (luaNewStateFun == null)
             {
-                luaNewStateFun = (LuaNewStateFun)BindNative<LuaNewStateFun>("luaL_newstate", new LuaNewStateFun(luaL_newstate_replace));
+                luaNewStateFun = (LuaNewStateFun)BindNative<LuaNewStateFun>("lua_newstate", new LuaNewStateFun(luaL_newstate_replace));
             }
 
             if (luaCloseFun == null)
             {
-                luaCloseFun = (LuaCloseFun)BindNative<LuaCloseFun>("lua_close", new LuaCloseFun(lua_close_replace));
+                BindHook(oldType, replaceType, "lua_close", "lua_close_replace");
             }
 
             if (luaRefFun == null)
@@ -398,7 +398,7 @@ end
 
             if (luaLoadbufferFun == null)
             {
-                luaLoadbufferFun = (LuaLoadbufferFun)BindNative<LuaLoadbufferFun>("luaL_loadbuffer", new LuaLoadbufferFun(luaL_loadbuffer_replace));
+                luaLoadbufferFun = (LuaLoadbufferFun)BindNative<LuaLoadbufferFun>("luaL_loadbufferx", new LuaLoadbufferFun(luaL_loadbuffer_replace));
             }
 #if TOLUA
             if (tolua_ref_hooker == null)
@@ -432,9 +432,9 @@ end
             return result;
         }
 
-        public static IntPtr luaL_newstate_replace()
+        public static IntPtr luaL_newstate_replace(IntPtr alloc, IntPtr ud)
         {
-            IntPtr intPtr = luaNewStateFun();
+            IntPtr intPtr = luaNewStateFun(alloc, ud);
             LuaProfiler.mainL = intPtr;
             MikuLuaProfilerLuaProfilerWrap.__Register(intPtr);
             return intPtr;
@@ -446,16 +446,16 @@ end
             {
                 LuaProfiler.mainL = IntPtr.Zero;
             }
-            luaCloseFun(luaState);
+            lua_close(luaState);
         }
 
-        public static int luaL_loadbuffer_replace(IntPtr luaState, IntPtr buff, IntPtr size, string name)
+        public static int luaL_loadbuffer_replace(IntPtr luaState, IntPtr buff, IntPtr size, string name, string mode)
         {
             byte[] buffer = new byte[(int)size];
             Marshal.Copy(buff, buffer, 0, buffer.Length);
             buffer = LuaHook.Hookloadbuffer(luaState, buffer, name);
 
-            return luaLoadbufferFun(luaState, NativeAPI.ArrayToIntptr(buffer), (IntPtr)(buffer.Length), name);
+            return luaLoadbufferFun(luaState, NativeAPI.ArrayToIntptr(buffer), (IntPtr)(buffer.Length), name, mode);
         }
 
         public static int luaL_ref_replace(IntPtr luaState, int t)

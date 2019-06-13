@@ -44,6 +44,15 @@ namespace MikuHook
     {
         private static Dictionary<IntPtr, HookerBase> _hookers = new Dictionary<IntPtr, HookerBase>();
 
+        public static void Clear()
+        {
+            var list = new List<HookerBase>(_hookers.Values);
+            foreach (var item in list)
+            {
+                item.Uninstall();
+            }
+        }
+
         public static void AddHooker(IntPtr targetAddr, HookerBase hooker)
         {
             HookerBase preHooker;
