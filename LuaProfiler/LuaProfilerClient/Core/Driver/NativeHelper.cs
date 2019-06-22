@@ -76,7 +76,18 @@ namespace MikuLuaProfiler
         public static int GetPass()
         {
 #if UNITY_ANDROID && !UNITY_EDITOR
-            return AndroidJNI.CallStaticIntMethod(m_debugClassPtr, m_getPassPtr, m_jv) * 1024;
+            if (m_getPassPtr != IntPtr.Zero)
+            {
+                return AndroidJNI.CallStaticIntMethod(m_debugClassPtr, m_getPassPtr, m_jv) * 1024;
+            }
+            else
+            {
+#if UNITY_5_5_OR_NEWER
+                return (int)Profiler.GetTotalAllocatedMemoryLong();
+#else
+                return (int)Profiler.GetTotalAllocatedMemory();
+#endif
+            }
 #else
 #if UNITY_5_5_OR_NEWER
             return (int)Profiler.GetTotalAllocatedMemoryLong();
