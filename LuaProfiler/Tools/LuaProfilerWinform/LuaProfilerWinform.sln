@@ -3,12 +3,12 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
 VisualStudioVersion = 15.0.28307.489
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LuaProfilerWinform", "TreeGridView\LuaProfilerWinform.csproj", "{2EC32C6E-A94E-43D4-AAD4-4701E27B2C0A}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LuaProfilerWinform", "LuaProfilerWinform\LuaProfilerWinform.csproj", "{2EC32C6E-A94E-43D4-AAD4-4701E27B2C0A}"
 	ProjectSection(ProjectDependencies) = postProject
 		{95E6AA00-47C3-4B1F-9F18-21164573D89C} = {95E6AA00-47C3-4B1F-9F18-21164573D89C}
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HookLib", "TreeGridView\HookLib\HookLib.csproj", "{95E6AA00-47C3-4B1F-9F18-21164573D89C}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HookLib", "LuaProfilerWinform\HookLib\HookLib.csproj", "{95E6AA00-47C3-4B1F-9F18-21164573D89C}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
