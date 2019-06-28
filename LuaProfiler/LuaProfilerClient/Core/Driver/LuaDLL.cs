@@ -306,6 +306,11 @@ end
         [DllImport(LUADLL, CallingConvention = CallingConvention.Cdecl, EntryPoint = "xluaL_loadbuffer")]
 #endif
         public static extern int luaL_loadbuffer(IntPtr luaState, byte[] buff, IntPtr size, string name);
+#else
+        public static int luaL_loadbuffer(IntPtr luaState, byte[] buff, IntPtr size, string name)
+        {
+            return 1;
+        }
 #endif
         public static string lua_tostring(IntPtr luaState, int index)
         {
