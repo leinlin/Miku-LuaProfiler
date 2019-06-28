@@ -513,8 +513,12 @@ end
 
         public static int luaL_loadbuffer_replace(IntPtr luaState, byte[] buff, int size, string name)
         {
+#if TOLUA || XLUA || SLUA
             buff = LuaHook.Hookloadbuffer(luaState, buff, name);
             return LuaDLL.luaL_loadbuffer(luaState, buff, (IntPtr)(buff.Length), name);
+#else
+            return 1;
+#endif
         }
 
         public static int luaL_ref_replace(IntPtr luaState, int t)
