@@ -297,6 +297,7 @@ end
         public static extern int luaL_ref(IntPtr luaState, int t);                                                  //[-1, +0, m]
         [DllImport(LUADLL, CallingConvention = CallingConvention.Cdecl)]
         public static extern void luaL_unref(IntPtr luaState, int registryIndex, int reference);
+#if TOLUA || SLUA || XLUA
 #if TOLUA
         [DllImport(LUADLL, CallingConvention = CallingConvention.Cdecl)]
 #elif SLUA
@@ -305,6 +306,7 @@ end
         [DllImport(LUADLL, CallingConvention = CallingConvention.Cdecl, EntryPoint = "xluaL_loadbuffer")]
 #endif
         public static extern int luaL_loadbuffer(IntPtr luaState, byte[] buff, IntPtr size, string name);
+#endif
         public static string lua_tostring(IntPtr luaState, int index)
         {
             IntPtr len;
