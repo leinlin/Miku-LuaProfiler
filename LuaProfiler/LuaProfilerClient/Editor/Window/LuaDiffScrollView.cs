@@ -1,4 +1,5 @@
-﻿namespace MikuLuaProfiler_Editor
+﻿#if (UNITY_5 || UNITY_2017_1_OR_NEWER)
+namespace MikuLuaProfiler_Editor
 {
     using System;
     using System.Collections.Generic;
@@ -31,7 +32,7 @@
 
             GUILayout.BeginHorizontal();
 
-            #region value
+#region value
             GUILayout.BeginVertical();
 
             GUILayout.BeginHorizontal();
@@ -101,9 +102,9 @@
 
             GUILayout.EndScrollView();
             GUILayout.EndVertical();
-            #endregion
+#endregion
 
-            #region detail
+#region detail
             scrollPositionDetail = GUILayout.BeginScrollView(scrollPositionDetail, EditorStyles.helpBox, GUILayout.Width(250));
             if (m_detailList != null)
             {
@@ -113,7 +114,7 @@
                 }
             }
             GUILayout.EndScrollView();
-            #endregion
+#endregion
 
             GUILayout.EndHorizontal();
 
@@ -193,3 +194,4 @@
     }
 
 }
+#endif
