@@ -30,6 +30,20 @@ namespace HookLib
         }
         #endregion
 
+        public void Uninstall()
+        {
+            if (MessageBoxWHook != null)
+            {
+                MessageBoxWHook.Dispose();
+                MessageBoxWHook = null;
+            }
+            if (MessageBoxAHook != null)
+            {
+                MessageBoxAHook.Dispose();
+                MessageBoxAHook = null;
+            }
+        }
+
         public Main(
             RemoteHooking.IContext context,
             string channelName
@@ -38,6 +52,7 @@ namespace HookLib
         {
             _server = RemoteHooking.IpcConnectClient<HookServer>(channelName);
             _instance = this;
+            _server.isHook = false;
         }
 
         public void Run(
@@ -46,7 +61,6 @@ namespace HookLib
             , HookParameter parameter
             )
         {
-            _server.isHook = true;
             try
             {
                 MessageBox.Show(parameter.Msg);
@@ -68,17 +82,18 @@ namespace HookLib
                 return;
             }
 
+            _server.isHook = true;
             try
             {
-                while (true)
+                while (_server.isHook)
                 {
                     Thread.Sleep(10);
                 }
             }
             catch
             {
-
             }
+            Uninstall();
         }
 
         #region MessageBoxW

@@ -9,6 +9,11 @@ namespace HookLib
         {
             return isHook;
         }
+
+        public void Deattach()
+        {
+            isHook = false;
+        }
         public void ReportMessage(string message)
         {
             Console.WriteLine(message);

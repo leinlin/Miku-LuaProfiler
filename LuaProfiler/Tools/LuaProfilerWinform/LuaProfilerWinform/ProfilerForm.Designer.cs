@@ -31,16 +31,14 @@ namespace MikuLuaProfiler
         private void InitializeComponent()
         {
             this.components = new System.ComponentModel.Container();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle2 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle1 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(ProfilerForm));
             this.tvTaskList = new AdvancedDataGridView.TreeGridView();
             this.attachmentColumn = new System.Windows.Forms.DataGridViewImageColumn();
             this.overview = new AdvancedDataGridView.TreeGridColumn();
             this.totalLuaMemory = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.selfLuaMemory = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.luaGC = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.totalMonoMemory = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.selfMonoMemory = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.monoGC = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.currentTime = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.averageTime = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.totalTime = new System.Windows.Forms.DataGridViewTextBoxColumn();
@@ -48,8 +46,11 @@ namespace MikuLuaProfiler
             this.calls = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.imageStrip = new System.Windows.Forms.ImageList(this.components);
             this.injectButton = new System.Windows.Forms.Button();
-            this.injectTextBox = new System.Windows.Forms.TextBox();
             this.label1 = new System.Windows.Forms.Label();
+            this.processCom = new System.Windows.Forms.ComboBox();
+            this.deattachBtn = new System.Windows.Forms.Button();
+            this.searchBox = new System.Windows.Forms.TextBox();
+            this.searchBtn = new System.Windows.Forms.Button();
             ((System.ComponentModel.ISupportInitialize)(this.tvTaskList)).BeginInit();
             this.SuspendLayout();
             // 
@@ -58,7 +59,11 @@ namespace MikuLuaProfiler
             this.tvTaskList.AllowUserToAddRows = false;
             this.tvTaskList.AllowUserToDeleteRows = false;
             this.tvTaskList.AllowUserToOrderColumns = true;
+            this.tvTaskList.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
             this.tvTaskList.AutoSizeColumnsMode = System.Windows.Forms.DataGridViewAutoSizeColumnsMode.Fill;
+            this.tvTaskList.BackgroundColor = System.Drawing.Color.White;
             this.tvTaskList.CellBorderStyle = System.Windows.Forms.DataGridViewCellBorderStyle.None;
             this.tvTaskList.ColumnHeadersHeight = 20;
             this.tvTaskList.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
@@ -67,9 +72,6 @@ namespace MikuLuaProfiler
             this.totalLuaMemory,
             this.selfLuaMemory,
             this.luaGC,
-            this.totalMonoMemory,
-            this.selfMonoMemory,
-            this.monoGC,
             this.currentTime,
             this.averageTime,
             this.totalTime,
@@ -77,20 +79,20 @@ namespace MikuLuaProfiler
             this.calls});
             this.tvTaskList.EditMode = System.Windows.Forms.DataGridViewEditMode.EditProgrammatically;
             this.tvTaskList.ImageList = null;
-            this.tvTaskList.Location = new System.Drawing.Point(0, 0);
+            this.tvTaskList.Location = new System.Drawing.Point(1, 32);
             this.tvTaskList.Name = "tvTaskList";
             this.tvTaskList.RowHeadersVisible = false;
             this.tvTaskList.RowHeadersWidth = 20;
             this.tvTaskList.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
             this.tvTaskList.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
-            this.tvTaskList.Size = new System.Drawing.Size(1416, 445);
+            this.tvTaskList.Size = new System.Drawing.Size(1416, 546);
             this.tvTaskList.TabIndex = 0;
             // 
             // attachmentColumn
             // 
             this.attachmentColumn.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.None;
-            dataGridViewCellStyle2.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleCenter;
-            this.attachmentColumn.DefaultCellStyle = dataGridViewCellStyle2;
+            dataGridViewCellStyle1.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleCenter;
+            this.attachmentColumn.DefaultCellStyle = dataGridViewCellStyle1;
             this.attachmentColumn.FillWeight = 51.53443F;
             this.attachmentColumn.HeaderText = "";
             this.attachmentColumn.MinimumWidth = 25;
@@ -127,24 +129,6 @@ namespace MikuLuaProfiler
             this.luaGC.HeaderText = "LuaGC";
             this.luaGC.Name = "luaGC";
             this.luaGC.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.NotSortable;
-            // 
-            // totalMonoMemory
-            // 
-            this.totalMonoMemory.HeaderText = "总Mono内存";
-            this.totalMonoMemory.Name = "totalMonoMemory";
-            this.totalMonoMemory.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.NotSortable;
-            // 
-            // selfMonoMemory
-            // 
-            this.selfMonoMemory.HeaderText = "函数本身";
-            this.selfMonoMemory.Name = "selfMonoMemory";
-            this.selfMonoMemory.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.NotSortable;
-            // 
-            // monoGC
-            // 
-            this.monoGC.HeaderText = "MonoGC";
-            this.monoGC.Name = "monoGC";
-            this.monoGC.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.NotSortable;
             // 
             // currentTime
             // 
@@ -184,7 +168,7 @@ namespace MikuLuaProfiler
             // 
             // injectButton
             // 
-            this.injectButton.Location = new System.Drawing.Point(165, 449);
+            this.injectButton.Location = new System.Drawing.Point(186, 3);
             this.injectButton.Name = "injectButton";
             this.injectButton.Size = new System.Drawing.Size(84, 23);
             this.injectButton.TabIndex = 1;
@@ -192,33 +176,66 @@ namespace MikuLuaProfiler
             this.injectButton.UseVisualStyleBackColor = true;
             this.injectButton.Click += new System.EventHandler(this.injectButton_Click);
             // 
-            // injectTextBox
-            // 
-            this.injectTextBox.Location = new System.Drawing.Point(59, 449);
-            this.injectTextBox.Name = "injectTextBox";
-            this.injectTextBox.Size = new System.Drawing.Size(100, 21);
-            this.injectTextBox.TabIndex = 2;
-            // 
             // label1
             // 
             this.label1.AutoSize = true;
-            this.label1.Location = new System.Drawing.Point(12, 454);
+            this.label1.Location = new System.Drawing.Point(12, 9);
             this.label1.Name = "label1";
             this.label1.Size = new System.Drawing.Size(41, 12);
             this.label1.TabIndex = 3;
             this.label1.Text = "进程名";
+            // 
+            // processCom
+            // 
+            this.processCom.FormattingEnabled = true;
+            this.processCom.Location = new System.Drawing.Point(59, 6);
+            this.processCom.Name = "processCom";
+            this.processCom.Size = new System.Drawing.Size(121, 20);
+            this.processCom.TabIndex = 4;
+            this.processCom.TextUpdate += new System.EventHandler(this.OnProcessTextChange);
+            // 
+            // deattachBtn
+            // 
+            this.deattachBtn.Enabled = false;
+            this.deattachBtn.Location = new System.Drawing.Point(289, 3);
+            this.deattachBtn.Name = "deattachBtn";
+            this.deattachBtn.Size = new System.Drawing.Size(84, 23);
+            this.deattachBtn.TabIndex = 5;
+            this.deattachBtn.Text = "解除";
+            this.deattachBtn.UseVisualStyleBackColor = true;
+            this.deattachBtn.Click += new System.EventHandler(this.deattachBtn_Click);
+            // 
+            // searchBox
+            // 
+            this.searchBox.Location = new System.Drawing.Point(1165, 5);
+            this.searchBox.Name = "searchBox";
+            this.searchBox.Size = new System.Drawing.Size(136, 21);
+            this.searchBox.TabIndex = 6;
+            // 
+            // searchBtn
+            // 
+            this.searchBtn.Location = new System.Drawing.Point(1320, 3);
+            this.searchBtn.Name = "searchBtn";
+            this.searchBtn.Size = new System.Drawing.Size(84, 23);
+            this.searchBtn.TabIndex = 7;
+            this.searchBtn.Text = "搜索";
+            this.searchBtn.UseVisualStyleBackColor = true;
             // 
             // ProfilerForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.AutoSize = true;
-            this.ClientSize = new System.Drawing.Size(1416, 475);
+            this.ClientSize = new System.Drawing.Size(1416, 577);
+            this.Controls.Add(this.searchBtn);
+            this.Controls.Add(this.searchBox);
+            this.Controls.Add(this.deattachBtn);
+            this.Controls.Add(this.processCom);
             this.Controls.Add(this.label1);
-            this.Controls.Add(this.injectTextBox);
             this.Controls.Add(this.injectButton);
             this.Controls.Add(this.tvTaskList);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedDialog;
+            this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.Name = "ProfilerForm";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "lua内存分析器";
@@ -232,21 +249,21 @@ namespace MikuLuaProfiler
 
         private TreeGridView tvTaskList;
         private System.Windows.Forms.ImageList imageStrip;
+        private System.Windows.Forms.Button injectButton;
+        private System.Windows.Forms.Label label1;
         private System.Windows.Forms.DataGridViewImageColumn attachmentColumn;
         private TreeGridColumn overview;
         private System.Windows.Forms.DataGridViewTextBoxColumn totalLuaMemory;
         private System.Windows.Forms.DataGridViewTextBoxColumn selfLuaMemory;
         private System.Windows.Forms.DataGridViewTextBoxColumn luaGC;
-        private System.Windows.Forms.DataGridViewTextBoxColumn totalMonoMemory;
-        private System.Windows.Forms.DataGridViewTextBoxColumn selfMonoMemory;
-        private System.Windows.Forms.DataGridViewTextBoxColumn monoGC;
         private System.Windows.Forms.DataGridViewTextBoxColumn currentTime;
         private System.Windows.Forms.DataGridViewTextBoxColumn averageTime;
         private System.Windows.Forms.DataGridViewTextBoxColumn totalTime;
         private System.Windows.Forms.DataGridViewTextBoxColumn totalCalls;
         private System.Windows.Forms.DataGridViewTextBoxColumn calls;
-        private System.Windows.Forms.Button injectButton;
-        private System.Windows.Forms.TextBox injectTextBox;
-        private System.Windows.Forms.Label label1;
+        private System.Windows.Forms.ComboBox processCom;
+        private System.Windows.Forms.Button deattachBtn;
+        private System.Windows.Forms.TextBox searchBox;
+        private System.Windows.Forms.Button searchBtn;
     }
 }

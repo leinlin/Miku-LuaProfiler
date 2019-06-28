@@ -27,17 +27,6 @@ namespace MikuLuaProfiler
         {
             attachmentColumn.DefaultCellStyle.NullValue = null;
 
-            // load image strip
-            this.imageStrip.ImageSize = new System.Drawing.Size(16, 16);
-            this.imageStrip.TransparentColor = System.Drawing.Color.Magenta;
-            this.imageStrip.ImageSize = new Size(16, 16);
-            this.imageStrip.Images.AddStrip(Properties.Resources.newGroupPostIconStrip);
-
-            tvTaskList.ImageList = imageStrip;
-
-            // attachment header cell
-            this.attachmentColumn.HeaderCell = new AttachmentColumnHeader(imageStrip.Images[2]);
-
             FillFormInfo();
         }
 
@@ -45,60 +34,40 @@ namespace MikuLuaProfiler
         {
             Font boldFont = new Font(tvTaskList.DefaultCellStyle.Font, FontStyle.Bold);
 
-            TreeGridNode node = tvTaskList.Nodes.Add(null, "测试站点1", "", "");
-            node.ImageIndex = 0;
+            TreeGridNode node = tvTaskList.Nodes.Add(null, "函数1", "100k", "100k", "0B", "0ms", "0ms", "0ms", 100, 1);
             node.DefaultCellStyle.Font = boldFont;
-            node = node.Nodes.Add(null, "测试站点11", DateTime.Now.ToString("yyyyMMdd HH:mm:ss"), "已完成");
-            node.ImageIndex = 1;
-            node = node.Parent.Nodes.Add(null, "测试站点12", DateTime.Now.ToString("yyyyMMdd HH:mm:ss"), "已完成");
-            node.ImageIndex = 1;
-            node = node.Parent.Nodes.Add(null, "测试站点13", DateTime.Now.ToString("yyyyMMdd HH:mm:ss"), "已完成");
-            node.ImageIndex = 1;
-            node = node.Parent.Nodes.Add(null, "测试站点14", DateTime.Now.ToString("yyyyMMdd HH:mm:ss"), "已完成");
-            node.ImageIndex = 1;
-            for (int i = 15, imax = 1000; i < imax; i++)
+            node = node.Nodes.Add(null, "函数2", "100k", "100k", "0B", "0ms", "0ms", "0ms", 100, 1);
+            node = node.Parent.Nodes.Add(null, "函数3", "100k", "100k", "0B", "0ms", "0ms", "0ms", 100, 1);
+            node = node.Parent.Nodes.Add(null, "函数4", "100k", "100k", "0B", "0ms", "0ms", "0ms", 100, 1);
+            var node5 = node.Parent.Nodes.Add(null, "函数5", "100k", "100k", "0B", "0ms", "0ms", "0ms", 100, 1);
+            for (int i = 6, imax = 1000; i < imax; i++)
             {
-                node = node.Parent.Nodes.Add(null, "测试站点" + i, DateTime.Now.ToString("yyyyMMdd HH:mm:ss"), "已完成");
-                node.ImageIndex = 1;
+                node = node5.Nodes.Add(null, "函数" + i, "100k", "100k", "0B", "0ms", "0ms", "0ms", 100, 1);
             }
-            node = node.Nodes.Add(null, "测试站点15", DateTime.Now.ToString("yyyyMMdd HH:mm:ss"), "已完成");
-            node.ImageIndex = 1;
-
-            node = tvTaskList.Nodes.Add(null, @"测试站点2", "", "");
-            node.ImageIndex = 0;
-            node.DefaultCellStyle.Font = boldFont;
-            node = node.Nodes.Add(null, "测试站点22", DateTime.Now.ToString("yyyyMMdd HH:mm:ss"), "未完成");
-            node.ImageIndex = 1;
-
-            node = tvTaskList.Nodes.Add(null, @"测试站点3", "", "");
-            node.ImageIndex = 1;
-
-            node = tvTaskList.Nodes.Add(null, @"测试站点4", "", "");
-            node.ImageIndex = 1;
         }
 
-        internal class AttachmentColumnHeader : DataGridViewColumnHeaderCell
+        public void OnProcessTextChange(object sender, EventArgs e)
         {
-            public Image _image;
-            public AttachmentColumnHeader(Image img)
-                : base()
+            string origin = processCom.Text;
+            string text = processCom.Text.ToLower();
+            processCom.Items.Clear();
+            var pArray = Process.GetProcesses();
+            for (int i = 0, imax = pArray.Length; i < imax; i++)
             {
-                this._image = img;
+                if (pArray[i].ProcessName.ToLower().Contains(text))
+                {
+                    processCom.Items.Add(pArray[i].ProcessName);
+                }
             }
-            protected override void Paint(Graphics graphics, Rectangle clipBounds, Rectangle cellBounds, int rowIndex, DataGridViewElementStates dataGridViewElementState, object value, object formattedValue, string errorText, DataGridViewCellStyle cellStyle, DataGridViewAdvancedBorderStyle advancedBorderStyle, DataGridViewPaintParts paintParts)
-            {
-                base.Paint(graphics, clipBounds, cellBounds, rowIndex, dataGridViewElementState, value, formattedValue, errorText, cellStyle, advancedBorderStyle, paintParts);
-                graphics.DrawImage(_image, cellBounds.X + 4, cellBounds.Y + 2);
-            }
-            protected override object GetValue(int rowIndex)
-            {
-                return null;
-            }
+            processCom.DroppedDown = true;
+            processCom.Text = origin;
+            processCom.SelectionStart = processCom.Text.Length;
+            //processCom.Show();
         }
 
         private void injectButton_Click(object sender, EventArgs e)
         {
-            Process[] process = Process.GetProcessesByName(injectTextBox.Text);
+            Process[] process = Process.GetProcessesByName(processCom.Text);
             if (process.Length > 0)
             {
                 var p = Process.GetProcessById(process.FirstOrDefault().Id);
@@ -180,7 +149,7 @@ namespace MikuLuaProfiler
                 Debug.Print(ex.ToString());
                 return false;
             }
-
+            deattachBtn.Enabled = true;
             return true;
         }
 
@@ -204,11 +173,13 @@ namespace MikuLuaProfiler
         [DllImport("kernel32.dll", SetLastError = true, CallingConvention = CallingConvention.Winapi)]
         [return: MarshalAs(UnmanagedType.Bool)]
         internal static extern bool IsWow64Process([In] IntPtr process, [Out] out bool wow64Process);
-
-        private void button2_Click(object sender, EventArgs e)
-        {
-            MessageBox.Show(serverInterface.IsInstalled().ToString());
-        }
         #endregion
+
+        private void deattachBtn_Click(object sender, EventArgs e)
+        {
+            serverInterface.Deattach();
+            MessageBox.Show("已解除");
+            deattachBtn.Enabled = false;
+        }
     }
 }
