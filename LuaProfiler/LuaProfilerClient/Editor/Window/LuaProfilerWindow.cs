@@ -14,6 +14,7 @@ namespace MikuLuaProfiler_Editor
 {
     public class LuaProfilerWindowProfiler : EditorWindow
     {
+#if (UNITY_5 || UNITY_2017_1_OR_NEWER)
         private static LuaDiffScrollView m_luaDiffScrollView = null;
         void OnEnable()
         {
@@ -22,6 +23,7 @@ namespace MikuLuaProfiler_Editor
                 m_luaDiffScrollView = new LuaDiffScrollView();
             }
         }
+#endif
 
         void OnGUI()
         {
@@ -34,7 +36,7 @@ namespace MikuLuaProfiler_Editor
         {
             var setting = LuaDeepProfilerSetting.Instance;
 
-            #region profiler settting
+#region profiler settting
             GUILayout.Label("profiler setting");
             GUILayout.BeginVertical("Box");
 
@@ -85,9 +87,9 @@ namespace MikuLuaProfiler_Editor
             GUILayout.Space(5);
 
             GUILayout.EndVertical();
-            #endregion
+#endregion
 
-            #region socket
+#region socket
             GUILayout.Space(10);
             GUILayout.Label("connet");
 
@@ -108,12 +110,13 @@ namespace MikuLuaProfiler_Editor
             GUILayout.Space(5);*/
 
             GUILayout.EndVertical();
-            #endregion
+#endregion
 
-            #region diff
+#region diff
             GUILayout.BeginVertical("Box");
             GUILayout.Space(5);
             GUILayout.BeginHorizontal();
+#if (UNITY_5 || UNITY_2017_1_OR_NEWER)
             if (GUILayout.Button("MarkLuaRecord", GUILayout.Height(30)))
             {
                 LuaHook.Record();
@@ -130,10 +133,11 @@ namespace MikuLuaProfiler_Editor
             GUILayout.EndHorizontal();
 
             m_luaDiffScrollView.DoRefScroll();
+#endif
             GUILayout.EndVertical();
-            #endregion
+#endregion
 
-            #region capture
+#region capture
             /*
             GUILayout.Space(10);
 
@@ -175,7 +179,7 @@ namespace MikuLuaProfiler_Editor
 
             GUILayout.EndVertical();
             */
-            #endregion
+#endregion
 
         }
 

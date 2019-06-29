@@ -38,7 +38,9 @@ using System;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Text;
+#if UNITY_EDITOR
 using MikuHook;
+#endif
 
 #if TOLUA
 using OldLuaDLL = LuaInterface.LuaDLL;
@@ -126,7 +128,7 @@ namespace MikuLuaProfiler
 
 #endif
 
-        #region index
+#region index
 #if XLUA
         [DllImport(LUADLL, CallingConvention = CallingConvention.Cdecl)]
         public static extern int xlua_getglobal(IntPtr L, string name);
@@ -160,9 +162,9 @@ namespace MikuLuaProfiler
         {
             luaL_unref(luaState, LuaIndexes.LUA_REGISTRYINDEX, reference);
         }
-        #endregion
+#endregion
 
-        #region 通用操作
+#region 通用操作
         [DllImport(LUADLL, CallingConvention = CallingConvention.Cdecl)]
         public static extern IntPtr luaL_newstate();
 
@@ -295,6 +297,7 @@ end
         public static extern int luaL_ref(IntPtr luaState, int t);                                                  //[-1, +0, m]
         [DllImport(LUADLL, CallingConvention = CallingConvention.Cdecl)]
         public static extern void luaL_unref(IntPtr luaState, int registryIndex, int reference);
+#if TOLUA || SLUA || XLUA
 #if TOLUA
         [DllImport(LUADLL, CallingConvention = CallingConvention.Cdecl)]
 #elif SLUA
@@ -303,6 +306,12 @@ end
         [DllImport(LUADLL, CallingConvention = CallingConvention.Cdecl, EntryPoint = "xluaL_loadbuffer")]
 #endif
         public static extern int luaL_loadbuffer(IntPtr luaState, byte[] buff, IntPtr size, string name);
+#else
+        public static int luaL_loadbuffer(IntPtr luaState, byte[] buff, IntPtr size, string name)
+        {
+            return 1;
+        }
+#endif
         public static string lua_tostring(IntPtr luaState, int index)
         {
             IntPtr len;
@@ -339,25 +348,18 @@ end
             IntPtr fn = Marshal.GetFunctionPointerForDelegate(func);
             lua_pushcclosure(luaState, fn, 0);
         }
-        #endregion
+#endregion
 
-        #region mono hook
+#region mono hook
 #if UNITY_EDITOR
 
         private static CSharpMethodHooker luaL_newstate_hooker;
         private static CSharpMethodHooker lua_close_hooker;
 
-        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-        public unsafe delegate int LuaLoadbufferFun(IntPtr luaState, IntPtr buff, IntPtr size, string name);
-        private static LuaLoadbufferFun luaLoadbufferFun;
+        private static CSharpMethodHooker lua_load_buffer_hooker;
+        private static CSharpMethodHooker luaL_ref_hooker;
+        private static CSharpMethodHooker luaL_unref_hooker;
 
-        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-        public delegate int LuaRefFun(IntPtr luaState, int t);
-        private static LuaRefFun luaRefFun;
-
-        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-        public delegate void LuaUnrefFun(IntPtr luaState, int registryIndex, int reference);
-        private static LuaUnrefFun luaUnrefFun;
 #if TOLUA
         private static CSharpMethodHooker tolua_ref_hooker;
         private static CSharpMethodHooker tolua_unref_hooker;
@@ -380,22 +382,26 @@ end
                 lua_close_hooker = BindHook(oldType, replaceType, "lua_close", "lua_close_replace");
             }
 
-            if (luaRefFun == null)
+            if (luaL_ref_hooker == null)
             {
-                luaRefFun = (LuaRefFun)BindNative<LuaRefFun>("luaL_ref", new LuaRefFun(luaL_ref_replace));
+                luaL_ref_hooker = BindHook(oldType, replaceType, "luaL_ref", "luaL_ref_replace");
             }
 
-            if (luaUnrefFun == null)
+            if (luaL_unref_hooker == null)
             {
-                luaUnrefFun = (LuaUnrefFun)BindNative<LuaUnrefFun>("luaL_unref", new LuaUnrefFun(luaL_unref_replace));
+                luaL_unref_hooker = BindHook(oldType, replaceType, "luaL_unref", "luaL_unref_replace");
             }
 
-            if (luaLoadbufferFun == null)
+
+            if (lua_load_buffer_hooker == null)
             {
-#if XLUA
-                luaLoadbufferFun = (LuaLoadbufferFun)BindNative<LuaLoadbufferFun>("xluaL_loadbuffer", new LuaLoadbufferFun(luaL_loadbuffer_replace));
-#else
-                luaLoadbufferFun = (LuaLoadbufferFun)BindNative<LuaLoadbufferFun>("luaL_loadbuffer", new LuaLoadbufferFun(luaL_loadbuffer_replace));
+#if TOLUA
+                lua_load_buffer_hooker = BindHook(oldType, replaceType, "tolua_loadbuffer", "luaL_loadbuffer_replace");
+#elif XLUA
+                lua_load_buffer_hooker = BindHook(oldType, replaceType, "xluaL_loadbuffer", "luaL_loadbuffer_replace");
+#elif SLUA
+                oldType = typeof(SLua.LuaDLLWrapper);
+                lua_load_buffer_hooker = BindHook(oldType, replaceType, "luaLS_loadbuffer", "luaL_loadbuffer_replace");
 #endif
             }
 #if TOLUA
@@ -429,23 +435,23 @@ end
                 lua_close_hooker = null;
             }
 
-            //if (lua_load_buffer_hooker != null)
-            //{
-            //    lua_load_buffer_hooker.Uninstall();
-            //    lua_load_buffer_hooker = null;
-            //}
+            if (lua_load_buffer_hooker != null)
+            {
+                lua_load_buffer_hooker.Uninstall();
+                lua_load_buffer_hooker = null;
+            }
 
-            //if (lua_ref_hooker != null)
-            //{
-            //    lua_ref_hooker.Uninstall();
-            //    lua_ref_hooker = null;
-            //}
+            if (luaL_ref_hooker != null)
+            {
+                luaL_ref_hooker.Uninstall();
+                luaL_ref_hooker = null;
+            }
 
-            //if (lua_unref_hooker != null)
-            //{
-            //    lua_unref_hooker.Uninstall();
-            //    lua_unref_hooker = null;
-            //}
+            if (luaL_unref_hooker != null)
+            {
+                luaL_unref_hooker.Uninstall();
+                luaL_unref_hooker = null;
+            }
 
 #if TOLUA
             if (tolua_ref_hooker != null)
@@ -510,18 +516,19 @@ end
             LuaDLL.lua_close(luaState);
         }
 
-        public static int luaL_loadbuffer_replace(IntPtr luaState, IntPtr buff, IntPtr size, string name)
+        public static int luaL_loadbuffer_replace(IntPtr luaState, byte[] buff, int size, string name)
         {
-            byte[] buffer = new byte[(int)size];
-            Marshal.Copy(buff, buffer, 0, buffer.Length);
-            buffer = LuaHook.Hookloadbuffer(luaState, buffer, name);
-
-            return luaLoadbufferFun(luaState, NativeAPI.ArrayToIntptr(buffer), (IntPtr)(buffer.Length), name);
+#if TOLUA || XLUA || SLUA
+            buff = LuaHook.Hookloadbuffer(luaState, buff, name);
+            return LuaDLL.luaL_loadbuffer(luaState, buff, (IntPtr)(buff.Length), name);
+#else
+            return 1;
+#endif
         }
 
         public static int luaL_ref_replace(IntPtr luaState, int t)
         {
-            int num = luaRefFun(luaState, t);
+            int num = LuaDLL.luaL_ref(luaState, t);
             LuaHook.HookRef(luaState, num);
             return num;
         }
@@ -529,7 +536,7 @@ end
         public static void luaL_unref_replace(IntPtr luaState, int registryIndex, int reference)
         {
             LuaHook.HookUnRef(luaState, reference);
-            luaUnrefFun(luaState, registryIndex, reference);
+            LuaDLL.luaL_unref(luaState, registryIndex, reference);
         }
 
 #if TOLUA

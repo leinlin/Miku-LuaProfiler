@@ -71,7 +71,9 @@ namespace MikuLuaProfiler
         }
         #endregion
 
+#if UNITY_5 || UNITY_2017_1_OR_NEWER
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
+#endif
         public static void OnStartGame()
         {
 #if UNITY_EDITOR
