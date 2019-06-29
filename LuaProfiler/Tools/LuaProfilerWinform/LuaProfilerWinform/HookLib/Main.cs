@@ -4,6 +4,7 @@ using System.Runtime.InteropServices;
 using EasyHook;
 using System.Threading;
 using System.Windows.Forms;
+using System.Diagnostics;
 
 namespace HookLib
 {
@@ -32,16 +33,7 @@ namespace HookLib
 
         public void Uninstall()
         {
-            if (MessageBoxWHook != null)
-            {
-                MessageBoxWHook.Dispose();
-                MessageBoxWHook = null;
-            }
-            if (MessageBoxAHook != null)
-            {
-                MessageBoxAHook.Dispose();
-                MessageBoxAHook = null;
-            }
+            NativeAPI.LhUninstallAllHooks();
         }
 
         public Main(
@@ -63,17 +55,27 @@ namespace HookLib
         {
             try
             {
-                MessageBox.Show(parameter.Msg);
+                var process = Process.GetCurrentProcess();
+                var modules = process.Modules;
+                foreach (ProcessModule item in modules)
+                {
+                    if (LocalHook.GetProcAddress(item.ModuleName, "luaL_newstate") != IntPtr.Zero)
+                    {
+                        HookLuaFun(item.ModuleName, string funName)
+                        break;
+                    }
+                }
+
                 MessageBoxWHook = LocalHook.Create(
                     LocalHook.GetProcAddress("user32.dll", "MessageBoxW"),
                     new DMessageBoxW(MessageBoxW_Hooked),
-                    this);
+                    null);
                 MessageBoxWHook.ThreadACL.SetExclusiveACL(new int[1]);
 
                 MessageBoxAHook = LocalHook.Create(
                     LocalHook.GetProcAddress("user32.dll", "MessageBoxA"),
                     new DMessageBoxW(MessageBoxA_Hooked),
-                    this);
+                    null);
                 MessageBoxAHook.ThreadACL.SetExclusiveACL(new int[1]);
             }
             catch (Exception ex)
@@ -95,6 +97,21 @@ namespace HookLib
             }
             Uninstall();
         }
+
+        #region hook lua fun
+        public static object HookLuaFun(string moduleName, string funName, Delegate luaFun)
+        {
+            IntPtr handle = LocalHook.GetProcAddress(moduleName, funName);
+            var newstateHook = LocalHook.Create(handle, luaFun, null);
+            newstateHook.ThreadACL.SetExclusiveACL(new int[1]);
+            return newstateHook.Callback;
+        }
+
+        public static void HookAllLuaFun(string moduleName)
+        {
+            LuaDLL.luaL_newstate = (LuaDLL.luaL_newstate_fun)HookLuaFun(moduleName, "luaL_newstate", new LuaDLL.luaL_newstate_fun(LuaDLL.luaL_newstate_hooked));
+        }
+        #endregion
 
         #region MessageBoxW
 

@@ -180,6 +180,7 @@ namespace MikuLuaProfiler
             serverInterface.Deattach();
             MessageBox.Show("ря╫БЁЩ");
             deattachBtn.Enabled = false;
+
         }
     }
 }
