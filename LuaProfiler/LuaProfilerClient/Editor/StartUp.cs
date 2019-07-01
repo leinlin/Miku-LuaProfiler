@@ -137,7 +137,6 @@ namespace MikuLuaProfiler_Editor
         private static MethodDefinition m_hookloadbuffer;
         private static MethodDefinition m_hookRef;
         private static MethodDefinition m_hookUnref;
-        private static MethodDefinition m_luaGC;
         public delegate void InjectMethodAction(MethodDefinition method, ModuleDefinition module, MethodDefinition newMethod);
 
         private const string LUA_NEW_STATE = "luaL_newstate";
@@ -577,10 +576,6 @@ namespace MikuLuaProfiler_Editor
                 if (m.Name == LUA_NEW_STATE + "_profiler")
                 {
                     return;
-                }
-                if (m.Name == "lua_gc")
-                {
-                    m_luaGC = m;
                 }
             }
             #endregion

@@ -109,7 +109,6 @@ namespace MikuLuaProfiler
 
         private void Awake()
         {
-            NativeHelper.RunAyncPass();
             setting = LuaDeepProfilerSetting.Instance;
         }
 
