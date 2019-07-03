@@ -365,6 +365,7 @@ end
         private static CSharpMethodHooker tolua_unref_hooker;
 #endif
         private static bool m_hooked = false;
+        private static object m_Lock = 1;
         public static void Install()
         {
 #if TOLUA || XLUA || SLUA
@@ -501,26 +502,35 @@ end
 
         public static IntPtr luaL_newstate_replace()
         {
-            IntPtr intPtr = LuaDLL.luaL_newstate();
-            LuaProfiler.mainL = intPtr;
-            MikuLuaProfilerLuaProfilerWrap.__Register(intPtr);
-            return intPtr;
+            lock (m_Lock)
+            {
+                IntPtr intPtr = LuaDLL.luaL_newstate();
+                LuaProfiler.mainL = intPtr;
+                MikuLuaProfilerLuaProfilerWrap.__Register(intPtr);
+                return intPtr;
+            }
         }
 
         public static void lua_close_replace(IntPtr luaState)
         {
-            if (LuaProfiler.mainL == luaState)
+            lock (m_Lock)
             {
-                LuaProfiler.mainL = IntPtr.Zero;
+                if (LuaProfiler.mainL == luaState)
+                {
+                    LuaProfiler.mainL = IntPtr.Zero;
+                }
+                LuaDLL.lua_close(luaState);
             }
-            LuaDLL.lua_close(luaState);
         }
 
         public static int luaL_loadbuffer_replace(IntPtr luaState, byte[] buff, int size, string name)
         {
 #if TOLUA || XLUA || SLUA
-            buff = LuaHook.Hookloadbuffer(luaState, buff, name);
-            return LuaDLL.luaL_loadbuffer(luaState, buff, (IntPtr)(buff.Length), name);
+            lock (m_Lock)
+            {
+                buff = LuaHook.Hookloadbuffer(luaState, buff, name);
+                return LuaDLL.luaL_loadbuffer(luaState, buff, (IntPtr)(buff.Length), name);
+            }
 #else
             return 1;
 #endif
@@ -528,26 +538,38 @@ end
 
         public static int luaL_ref_replace(IntPtr luaState, int t)
         {
-            int num = LuaDLL.luaL_ref(luaState, t);
-            LuaHook.HookRef(luaState, num);
-            return num;
+            lock (m_Lock)
+            {
+                int num = LuaDLL.luaL_ref(luaState, t);
+                LuaHook.HookRef(luaState, num);
+                return num;
+            }
         }
 
         public static void luaL_unref_replace(IntPtr luaState, int registryIndex, int reference)
         {
-            LuaHook.HookUnRef(luaState, reference);
-            LuaDLL.luaL_unref(luaState, registryIndex, reference);
+            lock (m_Lock)
+            {
+                LuaHook.HookUnRef(luaState, reference);
+                LuaDLL.luaL_unref(luaState, registryIndex, reference);
+            }
         }
 
 #if TOLUA
         public static int toluaL_ref_replace(IntPtr L)
         {
-            return OldLuaDLL.luaL_ref(L, -10000);
+            lock (m_Lock)
+            {
+                return OldLuaDLL.luaL_ref(L, -10000);
+            }
         }
 
         public static void toluaL_unref_replace(IntPtr L, int reference)
         {
-            OldLuaDLL.luaL_unref(L, -10000, reference);
+            lock (m_Lock)
+            {
+                OldLuaDLL.luaL_unref(L, -10000, reference);
+            }
         }
 #endif
 
