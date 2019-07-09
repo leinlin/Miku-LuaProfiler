@@ -470,14 +470,6 @@ end
             m_hooked = false;
 #endif
         }
-
-
-        private static Delegate BindNative<T>(string funName, Delegate replace)
-        {
-            NativeMethodHooker result = NativeMethodHooker.HookNative(LUADLL, funName, replace);
-            return result.GetProxy<T>();
-        }
-
         private static CSharpMethodHooker BindHook(Type oldType, Type replaceType, string oldName, string replaceName)
         {
             MethodInfo oldFun = null;
