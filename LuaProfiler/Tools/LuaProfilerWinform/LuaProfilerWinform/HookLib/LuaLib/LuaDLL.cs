@@ -1,8 +1,9 @@
-﻿using System;
+﻿using EasyHook;
+using System;
 using System.Runtime.InteropServices;
 using System.Windows.Forms;
 
-namespace HookLib
+namespace MikuLuaProfiler_Winform
 {
     public enum LuaTypes
     {
@@ -16,7 +17,6 @@ namespace HookLib
         LUA_TFUNCTION = 6,
         LUA_TUSERDATA = 7,
         LUA_TTHREAD = 8,
-
     }
 
     public enum LuaGCOptions
@@ -39,18 +39,20 @@ namespace HookLib
         [UnmanagedFunctionPointer(CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
         public delegate IntPtr luaL_newstate_fun();
         public static luaL_newstate_fun luaL_newstate;
+        public static LocalHook luaL_newstate_hook;
         public static IntPtr luaL_newstate_hooked()
         {
-            MessageBox.Show("hooked newstate");
+            MessageBox.Show("luaL_newstate");
             return luaL_newstate();
         }
 
         [UnmanagedFunctionPointer(CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
         public delegate void lua_close_fun(IntPtr L);
         public static lua_close_fun lua_close;
+        public static LocalHook lua_close_hook;
         public static void lua_close_hooked(IntPtr L)
         {
-            MessageBox.Show("hooked lua_close");
+            MessageBox.Show("lua_close");
             lua_close(L);
         }
 
@@ -148,16 +150,34 @@ namespace HookLib
         public static luaL_openlibs_fun luaL_openlibs;
 
         [UnmanagedFunctionPointer(CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        public delegate int luaL_ref_fun(IntPtr luaState, int t);                                                  //[-1, +0, m]
+        public delegate int luaL_ref_fun(IntPtr L, int t);                                                  //[-1, +0, m]
         public static luaL_ref_fun luaL_ref;
+        public static LocalHook luaL_ref_hook;
+        public static void luaL_ref_hooked(IntPtr L, int t)
+        {
+            MessageBox.Show("luaL_ref");
+            luaL_ref(L, t);
+        }
 
         [UnmanagedFunctionPointer(CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        public delegate void luaL_unref_fun(IntPtr luaState, int registryIndex, int reference);
+        public delegate void luaL_unref_fun(IntPtr L, int registryIndex, int reference);
         public static luaL_unref_fun luaL_unref;
+        public static LocalHook luaL_unref_hook;
+        public static void luaL_unref_hooked(IntPtr L, int registryIndex, int reference)
+        {
+            MessageBox.Show("luaL_unref");
+            luaL_unref(L, registryIndex, reference);
+        }
 
         [UnmanagedFunctionPointer(CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
         public delegate void luaL_loadbufferx_fun(IntPtr L, IntPtr buff, IntPtr sz, IntPtr name, IntPtr mode);
         public static luaL_loadbufferx_fun luaL_loadbufferx;
+        public static LocalHook luaL_loadbufferx_hook;
+        public static void luaL_loadbufferx_hooked(IntPtr L, IntPtr buff, IntPtr sz, IntPtr name, IntPtr mode)
+        {
+            MessageBox.Show("luaL_loadbufferx");
+            luaL_loadbufferx(L, buff, sz, name, mode);
+        }
 
         [UnmanagedFunctionPointer(CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
         public delegate void luaL_loadfilex_fun(IntPtr L, IntPtr filename, IntPtr mode);
@@ -170,6 +190,17 @@ namespace HookLib
         [UnmanagedFunctionPointer(CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
         public delegate void lua_pushcclosure_fun(IntPtr L, IntPtr fn, int nup);
         public static lua_pushcclosure_fun lua_pushcclosure;
+
+        public static long GetLuaMemory(IntPtr luaState)
+        {
+            long result = 0;
+            if (LuaProfiler.m_hasL)
+            {
+                result = LuaDLL.lua_gc(luaState, LuaGCOptions.LUA_GCCOUNT, 0);
+                result = result * 1024 + LuaDLL.lua_gc(luaState, LuaGCOptions.LUA_GCCOUNTB, 0);
+            }
+            return result;
+        }
 
         public static void luaL_initlibs(IntPtr luaState)
         {

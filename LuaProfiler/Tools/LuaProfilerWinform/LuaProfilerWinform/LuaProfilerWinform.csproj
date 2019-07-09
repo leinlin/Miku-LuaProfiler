@@ -39,6 +39,7 @@
     <DefineConstants>TRACE</DefineConstants>
     <WarningLevel>4</WarningLevel>
     <IncrementalBuild>false</IncrementalBuild>
+    <PlatformTarget>x64</PlatformTarget>
   </PropertyGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
@@ -59,7 +60,6 @@
     <Reference Include="System" />
     <Reference Include="System.Data" />
     <Reference Include="System.Drawing" />
-    <Reference Include="System.EnterpriseServices" />
     <Reference Include="System.Runtime.Remoting" />
     <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Xml" />
@@ -109,6 +109,7 @@
     <ProjectReference Include="HookLib\HookLib.csproj">
       <Project>{95e6aa00-47c3-4b1f-9f18-21164573d89c}</Project>
       <Name>HookLib</Name>
+      <Private>True</Private>
     </ProjectReference>
   </ItemGroup>
 </Project>

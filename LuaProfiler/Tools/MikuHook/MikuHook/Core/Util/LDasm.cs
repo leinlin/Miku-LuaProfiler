@@ -648,6 +648,18 @@ namespace MikuHook
                 return (uint)((size + 3) / 4) * 4; // 此为 jit 模式下的长度
             }
 
+            byte* bCode = (byte*)code;
+            //0xFF, 0x25, 0x00, 0x00, 0x00, 0x00
+            if (bCode[0] == 0xFF 
+                && bCode[1] == 0x25 
+                && bCode[2] == 0x00
+                && bCode[3] == 0x00
+                && bCode[4] == 0x00
+                && bCode[5] == 0x00)
+            {
+                return (uint)size;
+            }
+
             UInt32 Length;
             byte* pOpcode;
             UInt32 Result = 0;

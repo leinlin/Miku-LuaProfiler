@@ -51,6 +51,7 @@ namespace MikuLuaProfiler
             this.deattachBtn = new System.Windows.Forms.Button();
             this.searchBox = new System.Windows.Forms.TextBox();
             this.searchBtn = new System.Windows.Forms.Button();
+            this.button1 = new System.Windows.Forms.Button();
             ((System.ComponentModel.ISupportInitialize)(this.tvTaskList)).BeginInit();
             this.SuspendLayout();
             // 
@@ -221,12 +222,24 @@ namespace MikuLuaProfiler
             this.searchBtn.Text = "搜索";
             this.searchBtn.UseVisualStyleBackColor = true;
             // 
+            // button1
+            // 
+            this.button1.Enabled = false;
+            this.button1.Location = new System.Drawing.Point(388, 3);
+            this.button1.Name = "button1";
+            this.button1.Size = new System.Drawing.Size(84, 23);
+            this.button1.TabIndex = 8;
+            this.button1.Text = "Test";
+            this.button1.UseVisualStyleBackColor = true;
+            this.button1.Click += new System.EventHandler(this.button1_Click);
+            // 
             // ProfilerForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.AutoSize = true;
             this.ClientSize = new System.Drawing.Size(1416, 577);
+            this.Controls.Add(this.button1);
             this.Controls.Add(this.searchBtn);
             this.Controls.Add(this.searchBox);
             this.Controls.Add(this.deattachBtn);
@@ -265,5 +278,6 @@ namespace MikuLuaProfiler
         private System.Windows.Forms.Button deattachBtn;
         private System.Windows.Forms.TextBox searchBox;
         private System.Windows.Forms.Button searchBtn;
+        private System.Windows.Forms.Button button1;
     }
 }

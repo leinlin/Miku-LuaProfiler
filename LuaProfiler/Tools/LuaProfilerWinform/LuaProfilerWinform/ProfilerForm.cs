@@ -11,6 +11,8 @@ using System.Diagnostics;
 using EasyHook;
 using System.Runtime.Remoting;
 using System.Linq;
+using System.Collections.Generic;
+using System.Security.Cryptography;
 
 namespace MikuLuaProfiler
 {
@@ -19,8 +21,18 @@ namespace MikuLuaProfiler
         public ProfilerForm()
         {
             InitializeComponent();
-
+            button1.Enabled = true;
             SetStyle();
+        }
+
+        protected override void OnClosed(EventArgs e)
+        {
+            if (serverInterface != null)
+            {
+                serverInterface.isHook = false;
+            }
+            Thread.Sleep(1000);
+            base.OnClosed(e);
         }
 
         private void SetStyle()
@@ -85,7 +97,10 @@ namespace MikuLuaProfiler
                     return;
                 }
 
-                RegGACAssembly();
+                if (!RegGACAssembly())
+                {
+                    return;
+                }
                 InstallHookInternal(p.Id);
             }
             else
@@ -97,25 +112,50 @@ namespace MikuLuaProfiler
         #region inject
         #region filed
         private HookServer serverInterface;
+        private static string dictPath = AppDomain.CurrentDomain.BaseDirectory;
+        private string base64Str = GenBase64Str();
         #endregion
+
+        public static string GenBase64Str()
+        {
+            Byte[] IdentData = new Byte[30];
+            new RNGCryptoServiceProvider().GetBytes(IdentData);
+            return Convert.ToBase64String(IdentData);
+        }
 
         private bool RegGACAssembly()
         {
-            var dllName = "EasyHook.dll";
-            var dllPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, dllName);
-            if (!RuntimeEnvironment.FromGlobalAccessCache(Assembly.LoadFrom(dllPath)))
+            if (!NativeAPI.RhIsAdministrator())
             {
-                new System.EnterpriseServices.Internal.Publish().GacInstall(dllPath);
-                Thread.Sleep(100);
+                return false;
             }
 
-            dllName = "HookLib.dll";
-            dllPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, dllName);
-            new System.EnterpriseServices.Internal.Publish().GacRemove(dllPath);
-            if (!RuntimeEnvironment.FromGlobalAccessCache(Assembly.LoadFrom(dllPath)))
+            try
             {
-                new System.EnterpriseServices.Internal.Publish().GacInstall(dllPath);
+                try
+                {
+                    NativeAPI.GacUninstallAssemblies
+                    (
+                        new string[] {  "HookLib.dll" }
+                        , "A simple ProcessMonitor based on EasyHook!",
+                        base64Str
+                    );
+                    Thread.Sleep(100);
+                }
+                catch { }
+
+                NativeAPI.GacInstallAssemblies
+                (
+                    new string[] { Path.Combine(dictPath, "EasyHook.dll"), Path.Combine(dictPath, "HookLib.dll") }
+                    , "A simple ProcessMonitor based on EasyHook!",
+                    base64Str
+                );
                 Thread.Sleep(100);
+            }
+            catch(Exception ex)
+            {
+                Debug.Print(ex.ToString());
+                return false;
             }
 
             return true;
@@ -149,6 +189,7 @@ namespace MikuLuaProfiler
                 Debug.Print(ex.ToString());
                 return false;
             }
+            injectButton.Enabled = false;
             deattachBtn.Enabled = true;
             return true;
         }
@@ -178,9 +219,32 @@ namespace MikuLuaProfiler
         private void deattachBtn_Click(object sender, EventArgs e)
         {
             serverInterface.Deattach();
+            Thread.Sleep(1000);
+
+            NativeAPI.GacUninstallAssemblies
+            (
+                new string[] { "HookLib.dll" }
+                , "A simple ProcessMonitor based on EasyHook!",
+                base64Str
+            );
+            Thread.Sleep(100);
+
             MessageBox.Show("已解除");
+            injectButton.Enabled = true;
             deattachBtn.Enabled = false;
 
+        }
+
+        private void button1_Click(object sender, EventArgs e)
+        {
+            if (serverInterface != null && serverInterface.newstate)
+            {
+                MessageBox.Show("已经注入到程序中了！");
+            }
+            else
+            {
+                MessageBox.Show("没有注入！");
+            }
         }
     }
 }

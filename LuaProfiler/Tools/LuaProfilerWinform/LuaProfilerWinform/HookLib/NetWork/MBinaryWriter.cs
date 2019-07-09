@@ -24,52 +24,72 @@
         ###       ###        ###               
          ##       ###        ###               
 __________#_______####_______####______________
-                我们的未来没有BUG              
+                我们的未来没有BUG                
 * ==============================================================================
-* Filename: HookerPool
+* Filename: NetWorkClient
 * Created:  2018/7/13 14:29:22
 * Author:   エル・プサイ・コングリィ
 * Purpose:  
 * ==============================================================================
 */
+
 using System;
-using System.Collections.Generic;
+using System.IO;
 
-namespace MikuHook
+namespace MikuLuaProfiler_Winform
 {
-    /// <summary>
-    /// Hooker 池，防止重复 Hook
-    /// </summary>
-    public static class HookerPool
+    public class MBinaryWriter : BinaryWriter
     {
-        private static Dictionary<IntPtr, HookerBase> _hookers = new Dictionary<IntPtr, HookerBase>();
-
-        public static void Clear()
+        public MBinaryWriter(Stream output) : base(output)
         {
-            var list = new List<HookerBase>(_hookers.Values);
-            foreach (var item in list)
+            this._buffer = new byte[8];
+        }
+
+        public unsafe override void Write(float value)
+        {
+            fixed (byte* ptr = &this._buffer[0])
             {
-                item.Uninstall();
+                *(float*)ptr = value;
+                this.OutStream.Write(this._buffer, 0, 4);
             }
         }
 
-        public static void AddHooker(IntPtr targetAddr, HookerBase hooker)
+        public unsafe override void Write(short value)
         {
-            HookerBase preHooker;
-            if (_hookers.TryGetValue(targetAddr, out preHooker))
+            fixed (byte* ptr = &this._buffer[0])
             {
-                preHooker.Uninstall();
-                _hookers[targetAddr] = hooker;
-            }
-            else
-            {
-                _hookers.Add(targetAddr, hooker);
+                *(short*)ptr = value;
+                this.OutStream.Write(this._buffer, 0, 2);
             }
         }
 
-        public static void RemoveHooker(IntPtr targetAddr)
+        public unsafe override void Write(ushort value)
         {
-            _hookers.Remove(targetAddr);
+            fixed (byte* ptr = &this._buffer[0])
+            {
+                *(short*)ptr = (short)value;
+                this.OutStream.Write(this._buffer, 0, 2);
+            }
         }
+
+        public unsafe override void Write(int value)
+        {
+            fixed (byte* ptr = &this._buffer[0])
+            {
+                *(int*)ptr = value;
+                this.OutStream.Write(this._buffer, 0, 4);
+            }
+        }
+
+        public unsafe override void Write(uint value)
+        {
+            fixed (byte* ptr = &this._buffer[0])
+            {
+                *(uint*)ptr = value;
+                this.OutStream.Write(this._buffer, 0, 4);
+            }
+        }
+
+        private byte[] _buffer;
     }
 }

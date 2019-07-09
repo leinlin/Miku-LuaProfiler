@@ -42,25 +42,6 @@ namespace MikuHook
 {
     public unsafe static class NativeAPI
     {
-#if !UNITY_EDITOR && UNITY_IPHONE
-        const string DLL_NAME = "__Internal";
-#else
-        const string DLL_NAME = "mikuhooker";
-#endif
-
-        [DllImport(DLL_NAME)]
-        public static extern IntPtr miku_hooker_jit_alloc(IntPtr addr, int length);
-        [DllImport(DLL_NAME)]
-        public static extern bool miku_hooker_protect(void* addr, int length, int prot);
-        [DllImport(DLL_NAME)]
-        public static extern bool miku_hooker_free_library(string fileName);
-        [DllImport(DLL_NAME)]
-        public static extern IntPtr miku_hooker_get_address(string filename, string symbol);
-        [DllImport(DLL_NAME)]
-        public static extern IntPtr miku_hooker_free(void* addr, int length);
-        [DllImport(DLL_NAME)]
-        public static extern IntPtr miku_hooker_get_library_addr(string fileName);
-
         #region platform
         public static IntPtr ArrayToIntptr(byte[] source)
         {

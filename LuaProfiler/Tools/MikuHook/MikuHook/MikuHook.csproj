@@ -46,8 +46,6 @@
   <ItemGroup>
     <Compile Include="Core\Class\CSharpMethodHooker.cs" />
     <Compile Include="Core\Class\HookerBase.cs" />
-    <Compile Include="Core\Class\NativeMethodHooker.cs" />
-    <Compile Include="Core\Util\HookerPool.cs" />
     <Compile Include="Core\Util\LDasm.cs" />
     <Compile Include="Core\Util\NativeAPI.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

@@ -92,16 +92,16 @@ namespace MikuHook
             }
             else
             {
-				if(IntPtr.Size == 8)
-				{
-	                s_jmpBuff = s_jmpBuff64;
-	                s_addrOffset = 6;				
-				}
-				else
-				{
-				    s_jmpBuff = s_jmpBuff32;
-                	s_addrOffset = 1;
-				}
+                if (IntPtr.Size == 8)
+                {
+                    s_jmpBuff = s_jmpBuff64;
+                    s_addrOffset = 6;
+                }
+                else
+                {
+                    s_jmpBuff = s_jmpBuff32;
+                    s_addrOffset = 1;
+                }
             }
         }
     }

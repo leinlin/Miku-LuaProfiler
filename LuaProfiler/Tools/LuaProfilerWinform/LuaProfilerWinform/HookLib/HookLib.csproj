@@ -23,10 +23,11 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <PlatformTarget>x64</PlatformTarget>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
-    <Optimize>true</Optimize>
+    <Optimize>false</Optimize>
     <OutputPath>bin\Release\</OutputPath>
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
@@ -51,11 +52,24 @@
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="System.Data" />
     <Reference Include="System.Xml" />
+    <Reference Include="UnityEngine">
+      <HintPath>..\..\lib\UnityEngine.dll</HintPath>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Driver\List.cs" />
+    <Compile Include="Driver\LuaProfiler.cs" />
+    <Compile Include="Driver\ObjectPool.cs" />
+    <Compile Include="Driver\Parse\Common.cs" />
+    <Compile Include="Driver\Parse\LLex.cs" />
+    <Compile Include="Driver\Parse\Parse.cs" />
+    <Compile Include="Driver\Parse\Util.cs" />
+    <Compile Include="Driver\Sample.cs" />
     <Compile Include="HookServer.cs" />
     <Compile Include="LuaLib\LuaDLL.cs" />
     <Compile Include="Main.cs" />
+    <Compile Include="NetWork\MBinaryWriter.cs" />
+    <Compile Include="NetWork\NetWorkClient.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

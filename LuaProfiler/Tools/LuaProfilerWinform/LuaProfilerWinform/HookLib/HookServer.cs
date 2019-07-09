@@ -1,10 +1,12 @@
 ﻿using System;
 
-namespace HookLib
+namespace MikuLuaProfiler_Winform
 {
     public class HookServer : MarshalByRefObject
     {
         public bool isHook = false;
+        public bool newstate = false;
+        public bool discardInvalid = true;
         public bool IsInstalled()
         {
             return isHook;
