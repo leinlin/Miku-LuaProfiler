@@ -678,7 +678,7 @@ namespace MikuLuaProfiler
 
             if (isShowMonoChart)
             {
-                Handles.color = new Color32(154, 255, 154, 255);
+                Handles.color = new Color32(0, 180, 0, 255);
                 DrawMonoCurve(m_TreeView.historyCurve, rect);
             }
 

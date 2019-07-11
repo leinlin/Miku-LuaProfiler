@@ -330,8 +330,9 @@ namespace MikuLuaProfiler
         #endregion
 
         #region field
-        private static Color m_luaColor = new Color(0.4f, 0.7f, 0.9f, 1.0f);
-        private static Color m_monoColor = new Color32(154, 255, 154, 255);
+        private static Color m_selectColor = new Color(1.0f, 1.0f, 0.0f, 1.0f);
+        private static Color m_luaColor = new Color(0.2f, 0.5f, 0.7f, 1.0f);
+        private static Color m_monoColor = new Color32(0, 180, 0, 255);
         private List<int> m_expandIds = new List<int>();
         private readonly LuaProfilerTreeViewItem m_root;
         private readonly List<TreeViewItem> m_treeViewItems = new List<TreeViewItem>();
@@ -1082,14 +1083,22 @@ namespace MikuLuaProfiler
                 m_gs.alignment = TextAnchor.MiddleCenter;
             }
             var color = m_gs.normal.textColor;
-            if (item.isLua)
+            if (!this.IsSelected(item.id))
             {
-                m_gs.normal.textColor = m_luaColor;
+                if (item.isLua)
+                {
+                    m_gs.normal.textColor = m_luaColor;
+                }
+                else
+                {
+                    m_gs.normal.textColor = m_monoColor;
+                }
             }
             else
             {
-                m_gs.normal.textColor = m_monoColor;
+                m_gs.normal.textColor = m_selectColor;
             }
+
             Rect r = args.GetCellRect(0);
             args.rowRect = r;
             base.RowGUI(args);

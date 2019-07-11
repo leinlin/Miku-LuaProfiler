@@ -290,10 +290,7 @@ namespace MikuLuaProfiler
         {
             if (isHook)
             {
-                HookLuaSetup.RegisterAction(()=> 
-                {
-                    LuaLib.DoRefLuaFun(L, "lua_miku_add_ref_fun_info", reference);
-                });
+                LuaLib.DoRefLuaFun(L, "lua_miku_add_ref_fun_info", reference);
             }
         }
 
@@ -562,20 +559,25 @@ namespace MikuLuaProfiler
         public static void DoRefLuaFun(IntPtr L, string funName, int reference)
         {
             LuaDLL.lua_getref(L, reference);
-            int oldTop = LuaDLL.lua_gettop(L);
-            LuaDLL.lua_getglobal(L, "miku_handle_error");
-            do
-            {
-                LuaDLL.lua_getglobal(L, funName);
-                if (!LuaDLL.lua_isfunction(L, -1)) break;
-                LuaDLL.lua_pushvalue(L, oldTop);
-                if (LuaDLL.lua_pcall(L, 1, 0, oldTop + 1) == 0)
-                {
-                    LuaDLL.lua_remove(L, oldTop + 1);
-                }
 
-            } while (false);
-            LuaDLL.lua_settop(L, oldTop);
+            if (LuaDLL.lua_isfunction(L, -1))
+            {
+                int oldTop = LuaDLL.lua_gettop(L);
+                LuaDLL.lua_getglobal(L, "miku_handle_error");
+                do
+                {
+                    LuaDLL.lua_getglobal(L, funName);
+                    if (!LuaDLL.lua_isfunction(L, -1)) break;
+                    LuaDLL.lua_pushvalue(L, oldTop);
+                    if (LuaDLL.lua_pcall(L, 1, 0, oldTop + 1) == 0)
+                    {
+                        LuaDLL.lua_remove(L, oldTop + 1);
+                    }
+
+                } while (false);
+                LuaDLL.lua_settop(L, oldTop);
+            }
+
             LuaDLL.lua_pop(L, 1);
         }
     }
