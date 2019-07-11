@@ -560,7 +560,7 @@ namespace MikuLuaProfiler
         {
             LuaDLL.lua_getref(L, reference);
 
-            if (LuaDLL.lua_isfunction(L, -1))
+            if (LuaDLL.lua_isfunction(L, -1) || LuaDLL.lua_istable(L, -1))
             {
                 int oldTop = LuaDLL.lua_gettop(L);
                 LuaDLL.lua_getglobal(L, "miku_handle_error");
