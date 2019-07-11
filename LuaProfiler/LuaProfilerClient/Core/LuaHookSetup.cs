@@ -679,9 +679,10 @@ local function get_table_info(tb)
     local addr = funAddrTb[tb]
     if not result then
         local tostringFun
-        if getmetatable(tb) and rawget(getmetatable(tb), '__tostring') then
-            tostringFun = rawget(getmetatable(tb), '__tostring')
-            rawset(getmetatable(tb), '__tostring', nil)
+        local metaTb = getmetatable(tb)
+        if metaTb and miku_check_type(metaTb) == 2 and rawget(metaTb, '__tostring') then
+            tostringFun = rawget(metaTb, '__tostring')
+            rawset(metaTb, '__tostring', nil)
         end
         local addStr = tostring(tb)
         if tostringFun then
