@@ -154,10 +154,13 @@ namespace MikuLuaProfiler
             xlua_getglobal(luaState, name);
 #endif
         }
+        public delegate void tolua_getref_fun(IntPtr luaState, int reference);
+
         public static void lua_getref(IntPtr luaState, int reference)
         {
             lua_rawgeti(luaState, LuaIndexes.LUA_REGISTRYINDEX, reference);
         }
+
         public static void lua_unref(IntPtr luaState, int reference)
         {
             luaL_unref(luaState, LuaIndexes.LUA_REGISTRYINDEX, reference);
@@ -408,13 +411,20 @@ end
 #if TOLUA
             if (tolua_ref_hooker == null)
             {
-                tolua_ref_hooker = BindHook(oldType, replaceType, "toluaL_ref", "toluaL_ref_replace");
+                MethodInfo oldFun = oldType.GetMethod("toluaL_ref");
+                MethodInfo replaceFun = replaceType.GetMethod("toluaL_ref_replace");
+                MethodInfo proxyFun = replaceType.GetMethod("toluaL_ref_proxy");
+
+                tolua_ref_hooker = CSharpMethodHooker.HookCSMethod(oldFun, replaceFun, proxyFun);
             }
 
             if (tolua_unref_hooker == null)
             {
+                MethodInfo oldFun = oldType.GetMethod("toluaL_unref");
+                MethodInfo replaceFun = replaceType.GetMethod("toluaL_unref_replace");
+                MethodInfo proxyFun = replaceType.GetMethod("toluaL_unref_proxy");
 
-                tolua_unref_hooker = BindHook(oldType, replaceType, "toluaL_unref", "toluaL_unref_replace");
+                tolua_unref_hooker = CSharpMethodHooker.HookCSMethod(oldFun, replaceFun, proxyFun);
             }
 #endif
             m_hooked = true;
@@ -547,28 +557,54 @@ end
             }
         }
 
-#if TOLUA
+        public static tolua_getref_fun tolua_Getref_Fun = new tolua_getref_fun(toluaL_get_ref);
+        public static void toluaL_get_ref(IntPtr L, int reference)
+        {
+            // _R[5] table放到栈顶
+            lua_getref(L, 5);
+            lua_rawgeti(L, -1, reference);
+        }
+
         public static int toluaL_ref_replace(IntPtr L)
         {
             lock (m_Lock)
             {
-                return OldLuaDLL.luaL_ref(L, -10000);
+                int num = toluaL_ref_proxy(L);
+                LuaHook.HookRef(L, num, tolua_Getref_Fun);
+                return num;
             }
+        }
+
+        public static int toluaL_ref_proxy(IntPtr L)
+        {
+            for (int i = 0, imax = 250;i<imax;i++)
+            {
+                UnityEngine.Debug.Log("fuck misaka");
+            }
+            return 0;
         }
 
         public static void toluaL_unref_replace(IntPtr L, int reference)
         {
             lock (m_Lock)
             {
-                OldLuaDLL.luaL_unref(L, -10000, reference);
+                LuaHook.HookUnRef(L, reference, tolua_Getref_Fun);
+                toluaL_unref_proxy(L, reference);
             }
         }
-#endif
 
-#endif
-#endregion
-
-
+        public static void toluaL_unref_proxy(IntPtr L, int reference)
+        {
+            for (int i = 0, imax = 250; i < imax; i++)
+            {
+                UnityEngine.Debug.Log("fuck misaka");
+            }
         }
+
+#endif
+        #endregion
+
+
+    }
     }
 #endif
