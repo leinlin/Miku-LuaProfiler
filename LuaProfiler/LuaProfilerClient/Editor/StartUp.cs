@@ -42,7 +42,6 @@ using System.Linq;
 using System.Security.Cryptography;
 using UnityEditor;
 using UnityEngine;
-using MikuLuaProfiler;
 #if XLUA
 using LuaDLL = XLua.LuaDLL.Lua;
 #elif TOLUA
@@ -51,7 +50,7 @@ using LuaDLL = LuaInterface.LuaDLL;
 using LuaDLL = SLua.LuaDLL;
 #endif
 
-namespace MikuLuaProfiler_Editor
+namespace MikuLuaProfiler
 {
 
     [InitializeOnLoad]

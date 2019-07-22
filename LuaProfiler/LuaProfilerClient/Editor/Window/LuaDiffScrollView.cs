@@ -1,5 +1,5 @@
 ﻿#if (UNITY_5 || UNITY_2017_1_OR_NEWER)
-namespace MikuLuaProfiler_Editor
+namespace MikuLuaProfiler
 {
     using System;
     using System.Collections.Generic;

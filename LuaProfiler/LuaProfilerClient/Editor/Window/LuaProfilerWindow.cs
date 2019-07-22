@@ -10,7 +10,7 @@ using UnityEngine;
 using UnityEditor;
 using MikuLuaProfiler;
 
-namespace MikuLuaProfiler_Editor
+namespace MikuLuaProfiler
 {
     public class LuaProfilerWindowProfiler : EditorWindow
     {
