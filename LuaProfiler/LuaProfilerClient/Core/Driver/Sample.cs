@@ -124,6 +124,35 @@ namespace MikuLuaProfiler
         public MList<Sample> childs = new MList<Sample>(16);
         public string captureUrl = null;
 
+        public long selfLuaGC
+        {
+            get
+            {
+                long result = costLuaGC;
+                for (int i = 0, imax = childs.Count; i < imax; i++)
+                {
+                    var item = childs[i];
+                    result -= item.costLuaGC;
+                }
+                return result;
+            }
+        }
+
+        public long selfMonoGC
+        {
+            get
+            {
+                long result = costMonoGC;
+                for (int i = 0, imax = childs.Count; i < imax; i++)
+                {
+                    var item = childs[i];
+                    result -= item.costMonoGC;
+                }
+
+                return result;
+            }
+        }
+ 
         public bool CheckSampleValid()
         {
             bool result = false;

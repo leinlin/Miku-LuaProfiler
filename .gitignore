@@ -34,3 +34,4 @@ manifest.json
 /LuaProfiler/LuaProfilerServer/Diff
 /LuaProfiler/LuaProfilerServer/Ref
 /LuaProfiler/Tools/mikuhook_runtime/.vscode
+/LuaProfiler/LuaProfilerServer/LuaDeepProfilerSettings.config

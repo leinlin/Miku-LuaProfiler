@@ -130,7 +130,11 @@ namespace MikuLuaProfiler
 
         public static void SendMessage(NetBase sample)
         {
-            if (m_client == null) return;
+            if (m_client == null)
+            {
+                sample.Restore();
+                return;
+            }
             lock (m_sampleQueue)
             {
                 m_sampleQueue.Enqueue(sample);

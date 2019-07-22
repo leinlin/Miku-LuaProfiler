@@ -8,7 +8,6 @@
 */
 using UnityEngine;
 using UnityEditor;
-using MikuLuaProfiler;
 
 namespace MikuLuaProfiler
 {

@@ -395,6 +395,9 @@ namespace MikuLuaProfiler
         private static void InjectTryFinally(MethodDefinition method, ModuleDefinition module)
         {
             if (method.Body == null) return;
+            if (method.Body.Instructions.Count == 0) return;
+            if (method.IsConstructor && !method.IsStatic && method.Body.Instructions.Count == 1) return;
+
             var il = method.Body.GetILProcessor();
             var firstInstruction = FirstInstructionSkipCtor(method);
 

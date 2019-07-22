@@ -62,36 +62,20 @@ namespace MikuLuaProfiler
             }
         }
 
-#if UNITY_EDITOR
-        const string PROFILER_DLL = "miku_profiler";
-
-        [DllImport(PROFILER_DLL, CallingConvention = CallingConvention.Cdecl)]
-        public static extern bool miku_profiler_get_is_enable_lua();
-
-        [DllImport(PROFILER_DLL, CallingConvention = CallingConvention.Cdecl)]
-        public static extern void miku_profiler_set_is_enable_lua(bool value);
-
-        [DllImport(PROFILER_DLL, CallingConvention = CallingConvention.Cdecl)]
-        public static extern bool miku_profiler_get_is_enable_mono();
-
-        [DllImport(PROFILER_DLL, CallingConvention = CallingConvention.Cdecl)]
-        public static extern void miku_profiler_set_is_enable_mono(bool value);
-#endif
-
         public bool isDeepMonoProfiler
         {
             get
             {
-#if UNITY_EDITOR_WIN
-                return miku_profiler_get_is_enable_mono();
+#if UNITY_EDITOR
+                return LuaDeepProfilerAssetSetting.Instance.isDeepMonoProfiler;
 #else
                 return this.m_isDeepMonoProfiler;
 #endif
             }
             set
             {
-#if UNITY_EDITOR_WIN
-                miku_profiler_set_is_enable_mono(value);
+#if UNITY_EDITOR
+                LuaDeepProfilerAssetSetting.Instance.isDeepMonoProfiler = value;
 #endif
                 if (this.m_isDeepMonoProfiler != value)
                 {
@@ -105,16 +89,16 @@ namespace MikuLuaProfiler
         {
             get
             {
-#if UNITY_EDITOR_WIN
-                return miku_profiler_get_is_enable_lua();
+#if UNITY_EDITOR
+                return LuaDeepProfilerAssetSetting.Instance.isDeepLuaProfiler;
 #else
                 return this.m_isDeepLuaProfiler;
 #endif
             }
             set
             {
-#if UNITY_EDITOR_WIN
-                miku_profiler_set_is_enable_lua(value);
+#if UNITY_EDITOR
+                LuaDeepProfilerAssetSetting.Instance.isDeepLuaProfiler = value;
 #endif
                 if (this.m_isDeepLuaProfiler != value)
                 {

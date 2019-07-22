@@ -216,6 +216,8 @@ Lua Profiler For Unity支持 **XLua**、**SLua**、**ToLua** ，本工具是基�
 ```
 MikuLuaProfiler.HookLuaSetup.OnStartGame();
 ```
+注意！！！ 不要在 static变量声明里面 启动lua流程（比如xlua的demo），请在Awake或者Start里面进行调用。
+
 
 ### 理论
 它使用mono.ceil的IL注入功能（也用于XLua），将profiler代码注入游戏代码
