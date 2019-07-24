@@ -18,7 +18,12 @@ namespace MikuLuaProfiler
             {
                 if (instance == null)
                 {
+                #if (UNITY_5 || UNITY_2017_1_OR_NEWER)
                     instance = AssetDatabase.LoadAssetAtPath<LuaDeepProfilerAssetSetting>("Assets/LuaDeepProfilerAssetSetting.asset");
+                #else
+                    instance = AssetDatabase.LoadAssetAtPath("Assets/LuaDeepProfilerAssetSetting.asset", typeof(LuaDeepProfilerAssetSetting)) as LuaDeepProfilerAssetSetting;
+                #endif
+
                     if (instance == null)
                     {
                         UnityEngine.Debug.Log("Lua Profiler: cannot find integration settings, creating default settings");

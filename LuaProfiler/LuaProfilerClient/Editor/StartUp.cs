@@ -464,9 +464,15 @@ namespace MikuLuaProfiler
                 case BuildTarget.Android:
                     bg = BuildTargetGroup.Android;
                     break;
+            #if (UNITY_5 || UNITY_2017_1_OR_NEWER)
                 case BuildTarget.iOS:
                     bg = BuildTargetGroup.iOS;
                     break;
+            #else
+                case BuildTarget.iPhone:
+                    bg = BuildTargetGroup.iPhone;
+                    break;
+            #endif
             }
             string path = PlayerSettings.GetScriptingDefineSymbolsForGroup(bg);
             bool hasRecompile = false;

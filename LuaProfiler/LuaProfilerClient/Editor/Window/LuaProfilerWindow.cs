@@ -182,6 +182,10 @@ namespace MikuLuaProfiler
 
         }
 
+    #if !(UNITY_5 || UNITY_2017_1_OR_NEWER)
+        public GUIContent titleContent { get; set; }
+    #endif
+
         // Add menu named "My Window" to the Window menu
         [MenuItem("Window/Lua Profiler Window")]
         static public void ShowWindow()
