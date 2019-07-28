@@ -123,7 +123,6 @@ namespace MikuLuaProfiler
                 long memoryCount = LuaLib.GetLuaMemory(luaState);
                 Sample sample = Sample.Create(getcurrentTime, (int)memoryCount, name);
                 beginSampleMemoryStack.Push(sample);
-                Profiler.BeginSample(name);
             }
             catch
             {
@@ -209,12 +208,6 @@ namespace MikuLuaProfiler
                 sample.costLuaGC = (int)Math.Max(lua_gc, luaGC);
                 sample.costMonoGC = (int)Math.Max(mono_gc, monoGC);
             }
-            long selfLuaGC = sample.selfLuaGC;
-            if (selfLuaGC > 0)
-            {
-                byte[] luagc = new byte[Math.Max(0, selfLuaGC - 32)];
-            }
-            Profiler.EndSample();
 
             if (!sample.CheckSampleValid())
             {
