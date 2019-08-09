@@ -192,6 +192,7 @@ If you find any bug or have any suggests join the QQ group：[882425563](https:/
 [数据说明](#data_zh)</br>
 [记录模式](#record_zh)</br>
 [DIFF 两个不同时期的Lua变量](#diff_zh)</br>
+[自定义Profiler点](#custom_zh)</br>
 [真机profiler](#device_zh)</br>
 [联系我们](#contact_zh)</br>
 
@@ -338,6 +339,14 @@ CS.UIBehaviour.loginUI = { __name = "LoginUI" }
 ##
 ![](doc/null_object.png)<br/>
 ![](doc/search.png)<br/>
+
+<span id="custom_zh"></span>
+### [自定义Profiler点](#zh)
+```
+BeginMikuSample("profiler name")
+-- your code
+EndMikuSample()
+```
 
 <span id="device_zh"></span>
 ### [真机Profiler](#zh)
