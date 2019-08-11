@@ -596,6 +596,7 @@ namespace MikuLuaProfiler
     {
         public static LuaDeepProfilerSetting setting = LuaDeepProfilerSetting.Instance;
         public static LuaCSFunction beginSample = new LuaCSFunction(BeginSample);
+        public static LuaCSFunction beginSampleCustom = new LuaCSFunction(BeginSampleCustom);
         public static LuaCSFunction endSample = new LuaCSFunction(EndSample);
         public static LuaCSFunction unpackReturnValue = new LuaCSFunction(UnpackReturnValue);
         public static LuaCSFunction addRefFunInfo = new LuaCSFunction(AddRefFunInfo);
@@ -607,12 +608,20 @@ namespace MikuLuaProfiler
             LuaDLL.lua_newtable(L);
             LuaDLL.lua_pushstring(L, "LuaProfiler");
             LuaDLL.lua_newtable(L);
-            LuaDLL.lua_pushstring(L, "BeginSample");
 
+            LuaDLL.lua_pushstring(L, "BeginSample");
             LuaDLL.lua_pushstdcallcfunction(L, beginSample);
             LuaDLL.lua_rawset(L, -3);
 
             LuaDLL.lua_pushstring(L, "EndSample");
+            LuaDLL.lua_pushstdcallcfunction(L, endSample);
+            LuaDLL.lua_rawset(L, -3);
+
+            LuaDLL.lua_pushstring(L, "BeginSampleCustom");
+            LuaDLL.lua_pushstdcallcfunction(L, beginSampleCustom);
+            LuaDLL.lua_rawset(L, -3);
+
+            LuaDLL.lua_pushstring(L, "EndSampleCustom");
             LuaDLL.lua_pushstdcallcfunction(L, endSample);
             LuaDLL.lua_rawset(L, -3);
 
@@ -917,6 +926,13 @@ end";
         static int BeginSample(IntPtr L)
         {
             LuaProfiler.BeginSample(L, LuaHook.GetRefString(L, 1));
+            return 0;
+        }
+
+        [MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]
+        static int BeginSampleCustom(IntPtr L)
+        {
+            LuaProfiler.BeginSample(L, LuaHook.GetRefString(L, 1), true);
             return 0;
         }
 

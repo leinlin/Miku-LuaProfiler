@@ -124,6 +124,8 @@ namespace MikuLuaProfiler
         public MList<Sample> childs = new MList<Sample>(16);
         public string captureUrl = null;
 
+        public bool needShow = false;
+
         public long selfLuaGC
         {
             get
@@ -158,6 +160,11 @@ namespace MikuLuaProfiler
             bool result = false;
             do
             {
+                if (needShow)
+                {
+                    result = true;
+                    break;
+                }
                 var setting = LuaDeepProfilerSetting.Instance;
                 if (setting != null && !setting.discardInvalid)
                 {

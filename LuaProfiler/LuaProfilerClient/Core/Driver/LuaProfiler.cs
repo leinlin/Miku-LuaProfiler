@@ -105,7 +105,7 @@ namespace MikuLuaProfiler
                 return System.Diagnostics.Stopwatch.GetTimestamp();
             }
         }
-        public static void BeginSample(IntPtr luaState, string name)
+        public static void BeginSample(IntPtr luaState, string name, bool needShow = false)
         {
             if (!IsMainThread)
             {
@@ -122,6 +122,7 @@ namespace MikuLuaProfiler
                 }
                 long memoryCount = LuaLib.GetLuaMemory(luaState);
                 Sample sample = Sample.Create(getcurrentTime, (int)memoryCount, name);
+                sample.needShow = needShow;
                 beginSampleMemoryStack.Push(sample);
             }
             catch

@@ -343,9 +343,9 @@ CS.UIBehaviour.loginUI = { __name = "LoginUI" }
 <span id="custom_zh"></span>
 ### [自定义Profiler点](#zh)
 ```
-BeginMikuSample("profiler name")
+MikuLuaProfiler.LuaProfiler.BeginSampleCustom("profiler name")
 -- your code
-EndMikuSample()
+MikuLuaProfiler.LuaProfiler.EndSampleCustom()
 ```
 
 <span id="device_zh"></span>
