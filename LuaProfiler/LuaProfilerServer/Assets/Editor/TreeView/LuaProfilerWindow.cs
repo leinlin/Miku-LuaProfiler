@@ -101,6 +101,13 @@ namespace MikuLuaProfiler
         private Texture2D pssChart;
         private Texture2D powrChart;
 
+        private static Color disableColor = new Color(0.5f, 0.5f, 0.5f, 1.0f);
+        private static Color luaColor = new Color(0.4f, 0.7f, 0.9f, 1.0f);
+        private static Color monoColor = new Color32(0, 180, 0, 255);
+        private static Color fpsColor = new Color32(255, 193, 37, 255);
+        private static Color powerColor = new Color(0.5f, 0.5f, 0.5f, 1.0f);
+        private static Color pssColor = Color.red;
+
         private string oldStartUrl = null;
         private string oldEndUrl = null;
         private Texture2D oldStartT = null;
@@ -262,28 +269,44 @@ namespace MikuLuaProfiler
         {
             if (disableChart == null)
             {
-                disableChart = AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/Editor/Skin/disable.png");
+                disableChart = GenTextureColor(15, 15, disableColor);
+
             }
             if (luaChart == null)
             {
-                luaChart = AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/Editor/Skin/lua.png");
+                luaChart = GenTextureColor(15, 15, luaColor);
             }
             if(monoChart == null)
             {
-                monoChart = AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/Editor/Skin/mono.png");
+                monoChart = GenTextureColor(15, 15, monoColor);
             }
             if (fpsChart == null)
             {
-                fpsChart = AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/Editor/Skin/fps.png");
+                fpsChart = GenTextureColor(15, 15, fpsColor);
             }
             if (pssChart == null)
             {
-                pssChart = AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/Editor/Skin/pss.png");
+                pssChart = GenTextureColor(15, 15, pssColor);
             }
             if (powrChart == null)
             {
-                powrChart = AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/Editor/Skin/power.png");
+                powrChart = GenTextureColor(15, 15, powerColor);
             }
+        }
+
+        private Texture2D GenTextureColor(int width, int height, Color color) 
+        {
+            Texture2D t = new Texture2D(width, height);
+            for (int i = 0, imax = t.width; i < imax; i++) 
+            {
+                for (int j = 0, jmax = t.height; j < jmax; j++) 
+                {
+                    t.SetPixel(i, j, color);
+                }
+            }
+            t.Apply();
+
+            return t;
         }
 
         void DoToolbar()
@@ -672,32 +695,32 @@ namespace MikuLuaProfiler
 
             if (isShowPssChart)
             {
-                Handles.color = Color.red;
+                Handles.color = pssColor;
                 DrawPssCurve(m_TreeView.historyCurve, rect);
             }
 
             if (isShowMonoChart)
             {
-                Handles.color = new Color32(0, 180, 0, 255);
+                Handles.color = monoColor;
                 DrawMonoCurve(m_TreeView.historyCurve, rect);
             }
 
             if (isShowLuaChart)
             {
-                Handles.color = new Color(0.4f, 0.7f, 0.9f, 1.0f);
+                Handles.color = luaColor;
                 DrawLuaCurve(m_TreeView.historyCurve, rect);
             }
 
             if (isShowFpsChart)
             {
-                Handles.color = new Color32(255, 193, 37, 255);
+                Handles.color = fpsColor;
                 DrawFpsCurve(m_TreeView.historyCurve, rect);
                 DrawYAxis(rect);
             }
 
             if (isShowPowerChart)
             {
-                Handles.color = new Color32(255, 127, 39, 255);
+                Handles.color = powerColor;
                 DrawPowerCurve(m_TreeView.historyCurve, rect);
             }
 
@@ -1009,6 +1032,8 @@ namespace MikuLuaProfiler
                     startFrame = currentFrameIndex;
                     endFrame = currentFrameIndex;
                 }
+                startFrame = Mathf.Min(Mathf.Max(0, startFrame), metricCount);
+                endFrame = Mathf.Min(Mathf.Max(0, startFrame), metricCount);
 
                 m_TreeView.ReLoadSamples(startFrame, endFrame);
                 int startGameFrame = m_TreeView.GetFrameCount(startFrame);
