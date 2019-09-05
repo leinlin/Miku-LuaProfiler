@@ -72,7 +72,7 @@ function (prototype, data)
 end
 
 function ()
-    return function (self, txt) log(refCom.Name.."没用相应的默认绑定实现！目前类型为"..refCom.BindComType) end;
+    return function (self, txt) log() end;
 end
 
 function()
