@@ -184,7 +184,7 @@ namespace MikuLuaProfiler
         public int currentMonoMemory;
         public long currentTime;
         public float fps;
-        public int pss;
+        public long pss;
         public float power;
 
         public int calls;
@@ -475,7 +475,7 @@ namespace MikuLuaProfiler
             s.calls = b.ReadInt32();
             s.frameCount = b.ReadInt32();
             s.fps = b.ReadSingle();
-            s.pss = b.ReadInt32();
+            s.pss = b.ReadInt64();
             s.power = b.ReadSingle();
             s.costLuaGC = b.ReadInt32();
             s.costMonoGC = b.ReadInt32();
