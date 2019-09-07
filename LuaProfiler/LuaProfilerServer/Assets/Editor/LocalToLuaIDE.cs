@@ -34,6 +34,7 @@ __________#_______####_______####______________
 */
 
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Runtime.InteropServices;
 using UnityEditor;
@@ -67,33 +68,49 @@ namespace MikuLuaProfiler {
         {
             string filePath = file;
 
-            string projectRootPath = LuaDeepProfilerSetting.Instance.luaDir;
-            if (string.IsNullOrEmpty(projectRootPath) || !Directory.Exists(projectRootPath))
-            {
-                SetExternalProjectRootPath();
-                projectRootPath = LuaDeepProfilerSetting.Instance.luaDir;
-            }
             if (!File.Exists(filePath))
             {
-                filePath = Path.Combine(projectRootPath.Trim(), filePath.Trim());//+ ".lua"; 
-                if (File.Exists(filePath + ".lua"))
+                if (LuaDeepProfilerSetting.Instance.luaDir.Count <= 0)
                 {
-                    filePath = filePath + ".lua";
+                    AddExternalProjectRootPath();
                 }
-                else if (File.Exists(filePath + ".lua.txt"))
+                List<string> paths = LuaDeepProfilerSetting.Instance.luaDir;
+                bool finded = false;
+                string cacheFilePath = filePath.Trim();
+                for (int i = 0; i < paths.Count; i++)
                 {
-                    filePath = filePath + ".lua.txt";
+                    string projectRootPath = paths[i];
+                    Debug.Log(projectRootPath);
+                    filePath = Path.Combine(projectRootPath.Trim(), cacheFilePath);//+ ".lua"; 
+                    Debug.Log(filePath);
+                    if (File.Exists(filePath + ".lua"))
+                    {
+                        filePath = filePath + ".lua";
+                        finded = true;
+                        break;
+                    }
+                    else if (File.Exists(filePath + ".lua.txt"))
+                    {
+                        filePath = filePath + ".lua.txt";
+                        finded = true;
+                        break;
+                    }
+                    else if (File.Exists(filePath + ".txt"))
+                    {
+                        filePath = filePath + ".txt";
+                        finded = true;
+                        break;
+                    }
+                    else if (File.Exists(filePath + ".bytes"))
+                    {
+                        filePath = filePath + ".bytes";
+                        finded = true;
+                        break;
+                    }
                 }
-                else if (File.Exists(filePath + ".txt"))
-                {
-                    filePath = filePath + ".txt";
-                }
-                else if (File.Exists(filePath + ".bytes"))
-                {
-                    filePath = filePath + ".bytes";
-                }
+
                 //到处找Resources目录,找不到就在 unity 工程目录全部找一遍
-                else if (!GetResourcesPath(file, out filePath)
+                if (!finded && !GetResourcesPath(file, out filePath)
                     && !GetLuaPathInCurrentFile(file, out filePath)
                     )
                 {
@@ -101,7 +118,6 @@ namespace MikuLuaProfiler {
                     return;
                 }
             }
-
 
             OpenFileAtLineExternal(filePath, line);
         }
@@ -112,7 +128,7 @@ namespace MikuLuaProfiler {
             bool result = false;
             path = "";
 
-            string curPath = Directory.GetCurrentDirectory();
+            string curPath = LuaDeepProfilerSetting.Instance.luaDir[0];
             string[] pathArray = Directory.GetFiles(
                 curPath, "*.lua",
                 SearchOption.AllDirectories);
@@ -160,7 +176,7 @@ namespace MikuLuaProfiler {
             bool result = false;
             path = "";
 
-            string curPath = Directory.GetCurrentDirectory();
+            string curPath = LuaDeepProfilerSetting.Instance.luaDir[0];
             string[] pathArray = Directory.GetDirectories(
                 curPath, "Resources",
                 SearchOption.AllDirectories);
@@ -185,7 +201,6 @@ namespace MikuLuaProfiler {
         static void OpenFileAtLineExternal(string filePath, int line)
         {
             string editorPath = LuaDeepProfilerSetting.Instance.luaIDE;
-
             // 没有path就弹出面板设置
             if (string.IsNullOrEmpty(editorPath) || !File.Exists(editorPath))
             {
@@ -202,6 +217,7 @@ namespace MikuLuaProfiler {
             else if (editorPath.IndexOf("idea") != -1 || editorPath.IndexOf("clion") != -1 || editorPath.IndexOf("rider") != -1)
             {
                 procArgument = string.Format("--line {0} {1}", line, filePath);
+                Debug.Log(procArgument);
             }
             else
             {
@@ -227,8 +243,8 @@ namespace MikuLuaProfiler {
         #region set path
         public static void ClearPath()
         {
+            LuaDeepProfilerSetting.Instance.luaDir.Clear();
             LuaDeepProfilerSetting.Instance.luaIDE = "";
-            LuaDeepProfilerSetting.Instance.luaDir = "";
             Debug.Log("Clear Suceess");
         }
 
@@ -244,14 +260,18 @@ namespace MikuLuaProfiler {
             }
         }
 
-        public static void SetExternalProjectRootPath()
+        public static void AddExternalProjectRootPath()
         {
-            string path = LuaDeepProfilerSetting.Instance.luaDir;
+            string path = "";
+            if (LuaDeepProfilerSetting.Instance.luaDir.Count > 0)
+            {
+                path = LuaDeepProfilerSetting.Instance.luaDir[0];
+            }
             path = EditorUtility.OpenFolderPanel("Select Lua Project Root Path", path, "lua");
 
             if (path != "")
             {
-                LuaDeepProfilerSetting.Instance.luaDir = path;
+                LuaDeepProfilerSetting.Instance.AddLuaDir(path);
                 Debug.Log("Set Lua Project Root Path: " + path);
             }
         }

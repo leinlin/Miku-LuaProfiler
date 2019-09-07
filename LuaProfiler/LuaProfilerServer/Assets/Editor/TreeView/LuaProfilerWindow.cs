@@ -371,6 +371,20 @@ namespace MikuLuaProfiler
             {
                 m_luaDiffScrollView.Clear();
             }
+            GUILayout.Space(20);
+            if (GUILayout.Button("AddLuaDir", EditorStyles.toolbarButton, GUILayout.Height(30)))
+            {
+                LocalToLuaIDE.AddExternalProjectRootPath();
+            }
+            if (GUILayout.Button("SetIDE", EditorStyles.toolbarButton, GUILayout.Height(30)))
+            {
+                LocalToLuaIDE.SetExternalEditorPath();
+            }
+            if (GUILayout.Button("ClearLuaDir", EditorStyles.toolbarButton, GUILayout.Height(30)))
+            {
+                LocalToLuaIDE.ClearPath();
+            }
+
             GUILayout.Space(10);
             if (NetWorkServer.acceptThread != null)
             {
@@ -1033,7 +1047,7 @@ namespace MikuLuaProfiler
                     endFrame = currentFrameIndex;
                 }
                 startFrame = Mathf.Min(Mathf.Max(0, startFrame), metricCount);
-                endFrame = Mathf.Min(Mathf.Max(0, startFrame), metricCount);
+                endFrame = Mathf.Min(Mathf.Max(0, endFrame), metricCount);
 
                 m_TreeView.ReLoadSamples(startFrame, endFrame);
                 int startGameFrame = m_TreeView.GetFrameCount(startFrame);

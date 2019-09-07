@@ -40,6 +40,7 @@ namespace MikuLuaProfiler
     using UnityEngine;
     using System.Text;
     using System;
+    using System.Collections.Generic;
 
     public class LuaDeepProfilerSetting
     {
@@ -102,17 +103,20 @@ namespace MikuLuaProfiler
             }
         }
 
-        private string m_luaDir = "";
-        public string luaDir
+        private List<string> m_luaDir = new List<string>();
+        public List<string> luaDir
         {
             get
             {
                 return m_luaDir;
             }
-            set
+        }
+
+        public void AddLuaDir(string path)
+        {
+            if (!m_luaDir.Contains(path))
             {
-                if (m_luaDir == value) return;
-                m_luaDir = value;
+                m_luaDir.Add(path);
                 Save();
             }
         }
@@ -171,9 +175,14 @@ namespace MikuLuaProfiler
             b.Write(m_isRecord);
             b.Write(m_isNeedRecord);
 
-            byte[] datas = Encoding.UTF8.GetBytes(m_luaDir);
-            b.Write(datas.Length);
-            b.Write(datas);
+            b.Write(m_luaDir.Count);
+            byte[] datas;
+            for (int i = 0, imax = m_luaDir.Count; i < imax; i++)
+            {
+                datas = Encoding.UTF8.GetBytes(m_luaDir[i]);
+                b.Write(datas.Length);
+                b.Write(datas);
+            }
 
             datas = Encoding.UTF8.GetBytes(m_luaIDE);
             b.Write(datas.Length);
@@ -200,8 +209,13 @@ namespace MikuLuaProfiler
                     result.m_isRecord = b.ReadBoolean();
                     result.m_isNeedRecord = b.ReadBoolean();
 
-                    int len = b.ReadInt32();
-                    result.m_luaDir = Encoding.UTF8.GetString(b.ReadBytes(len));
+                    int count = b.ReadInt32();
+                    int len = 0;
+                    for (int i = 0; i < count; i++)
+                    {
+                        len = b.ReadInt32();
+                        result.m_luaDir.Add(Encoding.UTF8.GetString(b.ReadBytes(len)));
+                    }
 
                     len = b.ReadInt32();
                     result.m_luaIDE = Encoding.UTF8.GetString(b.ReadBytes(len));

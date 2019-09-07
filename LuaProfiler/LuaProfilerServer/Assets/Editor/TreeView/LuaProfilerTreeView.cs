@@ -37,6 +37,7 @@ namespace MikuLuaProfiler
 #if UNITY_5_6_OR_NEWER
     using System;
     using System.Collections.Generic;
+    using System.IO;
     using UnityEditor;
     using UnityEditor.IMGUI.Controls;
     using UnityEngine;
@@ -133,6 +134,7 @@ namespace MikuLuaProfiler
                 return m_isLua;
             }
         }
+        public int line = 1;
         public string filePath { private set; get; }
         private string m_originName;
 
@@ -149,15 +151,32 @@ namespace MikuLuaProfiler
         }
 
         private static readonly char[] splitDot = new char[] { ',' };
-        //private static readonly char[] splitFun = new char[] { '&' };
+        private static readonly char[] splitFun = new char[] { '&' };
+        private static readonly char[] splitLine = new char[] { ':' };
         public void ResetBySample(Sample sample, int depth, LuaProfilerTreeViewItem father)
         {
             if (sample != null)
             {
-                filePath = sample.name.Split(splitDot, 2)[0].Trim();
                 if (sample.name.Length >= 6)
                 {
                     m_isLua = sample.name.Substring(0, 6) == "[lua]:";
+                }
+
+                filePath = sample.name;
+                line = 1;
+                if (m_isLua)
+                {
+                    string[] array = sample.name.Split(splitDot, 2);
+                    if (array.Length == 2)
+                    {
+                        filePath = array[1];
+                        array = filePath.Split(splitFun, 2);
+                        if (array.Length == 2)
+                        {
+                            filePath = array[0].Trim();
+                            line = int.Parse(array[1].Split(splitLine, 2)[1]);
+                        }
+                    }
                 }
 
                 _showMonoGC = sample.costMonoGC;
@@ -620,9 +639,6 @@ namespace MikuLuaProfiler
             {
                 var selectItem = FindItem(id, BuildRoot());
                 var item = (LuaProfilerTreeViewItem)selectItem;
-                LuaProfilerWindow.ClearConsole();
-                Debug.Log(item.displayName);
-                /*
                 if (item.line == -1)
                 {
                     Debug.Log("please wait");
@@ -630,7 +646,6 @@ namespace MikuLuaProfiler
                 }
 
                 string fileName = item.filePath;
-                Debug.Log(fileName);
                 try
                 {
                     int line = item.line;
@@ -642,7 +657,7 @@ namespace MikuLuaProfiler
                 }
                 catch
                 {
-                }*/
+                }
             }
             else
             {
