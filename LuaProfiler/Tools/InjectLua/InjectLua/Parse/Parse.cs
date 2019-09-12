@@ -228,8 +228,11 @@ namespace MikuLuaProfiler
                                     if (onlyFun && tokens.Count <= 0)
                                     {
                                         l.Next();
-                                        lastPos = nextPos;
-                                        nextPos = l.pos;
+                                        if (!(l.Token is JumpToken))
+                                        {
+                                            lastPos = nextPos;
+                                            nextPos = l.pos;
+                                        }
                                         return;
                                     }
                                 }
@@ -257,8 +260,11 @@ namespace MikuLuaProfiler
                                 if (onlyFun && tokens.Count <= 0)
                                 {
                                     l.Next();
-                                    lastPos = nextPos;
-                                    nextPos = l.pos;
+                                    if (!(l.Token is JumpToken))
+                                    {
+                                        lastPos = nextPos;
+                                        nextPos = l.pos;
+                                    }
                                     return;
                                 }
                             }
