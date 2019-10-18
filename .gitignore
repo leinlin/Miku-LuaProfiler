@@ -11,8 +11,6 @@ Assets/StreamingAssets.meta
 Assets/StreamingAssets/
 Assets/xLuaTest.meta
 Assets/xLuaTest/
-*.csproj
-*.sln
 /build/build*
 UnityVS
 /Assets/UnityVS.meta
@@ -34,4 +32,10 @@ manifest.json
 /LuaProfiler/LuaProfilerServer/Diff
 /LuaProfiler/LuaProfilerServer/Ref
 /LuaProfiler/Tools/mikuhook_runtime/.vscode
-/LuaProfiler/LuaProfilerServer/LuaDeepProfilerSettings.config
+LuaDeepProfilerSettings.config
+LuaDeepProfilerAssetSetting.asset
+LuaDeepProfilerAssetSetting.asset.meta
+LuaDeepProfilerSetting.asset
+LuaDeepProfilerSetting.asset.meta
+Assembly-CSharp.csproj
+Assembly-CSharp-Editor.csproj

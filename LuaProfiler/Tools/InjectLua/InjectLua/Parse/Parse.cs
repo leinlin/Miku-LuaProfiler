@@ -177,8 +177,7 @@ namespace MikuLuaProfiler
                         }
                         break;
                     case (int)TK.IF:
-                    case (int)TK.FOR:
-                    case (int)TK.WHILE:
+                    case (int)TK.DO:
                         if (tokens.Count > 0)
                         {
                             tokens.Push(tokenType);
@@ -270,8 +269,8 @@ namespace MikuLuaProfiler
                             }
                             if (tokens.Count > 0)
                             {
-                                var tA = tokens.ToArray();
-                                lastStackToken = tA[tA.Length - 1];
+                                //var tA = tokens.ToArray();
+                                lastStackToken = tokens.Peek();
                             }
                             hasReturn = false;
                         }
