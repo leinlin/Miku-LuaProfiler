@@ -38,9 +38,7 @@ using System;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Text;
-#if UNITY_EDITOR
 using MikuHook;
-#endif
 
 #if TOLUA
 using OldLuaDLL = LuaInterface.LuaDLL;
@@ -354,7 +352,6 @@ end
 #endregion
 
 #region mono hook
-#if UNITY_EDITOR
 
         private static CSharpMethodHooker luaL_newstate_hooker;
         private static CSharpMethodHooker lua_close_hooker;
@@ -600,8 +597,6 @@ end
                 UnityEngine.Debug.Log("fuck misaka");
             }
         }
-
-#endif
         #endregion
 
 

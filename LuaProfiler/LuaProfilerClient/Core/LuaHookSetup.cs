@@ -89,12 +89,10 @@ namespace MikuLuaProfiler
                 Screen.SetResolution(480, 270, true);
             }
 
-#if UNITY_EDITOR
             if (setting.isDeepLuaProfiler)
             {
                  LuaDLL.Install();
             }
-#endif
 
             if (setting.isDeepLuaProfiler || setting.isDeepMonoProfiler || setting.isCleanMode)
             {
