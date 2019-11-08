@@ -240,6 +240,7 @@ namespace MikuLuaProfiler
                                     }
                                     break;
                             }
+                            head = br.ReadInt32();
                         }
                     }
                 }
