@@ -1,5 +1,4 @@
-﻿#if UNITY_5_6_OR_NEWER
-/*
+﻿/*
                #########                       
               ############                     
               #############                    
@@ -33,6 +32,8 @@ __________#_______####_______####______________
 * Purpose:  
 * ==============================================================================
 */
+
+#if UNITY_5_6_OR_NEWER && UNITY_EDITOR_WIN
 namespace MikuLuaProfiler
 {
     using System;
@@ -100,7 +101,7 @@ namespace MikuLuaProfiler
             GUILayout.EndScrollView();
         }
 
-        #region ref
+#region ref
         public void LoadHistory(int startFrame, int endFrame)
         {
             ClearRefInfo(false);
@@ -285,7 +286,7 @@ namespace MikuLuaProfiler
             }
         }
 
-        #endregion
+#endregion
     }
 }
 #endif

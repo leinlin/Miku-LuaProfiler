@@ -32,7 +32,7 @@ __________#_______####_______####______________
 * Purpose:  
 * ==============================================================================
 */
-#if UNITY_EDITOR || USE_LUA_PROFILER
+#if UNITY_EDITOR_WIN || USE_LUA_PROFILER
 using System;
 using System.Collections.Generic;
 
@@ -177,7 +177,8 @@ namespace MikuLuaProfiler
                         }
                         break;
                     case (int)TK.IF:
-                    case (int)TK.DO:
+                    case (int)TK.FOR:
+                    case (int)TK.WHILE:
                         if (tokens.Count > 0)
                         {
                             tokens.Push(tokenType);
@@ -269,7 +270,8 @@ namespace MikuLuaProfiler
                             }
                             if (tokens.Count > 0)
                             {
-                                lastStackToken = tokens.Peek();
+                                var tA = tokens.ToArray();
+                                lastStackToken = tA[tA.Length - 1];
                             }
                             hasReturn = false;
                         }

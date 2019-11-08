@@ -1,5 +1,4 @@
-﻿#if UNITY_5_6_OR_NEWER
-/*
+﻿/*
                #########                       
               ############                     
               #############                    
@@ -33,7 +32,7 @@ __________#_______####_______####______________
 * Purpose:  
 * ==============================================================================
 */
-
+#if UNITY_5_6_OR_NEWER && UNITY_EDITOR_WIN
 using System;
 using System.Collections.Generic;
 using System.IO;

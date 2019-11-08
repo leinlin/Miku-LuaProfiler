@@ -33,6 +33,7 @@ __________#_______####_______####______________
 * ==============================================================================
 */
 
+#if UNITY_EDITOR_WIN
 using Miku.Cecil;
 using Miku.Cecil.Cil;
 using System;
@@ -465,3 +466,4 @@ namespace MikuLuaProfiler
 #endif
     }
 }
+#endif
