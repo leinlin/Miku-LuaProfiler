@@ -552,11 +552,14 @@ end
             if (luaL_loadfile_hook == null)
             {
                 IntPtr handle = GetProcAddress(moduleName, "luaL_loadfile");
-                luaL_loadfile = (luaL_loadfile_fun)Marshal.GetDelegateForFunctionPointer(handle, typeof(luaL_loadfile_fun));
+                if (handle != IntPtr.Zero)
+                {
+                    luaL_loadfile = (luaL_loadfile_fun)Marshal.GetDelegateForFunctionPointer(handle, typeof(luaL_loadfile_fun));
 
-                luaL_loadfile_fun luaFun = new luaL_loadfile_fun(luaL_loadfile_replace);
-                luaL_loadfile_hook = LocalHook.Create(handle, luaFun, null);
-                InstallHook(luaL_loadfile_hook);
+                    luaL_loadfile_fun luaFun = new luaL_loadfile_fun(luaL_loadfile_replace);
+                    luaL_loadfile_hook = LocalHook.Create(handle, luaFun, null);
+                    InstallHook(luaL_loadfile_hook);
+                }
             }
 
             if (toluaL_ref_hook == null)
