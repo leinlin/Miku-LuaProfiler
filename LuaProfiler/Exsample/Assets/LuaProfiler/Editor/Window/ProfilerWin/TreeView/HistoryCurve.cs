@@ -53,7 +53,7 @@ namespace MikuLuaProfiler
         private readonly List<int> m_luaMemoryHistory;
         private readonly List<int> m_monoMemoryHistory;
         private readonly List<float> m_fpsHistory;
-        private readonly List<int> m_pssHistory;
+        private readonly List<uint> m_pssHistory;
         private readonly List<float> m_powerHistory;
 
         private LuaDeepProfilerSetting setting = LuaDeepProfilerSetting.Instance;
@@ -64,7 +64,7 @@ namespace MikuLuaProfiler
             m_luaMemoryHistory = new List<int>(count);
             m_monoMemoryHistory = new List<int>(count);
             m_fpsHistory = new List<float>(count);
-            m_pssHistory = new List<int>(count);
+            m_pssHistory = new List<uint>(count);
             m_powerHistory = new List<float>(count);
         }
 
@@ -472,7 +472,7 @@ namespace MikuLuaProfiler
         #endregion
 
         #region pss
-        private float m_minPssValue = int.MaxValue;
+        private float m_minPssValue = uint.MaxValue;
         public float minPssValue
         {
             get
@@ -488,7 +488,7 @@ namespace MikuLuaProfiler
         private float m_maxPssValue = 0;
         private float FindMinPssValue()
         {
-            int result = int.MaxValue;
+            uint result = uint.MaxValue;
             int imax = m_pssHistory.Count - 1;
             int imin = Mathf.Max(imax - RECORD_FRAME_COUNT, 0);
             for (int i = imax; i >= imin; --i)
@@ -516,7 +516,7 @@ namespace MikuLuaProfiler
 
         private float FindMaxPssValue()
         {
-            int result = 0;
+            uint result = 0;
             int imax = m_pssHistory.Count - 1;
             int imin = Mathf.Max(imax - RECORD_FRAME_COUNT, 0);
             for (int i = imax; i >= imin; --i)
@@ -578,7 +578,7 @@ namespace MikuLuaProfiler
             }
         }
 
-        public void SlotPssMemory(int value)
+        public void SlotPssMemory(uint value)
         {
             addPssCount++;
             if (value < m_minPssValue || m_minPssValue < 0)

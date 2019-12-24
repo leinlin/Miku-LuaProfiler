@@ -466,6 +466,7 @@ namespace MikuLuaProfiler
             if (m_TreeView != null)
             {
                 m_TreeView.searchString = m_SearchField.OnToolbarGUI(m_TreeView.searchString);
+                m_TreeView.toggleMerge = GUILayout.Toggle(m_TreeView.toggleMerge, "merge", EditorStyles.toolbarButton, GUILayout.Height(30));
             }
 
 

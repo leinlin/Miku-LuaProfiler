@@ -193,7 +193,7 @@ namespace MikuLuaProfiler
     {
         public static int frameCount;
         public static float fps;
-        public static int pss;
+        public static uint pss;
         public static float power;
     }
 
@@ -206,7 +206,7 @@ namespace MikuLuaProfiler
         public int calls;
         public int frameCount;
         public float fps;
-        public int pss;
+        public uint pss;
         public float power;
 
         public int costLuaGC;
@@ -219,24 +219,30 @@ namespace MikuLuaProfiler
         private string _fullName;
         public bool needShow = false;
 
+        public bool isCopy = false;
+        public long copySelfLuaGC = -1;
         public long selfLuaGC
         {
             get
             {
+                if (isCopy) return copySelfLuaGC;
                 long result = costLuaGC;
                 for (int i = 0, imax = childs.Count; i < imax; i++)
                 {
                     var item = childs[i];
                     result -= item.costLuaGC;
                 }
-                return result;
+                return Math.Max(result, 0);
             }
         }
+
+        public long copySelfMonoGC = -1;
 
         public long selfMonoGC
         {
             get
             {
+                if (copySelfMonoGC != -1) return copySelfMonoGC;
                 long result = costMonoGC;
                 for (int i = 0, imax = childs.Count; i < imax; i++)
                 {
@@ -244,7 +250,7 @@ namespace MikuLuaProfiler
                     result -= item.costMonoGC;
                 }
 
-                return result;
+                return Math.Max(result, 0);
             }
         }
  
@@ -584,7 +590,7 @@ namespace MikuLuaProfiler
             s.calls = b.ReadInt32();
             s.frameCount = b.ReadInt32();
             s.fps = b.ReadSingle();
-            s.pss = b.ReadInt32();
+            s.pss = b.ReadUInt32();
             s.power = b.ReadSingle();
             s.costLuaGC = b.ReadInt32();
             s.costMonoGC = b.ReadInt32();

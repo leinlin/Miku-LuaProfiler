@@ -88,6 +88,7 @@ namespace MikuLuaProfiler
             if (setting.isDeepLuaProfiler)
             {
                 LuaDLL.Uninstall();
+                LuaDLL.HookLoadLibrary();
                 LuaDLL.BindEasyHook();
                 //LuaDLL.Install();
             }
@@ -494,7 +495,7 @@ local function serialize(obj)
     lua = lua .. '{\n'
     local count = 0
     for k, v in pairs(obj) do
-        lua = lua .. '[' .. tostring(k) .. ']=' .. tostring(v) .. ',\n'
+        lua = lua .. '[' .. tostring(tostring(k)) .. ']=' .. tostring(tostring(v)) .. ',\n'
         count = count + 1
         if count > 5 then
             break

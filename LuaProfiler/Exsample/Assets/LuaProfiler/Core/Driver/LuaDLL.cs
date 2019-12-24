@@ -78,7 +78,7 @@ namespace MikuLuaProfiler
 #else
     public delegate int LuaCSFunction(IntPtr luaState);
 #endif
-#endregion
+    #endregion
 
     public class LuaDLL
     {
@@ -117,9 +117,14 @@ namespace MikuLuaProfiler
         private static LocalHook luaL_loadfile_hook;
         private static LocalHook toluaL_ref_hook;
         private static LocalHook toluaL_unref_hook;
+        private static LocalHook load_dll_hook;
         #endregion
 
         #region 通用操作
+        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        public delegate IntPtr LoadLibraryExW_t(IntPtr lpFileName, IntPtr hFile, int dwFlags);
+        public static LoadLibraryExW_t LoadLibraryExW_dll;
+
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
         public delegate IntPtr luaL_newstate_fun();
         public static luaL_newstate_fun luaL_newstate;
@@ -285,8 +290,8 @@ namespace MikuLuaProfiler
                 LuaLib.DoString(luaState, env_script);
             }
         }
-        
-#region script
+
+        #region script
         const string env_script = @"
 local function getfunction(level)
     local info = debug.getinfo(level + 1, 'f')
@@ -327,7 +332,7 @@ function getfenv(fn)
     end
 end
 ";
-#endregion
+        #endregion
 
         public static int luaL_loadbufferUnHook(IntPtr luaState, byte[] buff, IntPtr size, string name)
         {
@@ -394,6 +399,12 @@ end
 
         public static void Uninstall()
         {
+            if (load_dll_hook != null)
+            {
+                load_dll_hook.Dispose();
+                load_dll_hook = null;
+            }
+
             if (luaL_newstate_hook != null)
             {
                 luaL_newstate_hook.Dispose();
@@ -443,7 +454,6 @@ end
             string moduleName = CheckHasLuaDLL();
             if (string.IsNullOrEmpty(moduleName))
             {
-                UnityEngine.Debug.LogWarning("并没有运行任何lua库，先跑一下游戏再尝试一下");
                 return;
             }
 
@@ -547,19 +557,6 @@ end
                 luaL_loadbufferx_fun luaFun = new luaL_loadbufferx_fun(luaL_loadbuffer_replace);
                 luaL_loadbuffer_hook = LocalHook.Create(handle, luaFun, null);
                 InstallHook(luaL_loadbuffer_hook);
-            }
-
-            if (luaL_loadfile_hook == null)
-            {
-                IntPtr handle = GetProcAddress(moduleName, "luaL_loadfile");
-                if (handle != IntPtr.Zero)
-                {
-                    luaL_loadfile = (luaL_loadfile_fun)Marshal.GetDelegateForFunctionPointer(handle, typeof(luaL_loadfile_fun));
-
-                    luaL_loadfile_fun luaFun = new luaL_loadfile_fun(luaL_loadfile_replace);
-                    luaL_loadfile_hook = LocalHook.Create(handle, luaFun, null);
-                    InstallHook(luaL_loadfile_hook);
-                }
             }
 
             if (toluaL_ref_hook == null)
@@ -805,6 +802,38 @@ end
             }
             m_hooked = true;
             isHook = true;
+        }
+
+        public static void HookLoadLibrary()
+        {
+            IntPtr handle = GetProcAddress("KernelBase.dll", "LoadLibraryExW");
+            if (handle == IntPtr.Zero)
+                handle = GetProcAddress("kernel32.dll", "LoadLibraryExW");
+            if (handle != IntPtr.Zero)
+            {
+                // LoadLibraryExW is called by the other LoadLibrary functions, so we
+                // only need to hook it.
+                LoadLibraryExW_dll = (LoadLibraryExW_t)Marshal.GetDelegateForFunctionPointer(handle, typeof(LoadLibraryExW_t));
+
+                // destroy these functions.
+                LoadLibraryExW_t fun = new LoadLibraryExW_t(LoadLibraryExW_replace);
+                load_dll_hook = LocalHook.Create(handle, fun, null);
+                InstallHook(load_dll_hook);
+            }
+        }
+
+        public static IntPtr LoadLibraryExW_replace(IntPtr lpFileName, IntPtr hFile, int dwFlags)
+        {
+            var ret = LoadLibraryExW_dll(lpFileName, hFile, dwFlags);
+
+            if (!m_hooked)
+            {
+                if (NativeAPI.GetProcAddress(ret, "luaL_newstate") != IntPtr.Zero)
+                {
+                    BindEasyHook();
+                }
+            }
+            return ret;
         }
 
         private static IntPtr GetProcAddress(string moduleName, string funName)
