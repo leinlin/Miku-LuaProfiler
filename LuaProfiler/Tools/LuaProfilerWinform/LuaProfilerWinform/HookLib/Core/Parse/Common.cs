@@ -33,7 +33,8 @@ __________#_______####_______####______________
 * ==============================================================================
 */
 
-namespace MikuLuaProfiler_Winform
+#if UNITY_EDITOR_WIN || USE_LUA_PROFILER
+namespace MikuLuaProfiler
 {
     public static class LuaConf
     {
@@ -57,3 +58,4 @@ namespace MikuLuaProfiler_Winform
     }
 
 }
+#endif

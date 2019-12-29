@@ -35,7 +35,7 @@ __________#_______####_______####______________
 using System;
 using System.Collections.Generic;
 
-namespace MikuLuaProfiler_Winform
+namespace MikuLuaProfiler
 {
     public static class Parse
     {
@@ -46,8 +46,8 @@ namespace MikuLuaProfiler_Winform
         public static string InsertSample(string value, string name)
         {
             LLex l = new LLex(new StringLoadInfo(value), name);
-
-            l.InsertString(0, LOCAL_PROFILER + "BeginMikuSample(\"" + "[lua]:require " + name + " &line:1" + "\") ");
+            string sampleStr = string.Format("{0}BeginMikuSample(\"[lua]:require {1},{1}&line:1\")", LOCAL_PROFILER, name);
+            l.InsertString(0, sampleStr);
             int lastPos = 0;
             int nextPos = l.pos;
             l.Next();
@@ -168,7 +168,7 @@ namespace MikuLuaProfiler_Winform
                                 {
                                     funName = "";
                                 }
-                                string profilerStr = string.Format(" BeginMikuSample(\"[lua]:{0} {1}&line:{2}\") ", funName, l.Source, l.LineNumber);
+                                string profilerStr = string.Format(" BeginMikuSample(\"[lua]:{0},{1}&line:{2}\") ", funName, l.Source, l.LineNumber);
                                 l.InsertString(nextPos - 1, profilerStr);
                                 nextPos = l.pos;
                                 break;
@@ -227,8 +227,11 @@ namespace MikuLuaProfiler_Winform
                                     if (onlyFun && tokens.Count <= 0)
                                     {
                                         l.Next();
-                                        lastPos = nextPos;
-                                        nextPos = l.pos;
+                                        if (!(l.Token is JumpToken))
+                                        {
+                                            lastPos = nextPos;
+                                            nextPos = l.pos;
+                                        }
                                         return;
                                     }
                                 }
@@ -256,8 +259,11 @@ namespace MikuLuaProfiler_Winform
                                 if (onlyFun && tokens.Count <= 0)
                                 {
                                     l.Next();
-                                    lastPos = nextPos;
-                                    nextPos = l.pos;
+                                    if (!(l.Token is JumpToken))
+                                    {
+                                        lastPos = nextPos;
+                                        nextPos = l.pos;
+                                    }
                                     return;
                                 }
                             }

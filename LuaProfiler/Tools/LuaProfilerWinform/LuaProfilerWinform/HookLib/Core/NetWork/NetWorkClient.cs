@@ -33,7 +33,7 @@ __________#_______####_______####______________
 * ==============================================================================
 */
 
-namespace MikuLuaProfiler_Winform
+namespace MikuLuaProfiler
 {
     using System;
     using System.Collections.Generic;
@@ -41,12 +41,12 @@ namespace MikuLuaProfiler_Winform
     using System.Net.Sockets;
     using System.Text;
     using System.Threading;
+    using System.Windows.Forms;
 
     public static class NetWorkClient
     {
         private static TcpClient m_client = null;
         private static Thread m_sendThread;
-        private static Thread m_receiveThread;
         private static Queue<NetBase> m_sampleQueue = new Queue<NetBase>(256);
         private const int PACK_HEAD = 0x23333333;
         private static NetworkStream ns;
@@ -64,8 +64,7 @@ namespace MikuLuaProfiler_Winform
             try
             {
                 m_client.Connect(host, port);
-
-                UnityEngine.Debug.Log("<color=#00ff00>connect success</color>");
+                MessageBox.Show("连接成功");
                 m_client.Client.SendTimeout = 30000;
                 //m_sampleDict.Clear();
                 m_strDict.Clear();
@@ -76,13 +75,10 @@ namespace MikuLuaProfiler_Winform
 
                 m_sendThread = new Thread(new ThreadStart(DoSendMessage));
                 m_sendThread.Start();
-                m_receiveThread = new Thread(new ThreadStart(DoRecieveMessage));
-                m_receiveThread.Priority = ThreadPriority.Lowest;
-                m_receiveThread.Start();
             }
             catch (Exception e)
             {
-                UnityEngine.Debug.Log(e);
+                MessageBox.Show(e.Message);
                 Close();
             }
         }
@@ -103,18 +99,11 @@ namespace MikuLuaProfiler_Winform
             }
             catch (Exception e)
             {
-                UnityEngine.Debug.Log(e);
+                MessageBox.Show(e.Message);
             }
             finally
             {
                 m_strDict.Clear();
-            }
-
-            if (m_receiveThread != null)
-            {
-                var tmp = m_receiveThread;
-                m_receiveThread = null;
-                tmp.Abort();
             }
 
             if (m_sendThread != null)
@@ -129,7 +118,11 @@ namespace MikuLuaProfiler_Winform
 
         public static void SendMessage(NetBase sample)
         {
-            if (m_client == null) return;
+            if (m_client == null)
+            {
+                sample.Restore();
+                return;
+            }
             lock (m_sampleQueue)
             {
                 m_sampleQueue.Enqueue(sample);
@@ -146,7 +139,6 @@ namespace MikuLuaProfiler_Winform
                 {
                     if (m_sendThread == null)
                     {
-                        UnityEngine.Debug.LogError("<color=#ff0000>m_sendThread null</color>");
                         return;
                     }
                     if (m_sampleQueue.Count > 0)
@@ -175,65 +167,17 @@ namespace MikuLuaProfiler_Winform
                             s.Restore();
                         }
                     }
-                    else if (m_frameCount != Main.frameCount)
-                    {
-                        bw.Write(PACK_HEAD);
-                        //写入message 头编号
-                        bw.Write((int)0);
-                        Sample s = Sample.Create(0, (int)LuaDLL.GetLuaMemory(LuaProfiler.mainL), "");
-                        Serialize(s, bw);
-                        s.Restore();
-                        m_frameCount = Main.frameCount;
-                    }
                     Thread.Sleep(10);
                 }
 #pragma warning disable 0168
                 catch (ThreadAbortException e) { }
                 catch (Exception e)
                 {
-                    UnityEngine.Debug.Log(e);
                     Close();
                 }
 #pragma warning restore 0168
             }
 
-        }
-
-        private static void DoRecieveMessage()
-        {
-            while (true)
-            {
-                try
-                {
-                    if (m_receiveThread == null)
-                    {
-                        UnityEngine.Debug.LogError("<color=#ff0000>m_receiveThread null</color>");
-                        return;
-                    }
-                    if (ns.CanRead && ns.DataAvailable)
-                    {
-                        int head = br.ReadInt32();
-                        //处理粘包
-                        while (head == PACK_HEAD)
-                        {
-                            int messageId = br.ReadInt32();
-                            switch (messageId)
-                            {
-                                case 0:
-                                    {
-                                        LuaProfiler.SendAllRef();
-                                    }
-                                    break;
-                            }
-                        }
-                    }
-                }
-                catch (Exception e)
-                {
-                    UnityEngine.Debug.Log(e);
-                }
-                Thread.Sleep(10);
-            }
         }
 
         private static int m_key = 0;
@@ -270,9 +214,6 @@ namespace MikuLuaProfiler_Winform
 
                 bw.Write(s.calls);
                 bw.Write(s.frameCount);
-                bw.Write(s.fps);
-                bw.Write(s.pss);
-                bw.Write(s.power);
                 bw.Write(s.costLuaGC);
                 bw.Write(s.costMonoGC);
                 WriteString(bw, s.name);
@@ -289,9 +230,6 @@ namespace MikuLuaProfiler_Winform
                     Sample s0 = childs0[i0];
                     bw.Write(s0.calls);
                     bw.Write(s0.frameCount);
-                    bw.Write(s0.fps);
-                    bw.Write(s0.pss);
-                    bw.Write(s0.power);
                     bw.Write(s0.costLuaGC);
                     bw.Write(s0.costMonoGC);
                     WriteString(bw, s0.name);
@@ -306,9 +244,6 @@ namespace MikuLuaProfiler_Winform
                         Sample s1 = childs1[i1];
                         bw.Write(s1.calls);
                         bw.Write(s1.frameCount);
-                        bw.Write(s1.fps);
-                        bw.Write(s1.pss);
-                        bw.Write(s1.power);
                         bw.Write(s1.costLuaGC);
                         bw.Write(s1.costMonoGC);
                         WriteString(bw, s1.name);
@@ -323,9 +258,6 @@ namespace MikuLuaProfiler_Winform
                             Sample s2 = childs2[i2];
                             bw.Write(s2.calls);
                             bw.Write(s2.frameCount);
-                            bw.Write(s2.fps);
-                            bw.Write(s2.pss);
-                            bw.Write(s2.power);
                             bw.Write(s2.costLuaGC);
                             bw.Write(s2.costMonoGC);
                             WriteString(bw, s2.name);
@@ -340,9 +272,6 @@ namespace MikuLuaProfiler_Winform
                                 Sample s3 = childs3[i3];
                                 bw.Write(s3.calls);
                                 bw.Write(s3.frameCount);
-                                bw.Write(s3.fps);
-                                bw.Write(s3.pss);
-                                bw.Write(s3.power);
                                 bw.Write(s3.costLuaGC);
                                 bw.Write(s3.costMonoGC);
                                 WriteString(bw, s3.name);
@@ -357,9 +286,6 @@ namespace MikuLuaProfiler_Winform
                                     Sample s4 = childs4[i4];
                                     bw.Write(s4.calls);
                                     bw.Write(s4.frameCount);
-                                    bw.Write(s4.fps);
-                                    bw.Write(s4.pss);
-                                    bw.Write(s4.power);
                                     bw.Write(s4.costLuaGC);
                                     bw.Write(s4.costMonoGC);
                                     WriteString(bw, s4.name);
@@ -374,9 +300,6 @@ namespace MikuLuaProfiler_Winform
                                         Sample s5 = childs5[i5];
                                         bw.Write(s5.calls);
                                         bw.Write(s5.frameCount);
-                                        bw.Write(s5.fps);
-                                        bw.Write(s5.pss);
-                                        bw.Write(s5.power);
                                         bw.Write(s5.costLuaGC);
                                         bw.Write(s5.costMonoGC);
                                         WriteString(bw, s5.name);
@@ -391,9 +314,6 @@ namespace MikuLuaProfiler_Winform
                                             Sample s6 = childs6[i6];
                                             bw.Write(s6.calls);
                                             bw.Write(s6.frameCount);
-                                            bw.Write(s6.fps);
-                                            bw.Write(s6.pss);
-                                            bw.Write(s6.power);
                                             bw.Write(s6.costLuaGC);
                                             bw.Write(s6.costMonoGC);
                                             WriteString(bw, s6.name);
@@ -408,9 +328,6 @@ namespace MikuLuaProfiler_Winform
                                                 Sample s7 = childs7[i7];
                                                 bw.Write(s7.calls);
                                                 bw.Write(s7.frameCount);
-                                                bw.Write(s7.fps);
-                                                bw.Write(s7.pss);
-                                                bw.Write(s7.power);
                                                 bw.Write(s7.costLuaGC);
                                                 bw.Write(s7.costMonoGC);
                                                 WriteString(bw, s7.name);
@@ -425,9 +342,6 @@ namespace MikuLuaProfiler_Winform
                                                     Sample s8 = childs8[i8];
                                                     bw.Write(s8.calls);
                                                     bw.Write(s8.frameCount);
-                                                    bw.Write(s8.fps);
-                                                    bw.Write(s8.pss);
-                                                    bw.Write(s8.power);
                                                     bw.Write(s8.costLuaGC);
                                                     bw.Write(s8.costMonoGC);
                                                     WriteString(bw, s8.name);
@@ -442,9 +356,6 @@ namespace MikuLuaProfiler_Winform
                                                         Sample s9 = childs9[i9];
                                                         bw.Write(s9.calls);
                                                         bw.Write(s9.frameCount);
-                                                        bw.Write(s9.fps);
-                                                        bw.Write(s9.pss);
-                                                        bw.Write(s9.power);
                                                         bw.Write(s9.costLuaGC);
                                                         bw.Write(s9.costMonoGC);
                                                         WriteString(bw, s9.name);
@@ -459,9 +370,6 @@ namespace MikuLuaProfiler_Winform
                                                             Sample s10 = childs10[i10];
                                                             bw.Write(s10.calls);
                                                             bw.Write(s10.frameCount);
-                                                            bw.Write(s10.fps);
-                                                            bw.Write(s10.pss);
-                                                            bw.Write(s10.power);
                                                             bw.Write(s10.costLuaGC);
                                                             bw.Write(s10.costMonoGC);
                                                             WriteString(bw, s10.name);
@@ -476,9 +384,6 @@ namespace MikuLuaProfiler_Winform
                                                                 Sample s11 = childs11[i11];
                                                                 bw.Write(s11.calls);
                                                                 bw.Write(s11.frameCount);
-                                                                bw.Write(s11.fps);
-                                                                bw.Write(s11.pss);
-                                                                bw.Write(s11.power);
                                                                 bw.Write(s11.costLuaGC);
                                                                 bw.Write(s11.costMonoGC);
                                                                 WriteString(bw, s11.name);
@@ -493,9 +398,6 @@ namespace MikuLuaProfiler_Winform
                                                                     Sample s12 = childs12[i12];
                                                                     bw.Write(s12.calls);
                                                                     bw.Write(s12.frameCount);
-                                                                    bw.Write(s12.fps);
-                                                                    bw.Write(s12.pss);
-                                                                    bw.Write(s12.power);
                                                                     bw.Write(s12.costLuaGC);
                                                                     bw.Write(s12.costMonoGC);
                                                                     WriteString(bw, s12.name);
@@ -510,9 +412,6 @@ namespace MikuLuaProfiler_Winform
                                                                         Sample s13 = childs13[i13];
                                                                         bw.Write(s13.calls);
                                                                         bw.Write(s13.frameCount);
-                                                                        bw.Write(s13.fps);
-                                                                        bw.Write(s13.pss);
-                                                                        bw.Write(s13.power);
                                                                         bw.Write(s13.costLuaGC);
                                                                         bw.Write(s13.costMonoGC);
                                                                         WriteString(bw, s13.name);
@@ -527,9 +426,6 @@ namespace MikuLuaProfiler_Winform
                                                                             Sample s14 = childs14[i14];
                                                                             bw.Write(s14.calls);
                                                                             bw.Write(s14.frameCount);
-                                                                            bw.Write(s14.fps);
-                                                                            bw.Write(s14.pss);
-                                                                            bw.Write(s14.power);
                                                                             bw.Write(s14.costLuaGC);
                                                                             bw.Write(s14.costMonoGC);
                                                                             WriteString(bw, s14.name);
@@ -544,9 +440,6 @@ namespace MikuLuaProfiler_Winform
                                                                                 Sample s15 = childs15[i15];
                                                                                 bw.Write(s15.calls);
                                                                                 bw.Write(s15.frameCount);
-                                                                                bw.Write(s15.fps);
-                                                                                bw.Write(s15.pss);
-                                                                                bw.Write(s15.power);
                                                                                 bw.Write(s15.costLuaGC);
                                                                                 bw.Write(s15.costMonoGC);
                                                                                 WriteString(bw, s15.name);
@@ -561,9 +454,6 @@ namespace MikuLuaProfiler_Winform
                                                                                     Sample s16 = childs16[i16];
                                                                                     bw.Write(s16.calls);
                                                                                     bw.Write(s16.frameCount);
-                                                                                    bw.Write(s16.fps);
-                                                                                    bw.Write(s16.pss);
-                                                                                    bw.Write(s16.power);
                                                                                     bw.Write(s16.costLuaGC);
                                                                                     bw.Write(s16.costMonoGC);
                                                                                     WriteString(bw, s16.name);
@@ -578,9 +468,6 @@ namespace MikuLuaProfiler_Winform
                                                                                         Sample s17 = childs17[i17];
                                                                                         bw.Write(s17.calls);
                                                                                         bw.Write(s17.frameCount);
-                                                                                        bw.Write(s17.fps);
-                                                                                        bw.Write(s17.pss);
-                                                                                        bw.Write(s17.power);
                                                                                         bw.Write(s17.costLuaGC);
                                                                                         bw.Write(s17.costMonoGC);
                                                                                         WriteString(bw, s17.name);
@@ -595,9 +482,6 @@ namespace MikuLuaProfiler_Winform
                                                                                             Sample s18 = childs18[i18];
                                                                                             bw.Write(s18.calls);
                                                                                             bw.Write(s18.frameCount);
-                                                                                            bw.Write(s18.fps);
-                                                                                            bw.Write(s18.pss);
-                                                                                            bw.Write(s18.power);
                                                                                             bw.Write(s18.costLuaGC);
                                                                                             bw.Write(s18.costMonoGC);
                                                                                             WriteString(bw, s18.name);
@@ -612,9 +496,6 @@ namespace MikuLuaProfiler_Winform
                                                                                                 Sample s19 = childs19[i19];
                                                                                                 bw.Write(s19.calls);
                                                                                                 bw.Write(s19.frameCount);
-                                                                                                bw.Write(s19.fps);
-                                                                                                bw.Write(s19.pss);
-                                                                                                bw.Write(s19.power);
                                                                                                 bw.Write(s19.costLuaGC);
                                                                                                 bw.Write(s19.costMonoGC);
                                                                                                 WriteString(bw, s19.name);
@@ -629,9 +510,6 @@ namespace MikuLuaProfiler_Winform
                                                                                                     Sample s20 = childs20[i20];
                                                                                                     bw.Write(s20.calls);
                                                                                                     bw.Write(s20.frameCount);
-                                                                                                    bw.Write(s20.fps);
-                                                                                                    bw.Write(s20.pss);
-                                                                                                    bw.Write(s20.power);
                                                                                                     bw.Write(s20.costLuaGC);
                                                                                                     bw.Write(s20.costMonoGC);
                                                                                                     WriteString(bw, s20.name);
@@ -646,9 +524,6 @@ namespace MikuLuaProfiler_Winform
                                                                                                         Sample s21 = childs21[i21];
                                                                                                         bw.Write(s21.calls);
                                                                                                         bw.Write(s21.frameCount);
-                                                                                                        bw.Write(s21.fps);
-                                                                                                        bw.Write(s21.pss);
-                                                                                                        bw.Write(s21.power);
                                                                                                         bw.Write(s21.costLuaGC);
                                                                                                         bw.Write(s21.costMonoGC);
                                                                                                         WriteString(bw, s21.name);
@@ -663,9 +538,6 @@ namespace MikuLuaProfiler_Winform
                                                                                                             Sample s22 = childs22[i22];
                                                                                                             bw.Write(s22.calls);
                                                                                                             bw.Write(s22.frameCount);
-                                                                                                            bw.Write(s22.fps);
-                                                                                                            bw.Write(s22.pss);
-                                                                                                            bw.Write(s22.power);
                                                                                                             bw.Write(s22.costLuaGC);
                                                                                                             bw.Write(s22.costMonoGC);
                                                                                                             WriteString(bw, s22.name);
@@ -680,9 +552,6 @@ namespace MikuLuaProfiler_Winform
                                                                                                                 Sample s23 = childs23[i23];
                                                                                                                 bw.Write(s23.calls);
                                                                                                                 bw.Write(s23.frameCount);
-                                                                                                                bw.Write(s23.fps);
-                                                                                                                bw.Write(s23.pss);
-                                                                                                                bw.Write(s23.power);
                                                                                                                 bw.Write(s23.costLuaGC);
                                                                                                                 bw.Write(s23.costMonoGC);
                                                                                                                 WriteString(bw, s23.name);
@@ -697,9 +566,6 @@ namespace MikuLuaProfiler_Winform
                                                                                                                     Sample s24 = childs24[i24];
                                                                                                                     bw.Write(s24.calls);
                                                                                                                     bw.Write(s24.frameCount);
-                                                                                                                    bw.Write(s24.fps);
-                                                                                                                    bw.Write(s24.pss);
-                                                                                                                    bw.Write(s24.power);
                                                                                                                     bw.Write(s24.costLuaGC);
                                                                                                                     bw.Write(s24.costMonoGC);
                                                                                                                     WriteString(bw, s24.name);
@@ -714,9 +580,6 @@ namespace MikuLuaProfiler_Winform
                                                                                                                         Sample s25 = childs25[i25];
                                                                                                                         bw.Write(s25.calls);
                                                                                                                         bw.Write(s25.frameCount);
-                                                                                                                        bw.Write(s25.fps);
-                                                                                                                        bw.Write(s25.pss);
-                                                                                                                        bw.Write(s25.power);
                                                                                                                         bw.Write(s25.costLuaGC);
                                                                                                                         bw.Write(s25.costMonoGC);
                                                                                                                         WriteString(bw, s25.name);
@@ -731,9 +594,6 @@ namespace MikuLuaProfiler_Winform
                                                                                                                             Sample s26 = childs26[i26];
                                                                                                                             bw.Write(s26.calls);
                                                                                                                             bw.Write(s26.frameCount);
-                                                                                                                            bw.Write(s26.fps);
-                                                                                                                            bw.Write(s26.pss);
-                                                                                                                            bw.Write(s26.power);
                                                                                                                             bw.Write(s26.costLuaGC);
                                                                                                                             bw.Write(s26.costMonoGC);
                                                                                                                             WriteString(bw, s26.name);
@@ -748,9 +608,6 @@ namespace MikuLuaProfiler_Winform
                                                                                                                                 Sample s27 = childs27[i27];
                                                                                                                                 bw.Write(s27.calls);
                                                                                                                                 bw.Write(s27.frameCount);
-                                                                                                                                bw.Write(s27.fps);
-                                                                                                                                bw.Write(s27.pss);
-                                                                                                                                bw.Write(s27.power);
                                                                                                                                 bw.Write(s27.costLuaGC);
                                                                                                                                 bw.Write(s27.costMonoGC);
                                                                                                                                 WriteString(bw, s27.name);

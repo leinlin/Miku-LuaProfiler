@@ -2,7 +2,6 @@ using AdvancedDataGridView;
 using System;
 using System.Drawing;
 using System.Windows.Forms;
-using HookLib;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Reflection;
@@ -22,42 +21,105 @@ namespace MikuLuaProfiler
         {
             InitializeComponent();
             button1.Enabled = true;
-            SetStyle();
+            attachmentColumn.DefaultCellStyle.NullValue = null;
+
+            NetWorkServer.RegisterOnReceiveSample(OnReceiveSample);
+            NetWorkServer.BeginListen("0.0.0.0", 2333);
+            timer1.Enabled = true;
+            boldFont = new Font(tvTaskList.DefaultCellStyle.Font, FontStyle.Bold);
         }
 
         protected override void OnClosed(EventArgs e)
         {
-            if (serverInterface != null)
-            {
-                serverInterface.isHook = false;
-            }
             Thread.Sleep(1000);
             base.OnClosed(e);
         }
 
-        private void SetStyle()
+        #region refresh
+        Queue<Sample> queue = new Queue<Sample>(32);
+        Dictionary<string, Sample> dict = new Dictionary<string, Sample>();
+        Dictionary<string, TreeGridNode> nodeDict = new Dictionary<string, TreeGridNode>();
+        List<Sample> roots = new List<Sample>();
+        private Font boldFont;
+        private void OnReceiveSample(Sample sample)
         {
-            attachmentColumn.DefaultCellStyle.NullValue = null;
-
-            FillFormInfo();
+            lock (queue)
+            {
+                queue.Enqueue(sample);
+                Console.WriteLine(sample.name);
+            }
         }
 
         private void FillFormInfo()
         {
-            Font boldFont = new Font(tvTaskList.DefaultCellStyle.Font, FontStyle.Bold);
-
-            TreeGridNode node = tvTaskList.Nodes.Add(null, "函数1", "100k", "100k", "0B", "0ms", "0ms", "0ms", 100, 1);
-            node.DefaultCellStyle.Font = boldFont;
-            node = node.Nodes.Add(null, "函数2", "100k", "100k", "0B", "0ms", "0ms", "0ms", 100, 1);
-            node = node.Parent.Nodes.Add(null, "函数3", "100k", "100k", "0B", "0ms", "0ms", "0ms", 100, 1);
-            node = node.Parent.Nodes.Add(null, "函数4", "100k", "100k", "0B", "0ms", "0ms", "0ms", 100, 1);
-            var node5 = node.Parent.Nodes.Add(null, "函数5", "100k", "100k", "0B", "0ms", "0ms", "0ms", 100, 1);
-            for (int i = 6, imax = 1000; i < imax; i++)
+            foreach (var item in roots)
             {
-                node = node5.Nodes.Add(null, "函数" + i, "100k", "100k", "0B", "0ms", "0ms", "0ms", 100, 1);
+                TreeGridNode treeNode;
+                if (!nodeDict.TryGetValue(item.fullName, out treeNode))
+                {
+                    treeNode = tvTaskList.Nodes.Add();
+                    nodeDict.Add(item.fullName, treeNode);
+                }
+                DoFillChildFormInfo(item, treeNode);
             }
+            tvTaskList.Refresh();
         }
 
+        const long MaxB = 1024;
+        const long MaxK = MaxB * 1024;
+        const long MaxM = MaxK * 1024;
+        const long MaxG = MaxM * 1024;
+
+        public static string GetMemoryString(long value, string unit = "B")
+        {
+            string result = null;
+            int sign = Math.Sign(value);
+
+            value = Math.Abs(value);
+            if (value < MaxB)
+            {
+                result = string.Format("{0}{1}", value, unit);
+            }
+            else if (value < MaxK)
+            {
+                result = string.Format("{0:N2}K{1}", (float)value / MaxB, unit);
+            }
+            else if (value < MaxM)
+            {
+                result = string.Format("{0:N2}M{1}", (float)value / MaxK, unit);
+            }
+            else if (value < MaxG)
+            {
+                result = string.Format("{0:N2}G{1}", (float)value / MaxM, unit);
+            }
+            if (sign < 0)
+            {
+                result = "-" + result;
+            }
+            return result;
+        }
+
+        private void DoFillChildFormInfo(Sample sampleNood, TreeGridNode treeNode)
+        {
+            treeNode.DefaultCellStyle.Font = boldFont;
+            float totoalTime = (float)sampleNood.currentTime / 10000;
+            treeNode.SetValues(null, sampleNood.name, GetMemoryString(sampleNood.costLuaGC), GetMemoryString(sampleNood.selfLuaGC), GetMemoryString(sampleNood.luaGC), (totoalTime / (float)sampleNood.calls).ToString("f2") + "ms", totoalTime.ToString("f2") + "ms", GetMemoryString(sampleNood.calls, ""));
+            sampleNood.luaGC = 0;
+            for (int i = 0, imax = sampleNood.childs.Count; i < imax; i++)
+            {
+                var item = sampleNood.childs[i];
+                TreeGridNode node;
+                if (!nodeDict.TryGetValue(item.fullName, out node))
+                {
+                    node = treeNode.Nodes.Add();
+                    nodeDict.Add(item.fullName, node);
+                }
+                DoFillChildFormInfo(item, node);
+            }
+        }
+        #endregion
+
+        #region click
         public void OnProcessTextChange(object sender, EventArgs e)
         {
             string origin = processCom.Text;
@@ -109,12 +171,41 @@ namespace MikuLuaProfiler
             }
         }
 
-        #region inject
-        #region filed
-        private HookServer serverInterface;
+        private void deattachBtn_Click(object sender, EventArgs e)
+        {
+            Thread.Sleep(1000);
+
+            NativeAPI.GacUninstallAssemblies
+            (
+                new string[] { "HookLib.dll" }
+                , "A simple ProcessMonitor based on EasyHook!",
+                base64Str
+            );
+            Thread.Sleep(100);
+
+            MessageBox.Show("已解除");
+            injectButton.Enabled = true;
+            deattachBtn.Enabled = false;
+
+        }
+
+        private void button1_Click(object sender, EventArgs e)
+        {
+            ClearForm();
+        }
+        private void ClearForm()
+        {
+            queue.Clear();
+            dict.Clear();
+            nodeDict.Clear();
+            roots.Clear();
+            tvTaskList.Nodes.Clear();
+        }
+        #endregion
+
+        #region GAC
         private static string dictPath = AppDomain.CurrentDomain.BaseDirectory;
         private string base64Str = GenBase64Str();
-        #endregion
 
         public static string GenBase64Str()
         {
@@ -136,7 +227,7 @@ namespace MikuLuaProfiler
                 {
                     NativeAPI.GacUninstallAssemblies
                     (
-                        new string[] {  "HookLib.dll" }
+                        new string[] { "HookLib.dll" }
                         , "A simple ProcessMonitor based on EasyHook!",
                         base64Str
                     );
@@ -152,7 +243,7 @@ namespace MikuLuaProfiler
                 );
                 Thread.Sleep(100);
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 Debug.Print(ex.ToString());
                 return false;
@@ -170,17 +261,12 @@ namespace MikuLuaProfiler
                     Msg = "已经成功注入目标进程",
                     HostProcessId = RemoteHooking.GetCurrentProcessId()
                 };
-
-                serverInterface = new HookServer();
-                string channelName = null;
-                RemoteHooking.IpcCreateServer<HookServer>(ref channelName, System.Runtime.Remoting.WellKnownObjectMode.Singleton, serverInterface);
-
                 RemoteHooking.Inject(
                     processId,
                     InjectionOptions.Default,
                     typeof(HookParameter).Assembly.Location,
                     typeof(HookParameter).Assembly.Location,
-                    channelName,
+                    string.Empty,
                     parameter
                 );
             }
@@ -214,36 +300,28 @@ namespace MikuLuaProfiler
         [DllImport("kernel32.dll", SetLastError = true, CallingConvention = CallingConvention.Winapi)]
         [return: MarshalAs(UnmanagedType.Bool)]
         internal static extern bool IsWow64Process([In] IntPtr process, [Out] out bool wow64Process);
+
         #endregion
 
-        private void deattachBtn_Click(object sender, EventArgs e)
+        private void Timer1_Tick(object sender, EventArgs e)
         {
-            serverInterface.Deattach();
-            Thread.Sleep(1000);
-
-            NativeAPI.GacUninstallAssemblies
-            (
-                new string[] { "HookLib.dll" }
-                , "A simple ProcessMonitor based on EasyHook!",
-                base64Str
-            );
-            Thread.Sleep(100);
-
-            MessageBox.Show("已解除");
-            injectButton.Enabled = true;
-            deattachBtn.Enabled = false;
-
-        }
-
-        private void button1_Click(object sender, EventArgs e)
-        {
-            if (serverInterface != null && serverInterface.newstate)
+            lock (queue)
             {
-                MessageBox.Show("已经注入到程序中了！");
-            }
-            else
-            {
-                MessageBox.Show("没有注入！");
+                while (queue.Count > 0)
+                {
+                    Sample sample = queue.Dequeue();
+                    Sample s;
+                    if (dict.TryGetValue(sample.name, out s))
+                    {
+                        s.AddSample(sample);
+                    }
+                    else
+                    {
+                        dict.Add(sample.name, sample);
+                        roots.Add(sample);
+                    }
+                }
+                FillFormInfo();
             }
         }
     }

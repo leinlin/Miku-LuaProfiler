@@ -52,32 +52,27 @@
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="System.Data" />
     <Reference Include="System.Xml" />
-    <Reference Include="UnityEngine">
-      <HintPath>..\..\lib\UnityEngine.dll</HintPath>
-    </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Driver\List.cs" />
-    <Compile Include="Driver\LuaProfiler.cs" />
-    <Compile Include="Driver\ObjectPool.cs" />
-    <Compile Include="Driver\Parse\Common.cs" />
-    <Compile Include="Driver\Parse\LLex.cs" />
-    <Compile Include="Driver\Parse\Parse.cs" />
-    <Compile Include="Driver\Parse\Util.cs" />
-    <Compile Include="Driver\Sample.cs" />
-    <Compile Include="HookServer.cs" />
-    <Compile Include="LuaLib\LuaDLL.cs" />
+    <Compile Include="Core\Common\List.cs" />
+    <Compile Include="Core\Common\ObjectPool.cs" />
+    <Compile Include="Core\Common\Sample.cs" />
+    <Compile Include="Core\LuaDLL.cs" />
+    <Compile Include="Core\LuaProfiler.cs" />
+    <Compile Include="Core\NetWork\MBinaryWriter.cs" />
+    <Compile Include="Core\NetWork\NetWorkClient.cs" />
+    <Compile Include="Core\Parse\Common.cs" />
+    <Compile Include="Core\Parse\LLex.cs" />
+    <Compile Include="Core\Parse\Parse.cs" />
+    <Compile Include="Core\Parse\Util.cs" />
+    <Compile Include="Core\Wrap\MikuLuaProfilerLuaProfilerWrap.cs" />
     <Compile Include="Main.cs" />
-    <Compile Include="NetWork\MBinaryWriter.cs" />
-    <Compile Include="NetWork\NetWorkClient.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-  </ItemGroup>
-  <ItemGroup>
-    <Content Include="RefLib\EasyHook.dll" />
   </ItemGroup>
   <ItemGroup>
     <None Include="SN.snk" />
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

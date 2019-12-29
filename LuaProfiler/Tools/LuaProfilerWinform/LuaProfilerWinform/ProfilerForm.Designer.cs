@@ -34,16 +34,6 @@ namespace MikuLuaProfiler
             System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle1 = new System.Windows.Forms.DataGridViewCellStyle();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(ProfilerForm));
             this.tvTaskList = new AdvancedDataGridView.TreeGridView();
-            this.attachmentColumn = new System.Windows.Forms.DataGridViewImageColumn();
-            this.overview = new AdvancedDataGridView.TreeGridColumn();
-            this.totalLuaMemory = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.selfLuaMemory = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.luaGC = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.currentTime = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.averageTime = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.totalTime = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.totalCalls = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.calls = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.imageStrip = new System.Windows.Forms.ImageList(this.components);
             this.injectButton = new System.Windows.Forms.Button();
             this.label1 = new System.Windows.Forms.Label();
@@ -52,6 +42,15 @@ namespace MikuLuaProfiler
             this.searchBox = new System.Windows.Forms.TextBox();
             this.searchBtn = new System.Windows.Forms.Button();
             this.button1 = new System.Windows.Forms.Button();
+            this.timer1 = new System.Windows.Forms.Timer(this.components);
+            this.attachmentColumn = new System.Windows.Forms.DataGridViewImageColumn();
+            this.overview = new AdvancedDataGridView.TreeGridColumn();
+            this.totalLuaMemory = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.selfLuaMemory = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.luaGC = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.averageTime = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.totalTime = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.totalCalls = new System.Windows.Forms.DataGridViewTextBoxColumn();
             ((System.ComponentModel.ISupportInitialize)(this.tvTaskList)).BeginInit();
             this.SuspendLayout();
             // 
@@ -73,11 +72,9 @@ namespace MikuLuaProfiler
             this.totalLuaMemory,
             this.selfLuaMemory,
             this.luaGC,
-            this.currentTime,
             this.averageTime,
             this.totalTime,
-            this.totalCalls,
-            this.calls});
+            this.totalCalls});
             this.tvTaskList.EditMode = System.Windows.Forms.DataGridViewEditMode.EditProgrammatically;
             this.tvTaskList.ImageList = null;
             this.tvTaskList.Location = new System.Drawing.Point(1, 32);
@@ -88,78 +85,6 @@ namespace MikuLuaProfiler
             this.tvTaskList.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
             this.tvTaskList.Size = new System.Drawing.Size(1416, 546);
             this.tvTaskList.TabIndex = 0;
-            // 
-            // attachmentColumn
-            // 
-            this.attachmentColumn.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.None;
-            dataGridViewCellStyle1.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleCenter;
-            this.attachmentColumn.DefaultCellStyle = dataGridViewCellStyle1;
-            this.attachmentColumn.FillWeight = 51.53443F;
-            this.attachmentColumn.HeaderText = "";
-            this.attachmentColumn.MinimumWidth = 25;
-            this.attachmentColumn.Name = "attachmentColumn";
-            this.attachmentColumn.Resizable = System.Windows.Forms.DataGridViewTriState.False;
-            this.attachmentColumn.Width = 25;
-            // 
-            // overview
-            // 
-            this.overview.DefaultNodeImage = null;
-            this.overview.FillWeight = 95.40502F;
-            this.overview.HeaderText = "函数总览";
-            this.overview.MaxInputLength = 3000;
-            this.overview.Name = "overview";
-            this.overview.Resizable = System.Windows.Forms.DataGridViewTriState.True;
-            this.overview.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.NotSortable;
-            // 
-            // totalLuaMemory
-            // 
-            this.totalLuaMemory.FillWeight = 170.212F;
-            this.totalLuaMemory.HeaderText = "总Lua内存";
-            this.totalLuaMemory.Name = "totalLuaMemory";
-            this.totalLuaMemory.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.NotSortable;
-            // 
-            // selfLuaMemory
-            // 
-            this.selfLuaMemory.FillWeight = 130.0109F;
-            this.selfLuaMemory.HeaderText = "函数本身";
-            this.selfLuaMemory.Name = "selfLuaMemory";
-            this.selfLuaMemory.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.NotSortable;
-            // 
-            // luaGC
-            // 
-            this.luaGC.HeaderText = "LuaGC";
-            this.luaGC.Name = "luaGC";
-            this.luaGC.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.NotSortable;
-            // 
-            // currentTime
-            // 
-            this.currentTime.HeaderText = "当前时间";
-            this.currentTime.Name = "currentTime";
-            this.currentTime.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.NotSortable;
-            // 
-            // averageTime
-            // 
-            this.averageTime.HeaderText = "平均时间";
-            this.averageTime.Name = "averageTime";
-            this.averageTime.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.NotSortable;
-            // 
-            // totalTime
-            // 
-            this.totalTime.HeaderText = "总时间";
-            this.totalTime.Name = "totalTime";
-            this.totalTime.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.NotSortable;
-            // 
-            // totalCalls
-            // 
-            this.totalCalls.HeaderText = "总调用次数";
-            this.totalCalls.Name = "totalCalls";
-            this.totalCalls.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.NotSortable;
-            // 
-            // calls
-            // 
-            this.calls.HeaderText = "帧调用次数";
-            this.calls.Name = "calls";
-            this.calls.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.NotSortable;
             // 
             // imageStrip
             // 
@@ -225,13 +150,78 @@ namespace MikuLuaProfiler
             // button1
             // 
             this.button1.Enabled = false;
-            this.button1.Location = new System.Drawing.Point(388, 3);
+            this.button1.Location = new System.Drawing.Point(1075, 3);
             this.button1.Name = "button1";
             this.button1.Size = new System.Drawing.Size(84, 23);
             this.button1.TabIndex = 8;
-            this.button1.Text = "Test";
+            this.button1.Text = "Clear";
             this.button1.UseVisualStyleBackColor = true;
             this.button1.Click += new System.EventHandler(this.button1_Click);
+            // 
+            // timer1
+            // 
+            this.timer1.Interval = 1000;
+            this.timer1.Tick += new System.EventHandler(this.Timer1_Tick);
+            // 
+            // attachmentColumn
+            // 
+            this.attachmentColumn.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.None;
+            dataGridViewCellStyle1.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleCenter;
+            this.attachmentColumn.DefaultCellStyle = dataGridViewCellStyle1;
+            this.attachmentColumn.FillWeight = 51.53443F;
+            this.attachmentColumn.HeaderText = "";
+            this.attachmentColumn.MinimumWidth = 25;
+            this.attachmentColumn.Name = "attachmentColumn";
+            this.attachmentColumn.Resizable = System.Windows.Forms.DataGridViewTriState.False;
+            this.attachmentColumn.Width = 25;
+            // 
+            // overview
+            // 
+            this.overview.DefaultNodeImage = null;
+            this.overview.FillWeight = 150F;
+            this.overview.HeaderText = "OverView";
+            this.overview.MaxInputLength = 3000;
+            this.overview.Name = "overview";
+            this.overview.Resizable = System.Windows.Forms.DataGridViewTriState.True;
+            this.overview.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.NotSortable;
+            // 
+            // totalLuaMemory
+            // 
+            this.totalLuaMemory.FillWeight = 170.212F;
+            this.totalLuaMemory.HeaderText = "TotalLuaGC";
+            this.totalLuaMemory.Name = "totalLuaMemory";
+            this.totalLuaMemory.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.NotSortable;
+            // 
+            // selfLuaMemory
+            // 
+            this.selfLuaMemory.FillWeight = 130.0109F;
+            this.selfLuaMemory.HeaderText = "Self";
+            this.selfLuaMemory.Name = "selfLuaMemory";
+            this.selfLuaMemory.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.NotSortable;
+            // 
+            // luaGC
+            // 
+            this.luaGC.HeaderText = "GC";
+            this.luaGC.Name = "luaGC";
+            this.luaGC.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.NotSortable;
+            // 
+            // averageTime
+            // 
+            this.averageTime.HeaderText = "AverageTime";
+            this.averageTime.Name = "averageTime";
+            this.averageTime.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.NotSortable;
+            // 
+            // totalTime
+            // 
+            this.totalTime.HeaderText = "TotalTime";
+            this.totalTime.Name = "totalTime";
+            this.totalTime.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.NotSortable;
+            // 
+            // totalCalls
+            // 
+            this.totalCalls.HeaderText = "TotalCalls";
+            this.totalCalls.Name = "totalCalls";
+            this.totalCalls.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.NotSortable;
             // 
             // ProfilerForm
             // 
@@ -264,20 +254,19 @@ namespace MikuLuaProfiler
         private System.Windows.Forms.ImageList imageStrip;
         private System.Windows.Forms.Button injectButton;
         private System.Windows.Forms.Label label1;
-        private System.Windows.Forms.DataGridViewImageColumn attachmentColumn;
-        private TreeGridColumn overview;
-        private System.Windows.Forms.DataGridViewTextBoxColumn totalLuaMemory;
-        private System.Windows.Forms.DataGridViewTextBoxColumn selfLuaMemory;
-        private System.Windows.Forms.DataGridViewTextBoxColumn luaGC;
-        private System.Windows.Forms.DataGridViewTextBoxColumn currentTime;
-        private System.Windows.Forms.DataGridViewTextBoxColumn averageTime;
-        private System.Windows.Forms.DataGridViewTextBoxColumn totalTime;
-        private System.Windows.Forms.DataGridViewTextBoxColumn totalCalls;
-        private System.Windows.Forms.DataGridViewTextBoxColumn calls;
         private System.Windows.Forms.ComboBox processCom;
         private System.Windows.Forms.Button deattachBtn;
         private System.Windows.Forms.TextBox searchBox;
         private System.Windows.Forms.Button searchBtn;
         private System.Windows.Forms.Button button1;
+        private System.Windows.Forms.Timer timer1;
+        private System.Windows.Forms.DataGridViewImageColumn attachmentColumn;
+        private TreeGridColumn overview;
+        private System.Windows.Forms.DataGridViewTextBoxColumn totalLuaMemory;
+        private System.Windows.Forms.DataGridViewTextBoxColumn selfLuaMemory;
+        private System.Windows.Forms.DataGridViewTextBoxColumn luaGC;
+        private System.Windows.Forms.DataGridViewTextBoxColumn averageTime;
+        private System.Windows.Forms.DataGridViewTextBoxColumn totalTime;
+        private System.Windows.Forms.DataGridViewTextBoxColumn totalCalls;
     }
 }

@@ -35,21 +35,41 @@ __________#_______####_______####______________
 
 using System;
 using System.Collections.Generic;
-using RefDict = System.Collections.Generic.Dictionary<string, System.Collections.Generic.HashSet<string>>;
-
-namespace MikuLuaProfiler_Winform
+namespace MikuLuaProfiler
 {
     public static class LuaProfiler
     {
         #region member
         private static IntPtr _mainL = IntPtr.Zero;
         private static readonly Stack<Sample> beginSampleMemoryStack = new Stack<Sample>();
-        private static int m_currentFrame = 0;
         public static int mainThreadId = -100;
         const long MaxB = 1024;
         const long MaxK = MaxB * 1024;
         const long MaxM = MaxK * 1024;
         const long MaxG = MaxM * 1024;
+
+        private static Action<Sample> m_onReceiveSample;
+        private static Action<LuaRefInfo> m_onReceiveRef;
+        private static Action<LuaDiffInfo> m_onReceiveDiff;
+        public static void RegisterOnReceiveSample(Action<Sample> onReceive)
+        {
+            m_onReceiveSample = onReceive;
+        }
+        public static void RegisterOnReceiveRefInfo(Action<LuaRefInfo> onReceive)
+        {
+            m_onReceiveRef = onReceive;
+        }
+        public static void RegisterOnReceiveDiffInfo(Action<LuaDiffInfo> onReceive)
+        {
+            m_onReceiveDiff = onReceive;
+        }
+
+        public static void UnRegistReceive()
+        {
+            m_onReceiveSample = null;
+            m_onReceiveRef = null;
+            m_onReceiveDiff = null;
+        }
         #endregion
 
         #region property
@@ -66,6 +86,7 @@ namespace MikuLuaProfiler_Winform
                 {
                     m_hasL = true;
                     LuaDLL.luaL_initlibs(value);
+                    mainThreadId = System.Threading.Thread.CurrentThread.ManagedThreadId;
                 }
                 else
                 {
@@ -100,7 +121,7 @@ namespace MikuLuaProfiler_Winform
                 return System.Diagnostics.Stopwatch.GetTimestamp();
             }
         }
-        public static void BeginSample(IntPtr luaState, string name)
+        public static void BeginSample(IntPtr luaState, string name, bool needShow = false)
         {
             if (!IsMainThread)
             {
@@ -108,15 +129,9 @@ namespace MikuLuaProfiler_Winform
             }
             try
             {
-                int frameCount = Main.frameCount;
-
-                if (m_currentFrame != frameCount)
-                {
-                    PopAllSampleWhenLateUpdate(luaState);
-                    m_currentFrame = frameCount;
-                }
                 long memoryCount = LuaDLL.GetLuaMemory(luaState);
                 Sample sample = Sample.Create(getcurrentTime, (int)memoryCount, name);
+                sample.needShow = needShow;
                 beginSampleMemoryStack.Push(sample);
             }
             catch
@@ -160,6 +175,7 @@ namespace MikuLuaProfiler_Winform
                             popChilds[i].fahter = item;
                         }
                         popChilds.Clear();
+                        // TODO
                         NetWorkClient.SendMessage(item);
                     }
                     //item.Restore();
@@ -204,7 +220,6 @@ namespace MikuLuaProfiler_Winform
                 sample.costMonoGC = (int)Math.Max(mono_gc, monoGC);
             }
 
-
             if (!sample.CheckSampleValid())
             {
                 sample.Restore();
@@ -214,6 +229,7 @@ namespace MikuLuaProfiler_Winform
             //UnityEngine.Debug.Log(sample.name);
             if (beginSampleMemoryStack.Count == 0)
             {
+                // TODO
                 NetWorkClient.SendMessage(sample);
             }
             //释放掉被累加的Sample
@@ -222,81 +238,7 @@ namespace MikuLuaProfiler_Winform
                 sample.Restore();
             }
         }
-        #endregion
 
-        #region ref
-        private static Dictionary<byte, RefDict> m_refDict = new Dictionary<byte, RefDict>(4);
-
-        public static void AddRef(string refName, string refAddr, byte type)
-        {
-            RefDict refDict;
-            if (!m_refDict.TryGetValue(type, out refDict))
-            {
-                refDict = new RefDict(2048);
-                m_refDict.Add(type, refDict);
-            }
-
-            HashSet<string> addrList;
-            if (!refDict.TryGetValue(refName, out addrList))
-            {
-                addrList = new HashSet<string>();
-                refDict.Add(refName, addrList);
-            }
-            if (!addrList.Contains(refAddr))
-            {
-                addrList.Add(refAddr);
-            }
-            SendAddRef(refName, refAddr, type);
-        }
-        public static void SendAddRef(string funName, string funAddr, byte type)
-        {
-            LuaRefInfo refInfo = LuaRefInfo.Create(1, funName, funAddr, type);
-            NetWorkClient.SendMessage(refInfo);
-        }
-        public static void RemoveRef(string refName, string refAddr, byte type)
-        {
-            if (string.IsNullOrEmpty(refName)) return;
-            RefDict refDict;
-
-            if (!m_refDict.TryGetValue(type, out refDict))
-            {
-                return;
-            }
-
-            HashSet<string> addrList;
-            if (!refDict.TryGetValue(refName, out addrList))
-            {
-                return;
-            }
-            if (!addrList.Contains(refAddr))
-            {
-                return;
-            }
-            addrList.Remove(refAddr);
-            if (addrList.Count == 0)
-            {
-                refDict.Remove(refName);
-            }
-            SendRemoveRef(refName, refAddr, type);
-        }
-        public static void SendRemoveRef(string funName, string funAddr, byte type)
-        {
-            LuaRefInfo refInfo = LuaRefInfo.Create(0, funName, funAddr, type);
-            NetWorkClient.SendMessage(refInfo);
-        }
-        public static void SendAllRef()
-        {
-            foreach (var dictItem in m_refDict)
-            {
-                foreach (var hashList in dictItem.Value)
-                {
-                    foreach (var item in hashList.Value)
-                    {
-                        SendAddRef(hashList.Key, item, dictItem.Key);
-                    }
-                }
-            }
-        }
         #endregion
 
     }

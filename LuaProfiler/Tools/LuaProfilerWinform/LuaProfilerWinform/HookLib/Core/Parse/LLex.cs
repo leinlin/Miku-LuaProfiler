@@ -37,7 +37,7 @@ using System.Collections.Generic;
 using System.Text;
 using NumberStyles = System.Globalization.NumberStyles;
 
-namespace MikuLuaProfiler_Winform
+namespace MikuLuaProfiler
 {
     public enum TK
     {

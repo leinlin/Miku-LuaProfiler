@@ -26,70 +26,91 @@
 __________#_______####_______####______________
                 我们的未来没有BUG                
 * ==============================================================================
-* Filename: NetWorkClient
+* Filename: ObjectPool
 * Created:  2018/7/13 14:29:22
 * Author:   エル・プサイ・コングリィ
 * Purpose:  
 * ==============================================================================
 */
 
+/*
+ * 对象池
+ */
 using System;
-using System.IO;
+using System.Collections.Generic;
 
-namespace MikuLuaProfiler_Winform
+namespace MikuLuaProfiler
 {
-    public class MBinaryWriter : BinaryWriter
+    public class ObjectPool<T> where T : class, new()
     {
-        public MBinaryWriter(Stream output) : base(output)
+        public delegate T CreateFunc();
+
+        public ObjectPool()
         {
-            this._buffer = new byte[8];
+
+        }
+        public ObjectPool(int poolSize, CreateFunc createFunc = null, Action<T> resetAction = null)
+        {
+            Init(poolSize, createFunc, resetAction);
+        }
+        public T GetObject()
+        {
+            lock (this)
+            {
+                if (m_objStack.Count > 0)
+                {
+                    T t = m_objStack.Pop();
+                    return t;
+                }
+            }
+            return new T();
         }
 
-        public unsafe override void Write(float value)
+        public void Init(int poolSize, CreateFunc createFunc = null, Action<T> resetAction = null)
         {
-            fixed (byte* ptr = &this._buffer[0])
+            m_objStack = new Stack<T>(poolSize);
+            for (int i = 0; i < poolSize; i++)
             {
-                *(float*)ptr = value;
-                this.OutStream.Write(this._buffer, 0, 4);
+                T item = new T();
+                m_objStack.Push(item);
             }
         }
 
-        public unsafe override void Write(short value)
+        public void Store(T obj)
         {
-            fixed (byte* ptr = &this._buffer[0])
+            if (obj == null)
+                return;
+            lock (this)
             {
-                *(short*)ptr = value;
-                this.OutStream.Write(this._buffer, 0, 2);
+                m_objStack.Push(obj);
             }
         }
 
-        public unsafe override void Write(ushort value)
+        // 少用，调用这个池的作用就没有了
+        public void Clear()
         {
-            fixed (byte* ptr = &this._buffer[0])
+            if (m_objStack != null)
+                m_objStack.Clear();
+        }
+
+        public int Count
+        {
+            get
             {
-                *(short*)ptr = (short)value;
-                this.OutStream.Write(this._buffer, 0, 2);
+                if (m_objStack == null)
+                    return 0;
+                return m_objStack.Count;
             }
         }
 
-        public unsafe override void Write(int value)
+        public Stack<T>.Enumerator GetIter()
         {
-            fixed (byte* ptr = &this._buffer[0])
-            {
-                *(int*)ptr = value;
-                this.OutStream.Write(this._buffer, 0, 4);
-            }
+            if (m_objStack == null)
+                return new Stack<T>.Enumerator();
+            return m_objStack.GetEnumerator();
         }
 
-        public unsafe override void Write(uint value)
-        {
-            fixed (byte* ptr = &this._buffer[0])
-            {
-                *(uint*)ptr = value;
-                this.OutStream.Write(this._buffer, 0, 4);
-            }
-        }
-
-        private byte[] _buffer;
+        private Stack<T> m_objStack = null;
     }
+
 }

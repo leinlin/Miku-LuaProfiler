@@ -34,13 +34,11 @@ __________#_______####_______####______________
 */
 
 using System;
-using System.Runtime.InteropServices;
 using EasyHook;
 using System.Threading;
 using System.Windows.Forms;
-using System.Diagnostics;
 
-namespace MikuLuaProfiler_Winform
+namespace MikuLuaProfiler
 {
     [Serializable]
     public class HookParameter
@@ -52,7 +50,6 @@ namespace MikuLuaProfiler_Winform
     public class Main : IEntryPoint
     {
         #region field
-        public static HookServer server = null;
         public LocalHook MessageBoxWHook = null;
         public LocalHook MessageBoxAHook = null;
         public static int frameCount { private set; get; }
@@ -79,27 +76,12 @@ namespace MikuLuaProfiler_Winform
             )
         {
             frameCount = 0;
-            server = RemoteHooking.IpcConnectClient<HookServer>(channelName);
-            server.isHook = false;
             try
             {
-                var process = Process.GetCurrentProcess();
-                var modules = process.Modules;
-                foreach (ProcessModule item in modules)
-                {
-                    string moduleName = item.ModuleName;
-                    try
-                    {
-                        if (LocalHook.GetProcAddress(moduleName, "luaL_newstate") != IntPtr.Zero)
-                        {
-                            HookAllLuaFun(moduleName);
-                            break;
-                        }
-                    }
-                    catch
-                    {
-                    }
-                }
+                LuaDLL.Uninstall();
+                LuaDLL.HookLoadLibrary();
+                LuaDLL.BindEasyHook();
+                MessageBox.Show("success");
             }
             catch (Exception ex)
             {
@@ -107,39 +89,14 @@ namespace MikuLuaProfiler_Winform
                 return;
             }
 
-            server.isHook = true;
+            NetWorkClient.ConnectServer("127.0.0.1", 2333);
             while (true)
             {
-                Thread.Sleep(10);
+                Thread.Sleep(100);
                 frameCount++;
-                if (!server.isHook)
-                {
-                    Uninstall();
-                    break;
-                }
             }
 
         }
-
-        #region hook lua fun
-        public static void HookAllLuaFun(string moduleName)
-        {
-            IntPtr luaL_newstate_handle = LocalHook.GetProcAddress(moduleName, "luaL_newstate");
-            LuaDLL.luaL_newstate_hook = LocalHook.Create(luaL_newstate_handle, new LuaDLL.luaL_newstate_fun(LuaDLL.luaL_newstate_hooked), null);
-            LuaDLL.luaL_newstate_hook.ThreadACL.SetExclusiveACL(new int[1]);
-            LuaDLL.luaL_newstate = (LuaDLL.luaL_newstate_fun)Marshal.GetDelegateForFunctionPointer(luaL_newstate_handle, typeof(LuaDLL.luaL_newstate_fun));
-
-            IntPtr lua_close_handle = LocalHook.GetProcAddress(moduleName, "lua_close");
-            LuaDLL.lua_close_hook = LocalHook.Create(lua_close_handle, new LuaDLL.lua_close_fun(LuaDLL.lua_close_hooked), null);
-            LuaDLL.lua_close_hook.ThreadACL.SetExclusiveACL(new int[1]);
-            LuaDLL.lua_close = (LuaDLL.lua_close_fun)Marshal.GetDelegateForFunctionPointer(lua_close_handle, typeof(LuaDLL.lua_close_fun));
-
-            IntPtr lua_close_handle = LocalHook.GetProcAddress(moduleName, "lua_close");
-            LuaDLL.lua_close_hook = LocalHook.Create(lua_close_handle, new LuaDLL.lua_close_fun(LuaDLL.lua_close_hooked), null);
-            LuaDLL.lua_close_hook.ThreadACL.SetExclusiveACL(new int[1]);
-            LuaDLL.lua_close = (LuaDLL.lua_close_fun)Marshal.GetDelegateForFunctionPointer(lua_close_handle, typeof(LuaDLL.lua_close_fun));
-        }
-        #endregion
 
     }
 }

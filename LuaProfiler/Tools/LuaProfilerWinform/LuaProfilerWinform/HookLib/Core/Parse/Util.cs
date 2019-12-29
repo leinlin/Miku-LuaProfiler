@@ -38,7 +38,7 @@ __________#_______####_______####______________
 
 using System;
 
-namespace MikuLuaProfiler_Winform
+namespace MikuLuaProfiler
 {
     using DebugS = System.Diagnostics.Debug;
     using NumberStyles = System.Globalization.NumberStyles;

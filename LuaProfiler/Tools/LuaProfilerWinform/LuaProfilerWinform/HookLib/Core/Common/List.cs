@@ -32,12 +32,10 @@ __________#_______####_______####______________
 * Purpose:  
 * ==============================================================================
 */
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 
-namespace MikuLuaProfiler_Winform
+using System;
+
+namespace MikuLuaProfiler
 {
     public class MList<T>
     {

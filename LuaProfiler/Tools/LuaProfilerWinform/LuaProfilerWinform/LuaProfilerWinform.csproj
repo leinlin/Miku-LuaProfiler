@@ -82,6 +82,7 @@
       <DesignTime>True</DesignTime>
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
+    <Compile Include="Winform\NetWork\NetWorkServer.cs" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="App.ico" />
