@@ -111,6 +111,7 @@ namespace MikuLuaProfiler
         public long selfMonoMemory { private set; get; }
         public long totalLuaMemory { private set; get; }
         public long selfLuaMemory { private set; get; }
+        public long selfCostTime { private set; get; }
         public long totalTime { private set; get; }
         public long averageTime { private set; get; }
         public long currentTime { private set; get; }
@@ -179,6 +180,7 @@ namespace MikuLuaProfiler
                 totalLuaMemory = sample.costLuaGC;
                 selfLuaMemory = sample.selfLuaGC;
                 selfMonoMemory = sample.selfMonoGC;
+                selfCostTime = sample.selfCostTime;
                 totalTime = sample.costTime;
                 displayName = sample.name;
                 m_originName = sample.name;
@@ -196,6 +198,7 @@ namespace MikuLuaProfiler
                 totalLuaMemory = 0;
                 selfMonoMemory = 0;
                 selfLuaMemory = 0;
+                selfCostTime = 0;
 
                 totalTime = 0;
                 displayName = "root";
@@ -245,6 +248,7 @@ namespace MikuLuaProfiler
             totalLuaMemory = item.totalLuaMemory;
             selfLuaMemory = item.selfLuaMemory;
             selfMonoMemory = item.selfMonoMemory;
+            selfCostTime = item.selfCostTime;
             totalTime = item.totalTime;
             displayName = item.displayName;
             m_originName = item.m_originName;
@@ -270,6 +274,7 @@ namespace MikuLuaProfiler
                 currentTime += sample.costTime;
                 _showMonoGC += sample.costMonoGC;
                 _showLuaGC += sample.costLuaGC;
+                selfCostTime += sample.selfCostTime;
             }
             else
             {
@@ -277,6 +282,7 @@ namespace MikuLuaProfiler
                 currentTime = sample.costTime;
                 _showMonoGC = sample.costMonoGC;
                 _showLuaGC = sample.costLuaGC;
+                selfCostTime = sample.selfCostTime;
             }
 
             totalLuaMemory += sample.costLuaGC;
@@ -316,6 +322,7 @@ namespace MikuLuaProfiler
             s.isCopy = true;
             s.copySelfLuaGC = selfLuaMemory;
             s.copySelfMonoGC = selfLuaMemory;
+            s.copySelfCostTime = (int)selfCostTime;
             s.name = m_originName;
             s.costTime = (int)totalTime;
 
@@ -565,6 +572,20 @@ namespace MikuLuaProfiler
                 {
                     headerContent = new GUIContent("currentTime"),
                     contextMenuText = "currentTime",
+                    headerTextAlignment = TextAlignment.Center,
+                    sortedAscending = false,
+                    sortingArrowAlignment = TextAlignment.Right,
+                    width = 120,
+                    minWidth = 120,
+                    maxWidth = 120,
+                    autoResize = true,
+                    canSort = true,
+                    allowToggleVisibility = false
+                },
+                new MultiColumnHeaderState.Column
+                {
+                    headerContent = new GUIContent("self"),
+                    contextMenuText = "self",
                     headerTextAlignment = TextAlignment.Center,
                     sortedAscending = false,
                     sortingArrowAlignment = TextAlignment.Right,
@@ -1007,10 +1028,11 @@ namespace MikuLuaProfiler
                 case 5: rootList.Sort((a, b) => { return sign * Math.Sign(a.showLuaGC - b.showLuaGC); }); break;
                 case 6: rootList.Sort((a, b) => { return sign * Math.Sign(a.showMonoGC - b.showMonoGC); }); break;
                 case 7: rootList.Sort((a, b) => { return sign * Math.Sign(a.currentTime - b.currentTime); }); break;
-                case 8: rootList.Sort((a, b) => { return sign * Math.Sign(a.averageTime - b.averageTime); }); break;
-                case 9: rootList.Sort((a, b) => { return sign * Math.Sign(a.totalTime - b.totalTime); }); break;
-                case 10: rootList.Sort((a, b) => { return sign * Math.Sign(a.totalCallTime - b.totalCallTime); }); break;
-                case 11: rootList.Sort((a, b) => { return sign * Math.Sign(a.frameCalls - b.frameCalls); }); break;
+                case 8: rootList.Sort((a, b) => { return sign * Math.Sign(a.selfCostTime - b.selfCostTime); }); break;
+                case 9: rootList.Sort((a, b) => { return sign * Math.Sign(a.averageTime - b.averageTime); }); break;
+                case 10: rootList.Sort((a, b) => { return sign * Math.Sign(a.totalTime - b.totalTime); }); break;
+                case 11: rootList.Sort((a, b) => { return sign * Math.Sign(a.totalCallTime - b.totalCallTime); }); break;
+                case 12: rootList.Sort((a, b) => { return sign * Math.Sign(a.frameCalls - b.frameCalls); }); break;
             }
             foreach (var item in rootList)
             {
@@ -1037,10 +1059,11 @@ namespace MikuLuaProfiler
                     case 5: rootList.Sort((a, b) => { return sign * Math.Sign(a.showLuaGC - b.showLuaGC); }); break;
                     case 6: rootList.Sort((a, b) => { return sign * Math.Sign(a.showMonoGC - b.showMonoGC); }); break;
                     case 7: rootList.Sort((a, b) => { return sign * Math.Sign(a.currentTime - b.currentTime); }); break;
-                    case 8: rootList.Sort((a, b) => { return sign * Math.Sign(a.averageTime - b.averageTime); }); break;
-                    case 9: rootList.Sort((a, b) => { return sign * Math.Sign(a.totalTime - b.totalTime); }); break;
-                    case 10: rootList.Sort((a, b) => { return sign * Math.Sign(a.totalCallTime - b.totalCallTime); }); break;
-                    case 11: rootList.Sort((a, b) => { return sign * Math.Sign(a.frameCalls - b.frameCalls); }); break;
+                    case 8: rootList.Sort((a, b) => { return sign * Math.Sign(a.selfCostTime - b.selfCostTime); }); break;
+                    case 9: rootList.Sort((a, b) => { return sign * Math.Sign(a.averageTime - b.averageTime); }); break;
+                    case 10: rootList.Sort((a, b) => { return sign * Math.Sign(a.totalTime - b.totalTime); }); break;
+                    case 11: rootList.Sort((a, b) => { return sign * Math.Sign(a.totalCallTime - b.totalCallTime); }); break;
+                    case 12: rootList.Sort((a, b) => { return sign * Math.Sign(a.frameCalls - b.frameCalls); }); break;
                 }
                 foreach (var t in rootList)
                 {
@@ -1120,13 +1143,14 @@ namespace MikuLuaProfiler
                     case 2: m_treeViewItems.Sort((a, b) => { return sign * Math.Sign(((LuaProfilerTreeViewItem)a).selfLuaMemory - ((LuaProfilerTreeViewItem)b).selfLuaMemory); }); break;
                     case 3: m_treeViewItems.Sort((a, b) => { return sign * Math.Sign(((LuaProfilerTreeViewItem)a).totalMonoMemory - ((LuaProfilerTreeViewItem)b).totalMonoMemory); }); break;
                     case 4: m_treeViewItems.Sort((a, b) => { return sign * Math.Sign(((LuaProfilerTreeViewItem)a).selfMonoMemory - ((LuaProfilerTreeViewItem)b).selfMonoMemory); }); break;
-                    case 5: m_treeViewItems.Sort((a, b) => { return sign * Math.Sign(((LuaProfilerTreeViewItem)a).currentTime - ((LuaProfilerTreeViewItem)b).currentTime); }); break;
-                    case 6: m_treeViewItems.Sort((a, b) => { return sign * Math.Sign(((LuaProfilerTreeViewItem)a).averageTime - ((LuaProfilerTreeViewItem)b).averageTime); }); break;
-                    case 7: m_treeViewItems.Sort((a, b) => { return sign * Math.Sign(((LuaProfilerTreeViewItem)a).totalTime - ((LuaProfilerTreeViewItem)b).totalTime); }); break;
-                    case 8: m_treeViewItems.Sort((a, b) => { return sign * Math.Sign(((LuaProfilerTreeViewItem)a).showLuaGC - ((LuaProfilerTreeViewItem)b).showLuaGC); }); break;
-                    case 9: m_treeViewItems.Sort((a, b) => { return sign * Math.Sign(((LuaProfilerTreeViewItem)a).showMonoGC - ((LuaProfilerTreeViewItem)b).showMonoGC); }); break;
-                    case 10: m_treeViewItems.Sort((a, b) => { return sign * Math.Sign(((LuaProfilerTreeViewItem)a).totalCallTime - ((LuaProfilerTreeViewItem)b).totalCallTime); }); break;
-                    case 11: m_treeViewItems.Sort((a, b) => { return sign * Math.Sign(((LuaProfilerTreeViewItem)a).frameCalls - ((LuaProfilerTreeViewItem)b).frameCalls); }); break;
+                    case 5: m_treeViewItems.Sort((a, b) => { return sign * Math.Sign(((LuaProfilerTreeViewItem)a).showLuaGC - ((LuaProfilerTreeViewItem)b).showLuaGC); }); break;
+                    case 6: m_treeViewItems.Sort((a, b) => { return sign * Math.Sign(((LuaProfilerTreeViewItem)a).showMonoGC - ((LuaProfilerTreeViewItem)b).showMonoGC); }); break;
+                    case 7: m_treeViewItems.Sort((a, b) => { return sign * Math.Sign(((LuaProfilerTreeViewItem)a).currentTime - ((LuaProfilerTreeViewItem)b).currentTime); }); break;
+                    case 8: m_treeViewItems.Sort((a, b) => { return sign * Math.Sign(((LuaProfilerTreeViewItem)a).selfCostTime - ((LuaProfilerTreeViewItem)b).selfCostTime); }); break;
+                    case 9: m_treeViewItems.Sort((a, b) => { return sign * Math.Sign(((LuaProfilerTreeViewItem)a).averageTime - ((LuaProfilerTreeViewItem)b).averageTime); }); break;
+                    case 10: m_treeViewItems.Sort((a, b) => { return sign * Math.Sign(((LuaProfilerTreeViewItem)a).totalTime - ((LuaProfilerTreeViewItem)b).totalTime); }); break;
+                    case 11: m_treeViewItems.Sort((a, b) => { return sign * Math.Sign(((LuaProfilerTreeViewItem)a).totalCallTime - ((LuaProfilerTreeViewItem)b).totalCallTime); }); break;
+                    case 12: m_treeViewItems.Sort((a, b) => { return sign * Math.Sign(((LuaProfilerTreeViewItem)a).frameCalls - ((LuaProfilerTreeViewItem)b).frameCalls); }); break;
                 }
 
                 SetupParentsAndChildrenFromDepths(m_root, m_treeViewItems);
@@ -1188,15 +1212,18 @@ namespace MikuLuaProfiler
             GUI.Label(r, ((float)item.currentTime / 10000).ToString("f2") + "ms", m_gs);
 
             r = args.GetCellRect(8);
-            GUI.Label(r, ((float)item.averageTime / 10000).ToString("f2") + "ms", m_gs);
+            GUI.Label(r, ((float)item.selfCostTime / 10000).ToString("f2") + "ms", m_gs);
 
             r = args.GetCellRect(9);
-            GUI.Label(r, ((float)item.totalTime / 10000000).ToString("f6") + "s", m_gs);
+            GUI.Label(r, ((float)item.averageTime / 10000).ToString("f2") + "ms", m_gs);
 
             r = args.GetCellRect(10);
-            GUI.Label(r, GetMemoryString(item.totalCallTime, ""), m_gs);
+            GUI.Label(r, ((float)item.totalTime / 10000000).ToString("f6") + "s", m_gs);
 
             r = args.GetCellRect(11);
+            GUI.Label(r, GetMemoryString(item.totalCallTime, ""), m_gs);
+
+            r = args.GetCellRect(12);
             GUI.Label(r, item.frameCalls.ToString(), m_gs);
 
             m_gs.normal.textColor = color;

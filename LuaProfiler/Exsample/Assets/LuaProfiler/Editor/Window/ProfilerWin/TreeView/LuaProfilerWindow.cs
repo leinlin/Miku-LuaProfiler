@@ -104,7 +104,7 @@ namespace MikuLuaProfiler
         private Texture2D powrChart;
 
         private static Color disableColor = new Color(0.5f, 0.5f, 0.5f, 1.0f);
-        private static Color luaColor = new Color(0.4f, 0.7f, 0.9f, 1.0f);
+        private static Color luaColor = new Color(0.2f, 0.5f, 0.7f, 1.0f);
         private static Color monoColor = new Color32(0, 180, 0, 255);
         private static Color fpsColor = new Color32(255, 193, 37, 255);
         private static Color powerColor = new Color(0.5f, 0.5f, 0.5f, 1.0f);
@@ -664,14 +664,14 @@ namespace MikuLuaProfiler
             EditorGUILayout.BeginHorizontal(new GUILayoutOption[0]);
             //curveScale = GUILayout.VerticalSlider(curveScale, 1f, 0.01f, this._surveScaleOption);
             EditorGUILayout.BeginVertical(new GUILayoutOption[0]);
-            EditorGUILayout.BeginVertical(GuiSkinManager.Styles.textField, new GUILayoutOption[]
+            EditorGUILayout.BeginVertical(EditorStyles.helpBox, new GUILayoutOption[]
                 {
                 GUILayout.MinHeight(50f),
                 GUILayout.ExpandWidth(true)
                 });
             GUILayout.Space(3f);
             Rect controlRect = EditorGUILayout.GetControlRect(false, this._frameInfoRectsOption);
-            GUI.Label(controlRect, GUIContent.none, GuiSkinManager.Styles.entryOdd);
+            GUI.Label(controlRect, GUIContent.none);
             GUILayout.Space(3f);
             Rect controlRect2 = EditorGUILayout.GetControlRect(false, this._mainRectsOption);
             GUILayout.Space(5f);

@@ -242,7 +242,7 @@ namespace MikuLuaProfiler
         {
             get
             {
-                if (copySelfMonoGC != -1) return copySelfMonoGC;
+                if (isCopy) return copySelfMonoGC;
                 long result = costMonoGC;
                 for (int i = 0, imax = childs.Count; i < imax; i++)
                 {
@@ -253,7 +253,24 @@ namespace MikuLuaProfiler
                 return Math.Max(result, 0);
             }
         }
- 
+
+        public int copySelfCostTime = -1;
+        public int selfCostTime
+        {
+            get
+            {
+                if (isCopy) return copySelfCostTime;
+                int result = costTime;
+                for (int i = 0, imax = childs.Count; i < imax; i++)
+                {
+                    var item = childs[i];
+                    result -= item.costTime;
+                }
+
+                return Math.Max(result, 0);
+            }
+        }
+
         public bool CheckSampleValid()
         {
             bool result = false;
@@ -283,7 +300,7 @@ namespace MikuLuaProfiler
                     break;
                 }
 
-                if (costTime > 100000)
+                if (costTime > 10000)
                 {
                     result = true;
                     break;
