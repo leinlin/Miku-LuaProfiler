@@ -96,7 +96,7 @@ namespace MikuLuaProfiler
 #if UNITY_EDITOR_WIN
             path = path.Replace("Editor\\StartUp.cs", "Core\\Driver\\LuaDLL.cs");
 #else
-            path = path.Replace("Editor/StartUp.cs", "Core/LuaHookSetup.cs");
+            path = path.Replace("Editor/StartUp.cs", "Core/Driver/LuaDLL.cs");
 #endif
             AppendText(macro, selfPath);
             AppendText(macro, path);
