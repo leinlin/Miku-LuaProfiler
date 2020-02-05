@@ -48,7 +48,7 @@ namespace MikuLuaProfiler
         #region field
         public static float fps { private set; get; }
         public static int frameCount { private set; get; }
-        public static int pss { private set; get; }
+        public static long pss { private set; get; }
         public static float power { private set; get; }
 
         public static LuaDeepProfilerSetting setting { private set; get; }

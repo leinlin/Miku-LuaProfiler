@@ -113,7 +113,7 @@ namespace MikuLuaProfiler
         public int calls;
         public int frameCount;
         public float fps;
-        public int pss;
+        public long pss;
         public float power;
 
         public int costLuaGC;

@@ -46,12 +46,12 @@ namespace MikuLuaProfiler
 
     public static class NativeHelper
     {
-        public static int GetPass()
+        public static long GetPass()
         {
 #if UNITY_5_5_OR_NEWER
-            return (int)Profiler.GetTotalAllocatedMemoryLong();
+            return Profiler.GetTotalAllocatedMemoryLong();
 #else
-            return (int)Profiler.GetTotalAllocatedMemory();
+            return Profiler.GetTotalAllocatedMemory();
 #endif
         }
 
