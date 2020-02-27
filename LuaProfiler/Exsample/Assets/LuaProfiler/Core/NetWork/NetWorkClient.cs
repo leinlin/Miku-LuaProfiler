@@ -233,7 +233,7 @@ namespace MikuLuaProfiler
                                     {
                                         lock (m_client)
                                         {
-                                            LuaProfiler.Record();
+                                            LuaHook.MarkRecordServer();
                                         }
                                     }
                                     break;
@@ -241,7 +241,7 @@ namespace MikuLuaProfiler
                                     {
                                         lock (m_client)
                                         {
-                                            LuaProfiler.DiffServer();
+                                            LuaHook.DiffServer();
                                         }
                                     }
                                     break;
@@ -834,8 +834,12 @@ namespace MikuLuaProfiler
                 bw.Write(addDict.Count);
                 foreach (var item in addDict)
                 {
-                    WriteString(bw, item.Key);
-                    bw.Write((int)item.Value);
+                    bw.Write((int)item.Key);
+                    bw.Write(item.Value.Count);
+                    foreach (var v in item.Value)
+                    {
+                        WriteString(bw, v);
+                    }
                 }
                 var addDetail = ld.addDetail;
                 bw.Write(addDetail.Count);
@@ -854,8 +858,12 @@ namespace MikuLuaProfiler
                 bw.Write(rmDict.Count);
                 foreach (var item in rmDict)
                 {
-                    WriteString(bw, item.Key);
-                    bw.Write((int)item.Value);
+                    bw.Write((int)item.Key);
+                    bw.Write(item.Value.Count);
+                    foreach (var v in item.Value)
+                    {
+                        WriteString(bw, v);
+                    }
                 }
                 var rmDetail = ld.rmDetail;
                 bw.Write(rmDetail.Count);
@@ -875,8 +883,12 @@ namespace MikuLuaProfiler
                 bw.Write(nullDict.Count);
                 foreach (var item in nullDict)
                 {
-                    WriteString(bw, item.Key);
-                    bw.Write((int)item.Value);
+                    bw.Write((int)item.Key);
+                    bw.Write(item.Value.Count);
+                    foreach (var v in item.Value)
+                    {
+                        WriteString(bw, v);
+                    }
                 }
                 var nullDetail = ld.nullDetail;
                 bw.Write(nullDetail.Count);

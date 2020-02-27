@@ -94,6 +94,7 @@ namespace MikuLuaProfiler
         private bool isShowPssChart = false;
         private bool isShowPowerChart = false;
         private bool isTouchInChart = false;
+		private bool isShowRef = true;
         static private int currentFrameIndex = 0;
 
         private Texture2D disableChart;
@@ -246,24 +247,27 @@ namespace MikuLuaProfiler
 
             EditorGUILayout.EndVertical();
 
-            EditorGUILayout.BeginVertical();
-            if (GUILayout.Button("log to file"))
+            if (isShowRef)
             {
-                m_luaRefScrollView.LogToFile();
+                EditorGUILayout.BeginVertical();
+                if (GUILayout.Button("log to file"))
+                {
+                    m_luaRefScrollView.LogToFile();
+                }
+
+                //if (LuaDeepProfilerSetting.Instance.isRecord)
+                //{
+                //    if (GUILayout.Button("log history"))
+                //    {
+                //        int startGameFrame = m_TreeView.GetFrameCount(startFrame);
+                //        int endGameFrame = m_TreeView.GetFrameCount(endFrame);
+                //        m_luaRefScrollView.LogRefHistory(startGameFrame, endGameFrame);
+                //    }
+                //}
+
+                m_luaRefScrollView.DoRefScroll();
+                EditorGUILayout.EndVertical();
             }
-
-            //if (LuaDeepProfilerSetting.Instance.isRecord)
-            //{
-            //    if (GUILayout.Button("log history"))
-            //    {
-            //        int startGameFrame = m_TreeView.GetFrameCount(startFrame);
-            //        int endGameFrame = m_TreeView.GetFrameCount(endFrame);
-            //        m_luaRefScrollView.LogRefHistory(startGameFrame, endGameFrame);
-            //    }
-            //}
-
-            m_luaRefScrollView.DoRefScroll();
-            EditorGUILayout.EndVertical();
 
             EditorGUILayout.EndHorizontal();
         }
@@ -378,21 +382,6 @@ namespace MikuLuaProfiler
                     NetWorkServer.RealClose();
                     UnityEngine.Debug.Log("<color=#ff0000>disconnect</color>");
                 }
-
-                GUILayout.Space(25);
-                if (GUILayout.Button("MarkLuaRecord", EditorStyles.toolbarButton, GUILayout.Height(30)))
-                {
-                    NetWorkServer.SendCmd(1);
-                    m_luaDiffScrollView.MarkIsRecord();
-                }
-                if (GUILayout.Button("DiffRecord", EditorStyles.toolbarButton, GUILayout.Height(30)))
-                {
-                    NetWorkServer.SendCmd(2);
-                }
-                if (GUILayout.Button("ClearDiff", EditorStyles.toolbarButton, GUILayout.Height(30)))
-                {
-                    m_luaDiffScrollView.Clear();
-                }
             }
             else
             {
@@ -434,6 +423,48 @@ namespace MikuLuaProfiler
                 }
             }
 
+            GUILayout.Space(25);
+            if (GUILayout.Button("MarkStaticRecord", EditorStyles.toolbarButton, GUILayout.Height(30)))
+            {
+                if (!LuaDeepProfilerSetting.Instance.isLocal)
+                {
+                    NetWorkServer.SendCmd(3);
+                }
+                else
+                {
+                    m_luaDiffScrollView.DelDiffInfo(LuaHook.RecordStatic());
+                }
+                m_luaDiffScrollView.MarkIsStaticRecord();
+            }
+
+            if (GUILayout.Button("MarkLuaRecord", EditorStyles.toolbarButton, GUILayout.Height(30)))
+            {
+                if (!LuaDeepProfilerSetting.Instance.isLocal)
+                {
+                    NetWorkServer.SendCmd(1);
+                }
+                else
+                {
+                    m_luaDiffScrollView.DelDiffInfo(LuaHook.Record());
+                }
+                m_luaDiffScrollView.MarkIsRecord();
+            }
+            if (GUILayout.Button("DiffRecord", EditorStyles.toolbarButton, GUILayout.Height(30)))
+            {
+                if (!LuaDeepProfilerSetting.Instance.isLocal)
+                {
+                    NetWorkServer.SendCmd(2);
+                }
+                else
+                {
+                    m_luaDiffScrollView.DelDiffInfo(LuaHook.Diff());
+                }
+            }
+            if (GUILayout.Button("ClearDiff", EditorStyles.toolbarButton, GUILayout.Height(30)))
+            {
+                m_luaDiffScrollView.Clear();
+            }
+
             GUILayout.Space(20);
             if (GUILayout.Button("AddLuaDir", EditorStyles.toolbarButton, GUILayout.Height(30)))
             {
@@ -468,7 +499,7 @@ namespace MikuLuaProfiler
                 m_TreeView.searchString = m_SearchField.OnToolbarGUI(m_TreeView.searchString);
                 m_TreeView.toggleMerge = GUILayout.Toggle(m_TreeView.toggleMerge, "merge", EditorStyles.toolbarButton, GUILayout.Height(30));
             }
-
+			isShowRef = GUILayout.Toggle(isShowRef, "show refInfo", EditorStyles.toolbarButton, GUILayout.Height(30));
 
             EditorGUILayout.EndHorizontal();
         }

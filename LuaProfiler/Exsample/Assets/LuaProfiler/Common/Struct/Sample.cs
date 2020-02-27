@@ -112,11 +112,11 @@ namespace MikuLuaProfiler
     public class LuaDiffInfo : NetBase
     {
         #region field
-        public Dictionary<string, LuaTypes> addRef = new Dictionary<string, LuaTypes>();
+        public Dictionary<LuaTypes, HashSet<string>> addRef = new Dictionary<LuaTypes, HashSet<string>>();
         public Dictionary<string, List<string>> addDetail = new Dictionary<string, List<string>>();
-        public Dictionary<string, LuaTypes> rmRef = new Dictionary<string, LuaTypes>();
+        public Dictionary<LuaTypes, HashSet<string>> rmRef = new Dictionary<LuaTypes, HashSet<string>>();
         public Dictionary<string, List<string>> rmDetail = new Dictionary<string, List<string>>();
-        public Dictionary<string, LuaTypes> nullRef = new Dictionary<string, LuaTypes>();
+        public Dictionary<LuaTypes, HashSet<string>> nullRef = new Dictionary<LuaTypes, HashSet<string>>();
         public Dictionary<string, List<string>> nullDetail = new Dictionary<string, List<string>>();
         #endregion
 
@@ -141,7 +141,17 @@ namespace MikuLuaProfiler
         #region api
         public void PushAddRef(string addKey, int addType)
         {
-            addRef.Add(addKey, (LuaTypes)addType);
+            HashSet<string> list;
+            LuaTypes t = (LuaTypes)addType;
+            if (!addRef.TryGetValue(t, out list))
+            {
+                list = new HashSet<string>();
+                addRef.Add(t, list);
+            }
+            if (!list.Contains(addKey))
+            {
+                list.Add(addKey);
+            }
         }
 
         public void PushAddDetail(string addKey, string value)
@@ -157,7 +167,17 @@ namespace MikuLuaProfiler
 
         public void PushRmRef(string addKey, int addType)
         {
-            rmRef.Add(addKey, (LuaTypes)addType);
+            HashSet<string> list;
+            LuaTypes t = (LuaTypes)addType;
+            if (!rmRef.TryGetValue(t, out list))
+            {
+                list = new HashSet<string>();
+                rmRef.Add(t, list);
+            }
+            if (!list.Contains(addKey))
+            {
+                list.Add(addKey);
+            }
         }
 
         public void PushRmDetail(string key, string value)
@@ -173,7 +193,17 @@ namespace MikuLuaProfiler
 
         public void PushNullRef(string addKey, int addType)
         {
-            nullRef.Add(addKey, (LuaTypes)addType);
+            HashSet<string> list;
+            LuaTypes t = (LuaTypes)addType;
+            if (!nullRef.TryGetValue(t, out list))
+            {
+                list = new HashSet<string>();
+                nullRef.Add(t, list);
+            }
+            if (!list.Contains(addKey))
+            {
+                list.Add(addKey);
+            }
         }
 
         public void PushNullDetail(string addKey, string value)

@@ -152,7 +152,7 @@ namespace MikuLuaProfiler
             sendThread.Start();
         }
 
-        // 0获取ref表，1 记录下当前全局表状态，2 diff 当前状态与历史记录, 3 执行完lua的gc在diff
+        // 0获取ref表，1 记录下当前全局表状态，2 diff 当前状态与历史记录
         public static void SendCmd(int cmd)
         {
             lock (m_cmdQueue)
@@ -381,10 +381,15 @@ namespace MikuLuaProfiler
         public static LuaDiffInfo DeserializeDiff(BinaryReader br)
         {
             LuaDiffInfo diffInfo = LuaDiffInfo.Create();
-            int addCount = br.ReadInt32();
-            for (int i = 0; i < addCount; i++)
+            int addTypeCount = br.ReadInt32();
+            for (int i = 0; i < addTypeCount; i++)
             {
-                diffInfo.PushAddRef(ReadString(br), br.ReadInt32());
+                int type = br.ReadInt32();
+                int valueCount = br.ReadInt32();
+                for (int j = 0; j < valueCount; j++)
+                {
+                    diffInfo.PushAddRef(ReadString(br), type);
+                }
             }
             int addDetailCount = br.ReadInt32();
             for (int i = 0; i < addDetailCount; i++)
@@ -397,10 +402,15 @@ namespace MikuLuaProfiler
                 }
             }
 
-            int rmCount = br.ReadInt32();
-            for (int i = 0; i < rmCount; i++)
+            int rmTypeCount = br.ReadInt32();
+            for (int i = 0; i < rmTypeCount; i++)
             {
-                diffInfo.PushRmRef(ReadString(br), br.ReadInt32());
+                int type = br.ReadInt32();
+                int valueCount = br.ReadInt32();
+                for (int j = 0; j < valueCount; j++)
+                {
+                    diffInfo.PushRmRef(ReadString(br), type);
+                }
             }
             int rmDetailCount = br.ReadInt32();
             for (int i = 0; i < rmDetailCount; i++)

@@ -44,7 +44,9 @@ namespace MikuLuaProfiler
     using UnityEngine;
     public class LuaDiffScrollView
     {
+        private bool m_isStaticRecord = false;
         private bool m_isRecord = false;
+        private string m_staticDateTime = "";
         private string m_dateTime = "";
         LuaDiffInfo luaDiff;
         List<string> m_detailList;
@@ -54,6 +56,10 @@ namespace MikuLuaProfiler
         private Vector2 scrollPositionDetail;
         public void DoRefScroll()
         {
+            if (m_isStaticRecord)
+            {
+                EditorGUILayout.LabelField(m_staticDateTime);
+            }
             if (m_isRecord)
             {
                 EditorGUILayout.LabelField(m_dateTime);
@@ -65,33 +71,32 @@ namespace MikuLuaProfiler
             #region value
             GUILayout.BeginVertical();
 
-            GUILayout.BeginHorizontal();
-            EditorGUILayout.LabelField("add values count:" + luaDiff.addRef.Count, GUILayout.Width(150));
-            if (GUILayout.Button("ShowLog", GUILayout.Width(100)))
-            {
-                ShowLog("add", luaDiff.addRef, luaDiff.addDetail);
-            }
-            GUILayout.EndHorizontal();
-
             scrollPositionAdd = GUILayout.BeginScrollView(scrollPositionAdd, EditorStyles.helpBox, GUILayout.Height(100));
             int drawCount = 0;
             foreach (var item in luaDiff.addRef)
             {
-                DrawItemInfo(item.Key, item.Value.ToString(), luaDiff.addDetail);
-                drawCount++;
-                if (drawCount > 200)
+                string typeStr = item.Key.ToString();
+                bool needBreak = false;
+                foreach (var v in item.Value)
                 {
-                    GUILayout.Label("more please show log", GUILayout.Width(400));
-                    break;
+                    DrawItemInfo(v, typeStr, luaDiff.addDetail);
+                    drawCount++;
+                    if (drawCount > 200)
+                    {
+                        GUILayout.Label("more please show log", GUILayout.Width(400));
+                        needBreak = true;
+                        break;
+                    }
                 }
+                if (needBreak) break;
             }
             GUILayout.EndScrollView();
 
             GUILayout.BeginHorizontal();
-            EditorGUILayout.LabelField("rm values count:" + luaDiff.rmRef.Count, GUILayout.Width(150));
+            EditorGUILayout.LabelField("add values count:" + drawCount, GUILayout.Width(150));
             if (GUILayout.Button("ShowLog", GUILayout.Width(100)))
             {
-                ShowLog("rm", luaDiff.rmRef, luaDiff.rmDetail);
+                ShowLog("add", luaDiff.addRef, luaDiff.addDetail);
             }
             GUILayout.EndHorizontal();
 
@@ -99,21 +104,28 @@ namespace MikuLuaProfiler
             drawCount = 0;
             foreach (var item in luaDiff.rmRef)
             {
-                DrawItemInfo(item.Key, item.Value.ToString(), luaDiff.rmDetail);
-                drawCount++;
-                if (drawCount > 200)
+                string typeStr = item.Key.ToString();
+                bool needBreak = false;
+                foreach (var v in item.Value)
                 {
-                    GUILayout.Label("more please show log", GUILayout.Width(400));
-                    break;
+                    DrawItemInfo(v, typeStr, luaDiff.rmDetail);
+                    drawCount++;
+                    if (drawCount > 200)
+                    {
+                        GUILayout.Label("more please show log", GUILayout.Width(400));
+                        needBreak = true;
+                        break;
+                    }
                 }
+                if (needBreak) break;
             }
             GUILayout.EndScrollView();
 
             GUILayout.BeginHorizontal();
-            EditorGUILayout.LabelField("Destory null values count:" + luaDiff.nullRef.Count, GUILayout.Width(200));
+            EditorGUILayout.LabelField("remain values count:" + drawCount, GUILayout.Width(150));
             if (GUILayout.Button("ShowLog", GUILayout.Width(100)))
             {
-                ShowLog("null", luaDiff.nullRef, luaDiff.nullDetail);
+                ShowLog("remain", luaDiff.rmRef, luaDiff.rmDetail);
             }
             GUILayout.EndHorizontal();
 
@@ -121,16 +133,32 @@ namespace MikuLuaProfiler
             drawCount = 0;
             foreach (var item in luaDiff.nullRef)
             {
-                DrawItemInfo(item.Key, item.Value.ToString(), luaDiff.nullDetail);
-                drawCount++;
-                if (drawCount > 200)
+                string typeStr = item.Key.ToString();
+                bool needBreak = false;
+                foreach (var v in item.Value)
                 {
-                    GUILayout.Label("more please show log", GUILayout.Width(400));
-                    break;
+                    DrawItemInfo(v, typeStr, luaDiff.nullDetail);
+                    drawCount++;
+                    if (drawCount > 200)
+                    {
+                        GUILayout.Label("more please show log", GUILayout.Width(400));
+                        needBreak = true;
+                        break;
+                    }
                 }
+                if (needBreak) break;
             }
 
             GUILayout.EndScrollView();
+
+            GUILayout.BeginHorizontal();
+            EditorGUILayout.LabelField("Destory null values count:" + drawCount, GUILayout.Width(200));
+            if (GUILayout.Button("ShowLog", GUILayout.Width(100)))
+            {
+                ShowLog("null", luaDiff.nullRef, luaDiff.nullDetail);
+            }
+            GUILayout.EndHorizontal();
+
             GUILayout.EndVertical();
             #endregion
 
@@ -150,28 +178,31 @@ namespace MikuLuaProfiler
 
         }
 
-        public void ShowLog(string fileName, Dictionary<string, LuaTypes> refDict, Dictionary<string, List<string>> detailDict)
+        public void ShowLog(string fileName, Dictionary<LuaTypes, HashSet<string>> refDict, Dictionary<string, List<string>> detailDict)
         {
             StringBuilder sb = new StringBuilder();
             foreach (var item in refDict)
             {
+                string typeStr = item.Key.ToString();
                 List<string> list = null;
-                string key = item.Key;
-                string value = item.Value.ToString();
-                if (detailDict.TryGetValue(key, out list))
+                foreach (var v in item.Value)
                 {
-                    sb.AppendLine("type:" + value);
-                    for (int i = 0,imax=list.Count;i<imax;i++)
+                    string key = v;
+                    if (detailDict.TryGetValue(key, out list))
                     {
-                        if (i == imax - 1)
+                        sb.AppendLine("type:" + typeStr);
+                        for (int i = 0, imax = list.Count; i < imax; i++)
                         {
-                            sb.AppendLine(" └─ref" + (i + 1) + " url:" + list[i]);
-                        }
-                        else
-                        {
-                            sb.AppendLine(" ├─ref" + (i + 1) + " url:" + list[i]);
-                        }
+                            if (i == imax - 1)
+                            {
+                                sb.AppendLine(" └─ref" + (i + 1) + " url:" + list[i]);
+                            }
+                            else
+                            {
+                                sb.AppendLine(" ├─ref" + (i + 1) + " url:" + list[i]);
+                            }
 
+                        }
                     }
                 }
             }
@@ -211,9 +242,19 @@ namespace MikuLuaProfiler
         public void Clear()
         {
             m_isRecord = false;
+            m_isStaticRecord = false;
             luaDiff = null;
             m_dateTime = "";
+            m_staticDateTime = "";
             m_detailList = null;
+            LuaHook.ClearStaticRecord();
+            LuaHook.ClearRecord();
+        }
+
+        public void MarkIsStaticRecord()
+        {
+            m_staticDateTime = "static record:" + DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
+            m_isStaticRecord = true;
         }
 
         public void MarkIsRecord()
