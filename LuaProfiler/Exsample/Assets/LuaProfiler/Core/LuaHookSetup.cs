@@ -468,6 +468,7 @@ namespace MikuLuaProfiler
             LuaDiffInfo ld = LuaDiffInfo.Create();
             SetTable(nullObjectRef, ld.nullRef, ld.nullDetail);
 
+            LuaDLL.lua_unref(L, nullObjectRef);
             LuaDLL.isHook = true;
             return ld;
         }
@@ -921,15 +922,6 @@ function miku_do_record(val, prefix, key, record, history, null_list, staticReco
         return
     end
 
-    if typeStr == 'table' then
-        local isEmpty = true
-        for k,v in pairs(val) do
-            isEmpty = false
-            break
-        end
-        if isEmpty then return end
-    end
-
     local tmp_prefix
     local strKey = tostring(key)
     if not strKey then
@@ -999,11 +991,13 @@ function miku_do_record(val, prefix, key, record, history, null_list, staticReco
     if typeStr == 'table' then
         for k,v in pairs(val) do
             local typeKStr = type(k)
+            local typeVStr = type(v)
+            local key = k
             if typeKStr == 'table' or typeKStr == 'userdata' or typeKStr == 'function' then
-                miku_do_record(k, tmp_prefix, v, record, history, null_list, staticRecord)
-            else
-                miku_do_record(v, tmp_prefix, k, record, history, null_list, staticRecord)
+                key = 'table:'
+                miku_do_record(k, tmp_prefix, 'table:', record, history, null_list, staticRecord)
             end
+            miku_do_record(v, tmp_prefix, key, record, history, null_list, staticRecord)
         end
 
     elseif typeStr == 'function' then
@@ -1024,10 +1018,6 @@ function miku_do_record(val, prefix, key, record, history, null_list, staticReco
     end
 
     local metaTable = getmetatable(val)
-    if metaTable then
-        miku_do_record(metaTable, tmp_prefix, 'metaTable', record, history, null_list, staticRecord)
-    end
-    metaTable = getmetatable(key)
     if metaTable then
         miku_do_record(metaTable, tmp_prefix, 'metaTable', record, history, null_list, staticRecord)
     end
