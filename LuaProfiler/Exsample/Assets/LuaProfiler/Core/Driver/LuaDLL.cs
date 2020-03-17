@@ -170,6 +170,10 @@ namespace MikuLuaProfiler
         public static lua_gettop_fun lua_gettop { get; private set; }
 
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        public delegate int lua_objlen_fun(IntPtr luaState, int stackPos);
+        public static lua_objlen_fun lua_objlen { get; private set; }
+
+        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
         public delegate void lua_settop_fun(IntPtr luaState, int top);
         public static lua_settop_fun lua_settop { get; private set; }
 
@@ -610,11 +614,25 @@ end
                         lua_setglobal = (lua_setglobal_fun)Marshal.GetDelegateForFunctionPointer(handle, typeof(lua_setglobal_fun));
                     }
                 }
+                {
+                    IntPtr handle = GetProcAddress(moduleName, "lua_rawlen");
+                    if (handle != IntPtr.Zero)
+                    {
+                        lua_objlen = (lua_objlen_fun)Marshal.GetDelegateForFunctionPointer(handle, typeof(lua_objlen_fun));
+                    }
+                }
             }
             else
             {
                 lua_getglobal = new lua_getglobal_fun(lua_getglobal51);
                 lua_setglobal = new lua_setglobal_fun(lua_setglobal51);
+                {
+                    IntPtr handle = GetProcAddress(moduleName, "lua_objlen");
+                    if (handle != IntPtr.Zero)
+                    {
+                        lua_objlen = (lua_objlen_fun)Marshal.GetDelegateForFunctionPointer(handle, typeof(lua_objlen_fun));
+                    }
+                }
             }
 
             {

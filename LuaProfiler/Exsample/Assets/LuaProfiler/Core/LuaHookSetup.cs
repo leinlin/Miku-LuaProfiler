@@ -309,8 +309,10 @@ namespace MikuLuaProfiler
             int oldTop = LuaDLL.lua_gettop(L);
             //把字符串ref了之后就不GC了
             LuaDLL.lua_getglobal(L, "MikuLuaProfilerStrTb");
+            int len = LuaDLL.lua_objlen(L, -1);
+            LuaDLL.lua_pushnumber(L, len + 1);
             LuaDLL.lua_pushvalue(L, index);
-            LuaDLL.lua_insert(L, -2);
+            LuaDLL.lua_rawset(L, -3);
 
             LuaDLL.lua_settop(L, oldTop);
             stringDict[(long)strPoint] = s;
