@@ -194,6 +194,8 @@ namespace MikuLuaProfiler
         public static lua_type_fun lua_type { get; private set; }
 
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        public delegate double lua_tonumberx_fun(IntPtr luaState, int idx, IntPtr isnum);
+        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
         public delegate double lua_tonumber_fun(IntPtr luaState, int idx);
         public static lua_tonumber_fun lua_tonumber { get; private set; }
 
@@ -237,6 +239,8 @@ namespace MikuLuaProfiler
         public delegate void lua_rawset_fun(IntPtr luaState, int idx);
         public static lua_rawset_fun lua_rawset { get; private set; }
 
+        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        public delegate int lua_pcallk_fun(IntPtr luaState, int nArgs, int nResults, int errfunc, int ctx, IntPtr k);
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
         public delegate int lua_pcall_fun(IntPtr luaState, int nArgs, int nResults, int errfunc);
         public static lua_pcall_fun lua_pcall { get; private set; }
@@ -456,6 +460,7 @@ end
         {
             if (m_hooked) return;
             string moduleName = CheckHasLuaDLL();
+            if (m_hooked) return;
             if (string.IsNullOrEmpty(moduleName))
             {
                 return;
@@ -598,7 +603,7 @@ end
                 }
             }
 
-            if (LUA_VERSION >= 530)
+            if (LUA_VERSION > 510)
             {
                 {
                     IntPtr handle = GetProcAddress(moduleName, "lua_getglobal");
@@ -684,10 +689,25 @@ end
             }
 
             {
-                IntPtr handle = GetProcAddress(moduleName, "lua_tonumber");
-                if (handle != IntPtr.Zero)
+                if (LUA_VERSION == 520)
                 {
-                    lua_tonumber = (lua_tonumber_fun)Marshal.GetDelegateForFunctionPointer(handle, typeof(lua_tonumber_fun));
+                    IntPtr handle = GetProcAddress(moduleName, "lua_tonumberx");
+                    if (handle != IntPtr.Zero)
+                    {
+                        var tonumx = (lua_tonumberx_fun)Marshal.GetDelegateForFunctionPointer(handle, typeof(lua_tonumberx_fun));
+                        lua_tonumber = (IntPtr luaState, int idx) =>
+                        {
+                            return tonumx(luaState, idx, IntPtr.Zero);
+                        };
+                    }
+                }
+                else
+                {
+                    IntPtr handle = GetProcAddress(moduleName, "lua_tonumber");
+                    if (handle != IntPtr.Zero)
+                    {
+                        lua_tonumber = (lua_tonumber_fun)Marshal.GetDelegateForFunctionPointer(handle, typeof(lua_tonumber_fun));
+                    }
                 }
             }
 
@@ -772,10 +792,25 @@ end
             }
 
             {
-                IntPtr handle = GetProcAddress(moduleName, "lua_pcall");
-                if (handle != IntPtr.Zero)
+                if (LUA_VERSION == 520)
                 {
-                    lua_pcall = (lua_pcall_fun)Marshal.GetDelegateForFunctionPointer(handle, typeof(lua_pcall_fun));
+                    IntPtr handle = GetProcAddress(moduleName, "lua_pcallk");
+                    if (handle != IntPtr.Zero)
+                    {
+                        var pcallkFun = (lua_pcallk_fun)Marshal.GetDelegateForFunctionPointer(handle, typeof(lua_pcallk_fun));
+                        lua_pcall = (IntPtr luaState, int nArgs, int nResults, int errfunc) =>
+                        {
+                            return pcallkFun(luaState, nArgs, nResults, errfunc, 0, IntPtr.Zero);
+                        };
+                    }
+                }
+                else
+                {
+                    IntPtr handle = GetProcAddress(moduleName, "lua_pcall");
+                    if (handle != IntPtr.Zero)
+                    {
+                        lua_pcall = (lua_pcall_fun)Marshal.GetDelegateForFunctionPointer(handle, typeof(lua_pcall_fun));
+                    }
                 }
             }
 
@@ -818,8 +853,8 @@ end
                     lua_pushcclosure = (lua_pushcclosure_fun)Marshal.GetDelegateForFunctionPointer(handle, typeof(lua_pushcclosure_fun));
                 }
             }
-            m_hooked = true;
             isHook = true;
+            m_hooked = true;
         }
 
         public static void HookLoadLibrary()

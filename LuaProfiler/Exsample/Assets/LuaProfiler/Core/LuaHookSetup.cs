@@ -88,6 +88,7 @@ namespace MikuLuaProfiler
             if (setting.isDeepLuaProfiler)
             {
                 LuaDLL.Uninstall();
+                LuaDLL.HookLoadLibrary();
                 LuaDLL.BindEasyHook();
                 //LuaDLL.Install();
             }
@@ -470,7 +471,6 @@ namespace MikuLuaProfiler
             LuaDiffInfo ld = LuaDiffInfo.Create();
             SetTable(nullObjectRef, ld.nullRef, ld.nullDetail);
 
-            LuaDLL.lua_unref(L, nullObjectRef);
             LuaDLL.isHook = true;
             return ld;
         }
@@ -914,9 +914,6 @@ function miku_do_record(val, prefix, key, record, history, null_list, staticReco
     if val == miku_get_fun_info then
         return
     end
-    if val == MikuLuaProfilerStrTb then
-        return
-	end
 
     if getmetatable(record) ~= weak_meta_key_table then
         setmetatable(record, weak_meta_key_table)
@@ -925,6 +922,15 @@ function miku_do_record(val, prefix, key, record, history, null_list, staticReco
     local typeStr = type(val)
     if typeStr ~= 'table' and typeStr ~= 'userdata' and typeStr ~= 'function' then
         return
+    end
+
+    if typeStr == 'table' then
+        local isEmpty = true
+        for k,v in pairs(val) do
+            isEmpty = false
+            break
+        end
+        if isEmpty then return end
     end
 
     local tmp_prefix
@@ -996,13 +1002,11 @@ function miku_do_record(val, prefix, key, record, history, null_list, staticReco
     if typeStr == 'table' then
         for k,v in pairs(val) do
             local typeKStr = type(k)
-            local typeVStr = type(v)
-            local key = k
             if typeKStr == 'table' or typeKStr == 'userdata' or typeKStr == 'function' then
-                key = 'table:'
-                miku_do_record(k, tmp_prefix, 'table:', record, history, null_list, staticRecord)
+                miku_do_record(k, tmp_prefix, v, record, history, null_list, staticRecord)
+            else
+                miku_do_record(v, tmp_prefix, k, record, history, null_list, staticRecord)
             end
-            miku_do_record(v, tmp_prefix, key, record, history, null_list, staticRecord)
         end
 
     elseif typeStr == 'function' then
@@ -1023,6 +1027,10 @@ function miku_do_record(val, prefix, key, record, history, null_list, staticReco
     end
 
     local metaTable = getmetatable(val)
+    if metaTable then
+        miku_do_record(metaTable, tmp_prefix, 'metaTable', record, history, null_list, staticRecord)
+    end
+    metaTable = getmetatable(key)
     if metaTable then
         miku_do_record(metaTable, tmp_prefix, 'metaTable', record, history, null_list, staticRecord)
     end
