@@ -83,4 +83,8 @@ if true then
 	return {};
 end
 
+do
+    print("fkk")
+end
+
 return Mathf;
