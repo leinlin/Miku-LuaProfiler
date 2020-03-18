@@ -914,6 +914,9 @@ function miku_do_record(val, prefix, key, record, history, null_list, staticReco
     if val == miku_get_fun_info then
         return
     end
+    if val == MikuLuaProfilerStrTb then
+        return
+	end
 
     if getmetatable(record) ~= weak_meta_key_table then
         setmetatable(record, weak_meta_key_table)
