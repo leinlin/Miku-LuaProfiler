@@ -83,6 +83,17 @@ if true then
 	return {};
 end
 
+repeat
+    return
+until true
+
+if true then
+    goto  test_go
+end
+
+::test_go::
+
+
 do
     print("fkk")
 end
