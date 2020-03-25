@@ -87,12 +87,12 @@ repeat
     return
 until true
 
-if true then
-    goto  test_go
-end
-
+function test()
+	if true then
+		goto  test_go
+	end
 ::test_go::
-
+end
 
 do
     print("fkk")
