@@ -91,7 +91,9 @@ function test()
 	if true then
 		goto  test_go
 	end
-::test_go::
+
+	local ss = 123
+	::test_go::
 end
 
 do
