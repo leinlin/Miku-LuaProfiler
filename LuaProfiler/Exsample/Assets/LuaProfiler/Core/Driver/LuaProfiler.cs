@@ -147,7 +147,6 @@ namespace MikuLuaProfiler
                 Sample sample = Sample.Create(getcurrentTime, (int)memoryCount, name);
                 sample.needShow = needShow;
                 beginSampleMemoryStack.Push(sample);
-                Profiler.BeginSample(name);
             }
             catch
             {
@@ -227,28 +226,6 @@ namespace MikuLuaProfiler
             sample.currentMonoMemory = (int)nowMonoCount;
             sample.costLuaGC = (int)luaGC;
             sample.costMonoGC = (int)monoGC;
-
-            if (sample.childs.Count > 0)
-            {
-                long mono_gc = 0;
-                long lua_gc = 0;
-                for (int i = 0, imax = sample.childs.Count; i < imax; i++)
-                {
-                    Sample c = sample.childs[i];
-                    lua_gc += c.costLuaGC;
-                    mono_gc += c.costMonoGC;
-                }
-                sample.costLuaGC = (int)Math.Max(lua_gc, luaGC);
-                sample.costMonoGC = (int)Math.Max(mono_gc, monoGC);
-            }
-            long selfLuaGC = sample.selfLuaGC;
-            if (selfLuaGC > 0)
-            {
-#pragma warning disable 0219
-                byte[] luagc = new byte[Math.Max(0, selfLuaGC - 32)];
-#pragma warning restore 0219
-            }
-            Profiler.EndSample();
 
             if (!sample.CheckSampleValid())
             {

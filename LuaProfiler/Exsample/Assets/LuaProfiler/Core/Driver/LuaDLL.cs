@@ -111,6 +111,7 @@ namespace MikuLuaProfiler
         #region hooks
         private static LocalHook luaL_newstate_hook;
         private static LocalHook lua_close_hook;
+        private static LocalHook lua_gc_hook;
         private static LocalHook luaL_ref_hook;
         private static LocalHook luaL_unref_hook;
         private static LocalHook luaL_loadbuffer_hook;
@@ -525,6 +526,16 @@ end
                 InstallHook(lua_close_hook);
             }
 
+            if (lua_gc_hook == null)
+            {
+                IntPtr handle = GetProcAddress(moduleName, "lua_gc");
+                lua_gc = (lua_gc_fun)Marshal.GetDelegateForFunctionPointer(handle, typeof(lua_gc_fun));
+
+                lua_gc_fun luaFun = new lua_gc_fun(lua_gc_replace);
+                lua_gc_hook = LocalHook.Create(handle, luaFun, null);
+                InstallHook(lua_gc_hook);
+            }
+
             if (luaL_ref_hook == null)
             {
                 IntPtr handle = GetProcAddress(moduleName, "luaL_ref");
@@ -814,13 +825,6 @@ end
                 }
             }
 
-            {
-                IntPtr handle = GetProcAddress(moduleName, "lua_gc");
-                if (handle != IntPtr.Zero)
-                {
-                    lua_gc = (lua_gc_fun)Marshal.GetDelegateForFunctionPointer(handle, typeof(lua_gc_fun));
-                }
-            }
 
             {
                 IntPtr handle = GetProcAddress(moduleName, "lua_next");
@@ -929,6 +933,19 @@ end
                     MikuLuaProfilerLuaProfilerWrap.__Register(intPtr);
                 }
                 return intPtr;
+            }
+        }
+
+        public static int lua_gc_replace(IntPtr luaState, LuaGCOptions what, int data)
+        {
+            lock (m_Lock)
+            {
+                if (what == LuaGCOptions.LUA_GCCOUNT ||
+                    what == LuaGCOptions.LUA_GCCOUNTB)
+                {
+                    return lua_gc(luaState, what, data);
+                }
+                return 0;
             }
         }
 
