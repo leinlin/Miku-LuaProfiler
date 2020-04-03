@@ -890,7 +890,7 @@ local BeginMikuSample = MikuLuaProfiler.LuaProfiler.BeginSample
 local EndMikuSample = MikuLuaProfiler.LuaProfiler.EndSample
 
 local coroutineTb = {}
-
+setmetatable(coroutineTb, weak_meta_key_table)
 local oldYiled = coroutine.yield
 local yield = function(...)
     EndMikuSample()
@@ -900,9 +900,7 @@ end
 local oldResume = coroutine.resume
 local resume = function(co, ...)
     if coroutineTb[co] then
-        local info = debug.getinfo(co, 1, 'Sl')
-        local s = string.format('[lua]:,%s&line:%d', info.source, info.linedefined)
-        BeginMikuSample(s)
+        BeginMikuSample('[lua]:coroutine.resume')
     else
         coroutineTb[co] = true
     end
