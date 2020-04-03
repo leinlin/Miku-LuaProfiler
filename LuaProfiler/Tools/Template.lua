@@ -87,6 +87,18 @@ repeat
     return
 until true
 
+local co=coroutine.create(
+        function (a,b)
+            print (a+b)
+            coroutine.yield()--暂停
+            print (a-b)
+        end
+)
+
+coroutine.resume(co,20,30)--启动协同函数
+print("喵喵爱学习")
+coroutine.resume(co)--重新启动协同函数
+
 function test()
 	if true then
 		goto  test_go
