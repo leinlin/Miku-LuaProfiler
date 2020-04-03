@@ -266,8 +266,9 @@ namespace MikuLuaProfiler
             this.father = father;
         }
 
-        public void AddSample(Sample sample)
+        public bool AddSample(Sample sample)
         {
+            bool result = false;
             if (_frameCount == sample.frameCount)
             {
                 frameCalls += sample.calls;
@@ -303,12 +304,15 @@ namespace MikuLuaProfiler
                 }
                 else
                 {
+                    result = true;
                     var treeItem = Create(sampleChild, depth + 1, this);
                     childs.Add(treeItem);
                 }
             }
             _frameCount = sample.frameCount;
             s_frameCount = sample.frameCount;
+
+            return result;
         }
 
         public Sample CopySelfToSample()
@@ -985,7 +989,7 @@ namespace MikuLuaProfiler
 
             if (m_nodeDict.TryGetValue(f, out item))
             {
-                item.AddSample(sample);
+                needRebuild = needRebuild || item.AddSample(sample);
             }
             else
             {

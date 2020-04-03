@@ -140,8 +140,8 @@ namespace MikuLuaProfiler
 
                 if (m_currentFrame != frameCount)
                 {
-                    PopAllSampleWhenLateUpdate(luaState);
                     m_currentFrame = frameCount;
+                    PopAllSampleWhenLateUpdate(luaState);
                 }
                 long memoryCount = LuaLib.GetLuaMemory(luaState);
                 Sample sample = Sample.Create(getcurrentTime, (int)memoryCount, name);

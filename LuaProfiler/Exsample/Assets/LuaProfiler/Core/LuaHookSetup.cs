@@ -886,6 +886,38 @@ local weak_meta_value_table = {__mode = 'v'}
 local infoTb = {}
 local cache_key = 'miku_record_prefix_cache'
 
+local BeginMikuSample = MikuLuaProfiler.LuaProfiler.BeginSample
+local EndMikuSample = MikuLuaProfiler.LuaProfiler.EndSample
+
+local coroutineTb = {}
+
+local oldYiled = coroutine.yield
+local yield = function(...)
+    EndMikuSample()
+    return oldYiled(...)
+end
+
+local oldResume = coroutine.resume
+local resume = function(co, ...)
+    if coroutineTb[co] then
+        local info = debug.getinfo(co, 1, 'Sl')
+        local s = string.format('[lua]:,%s&line:%d', info.source, info.linedefined)
+        BeginMikuSample(s)
+    else
+        coroutineTb[co] = true
+    end
+    oldResume(co, ...)
+end
+
+local temp_coroutine = {}
+
+for k,v in pairs(coroutine) do
+    temp_coroutine[k] = v
+end
+temp_coroutine['resume'] = resume
+temp_coroutine['yield'] = yield
+coroutine = temp_coroutine
+
 function miku_do_record(val, prefix, key, record, history, null_list, staticRecord)
     if val == staticRecord then
         return
@@ -922,15 +954,6 @@ function miku_do_record(val, prefix, key, record, history, null_list, staticReco
     local typeStr = type(val)
     if typeStr ~= 'table' and typeStr ~= 'userdata' and typeStr ~= 'function' then
         return
-    end
-
-    if typeStr == 'table' then
-        local isEmpty = true
-        for k,v in pairs(val) do
-            isEmpty = false
-            break
-        end
-        if isEmpty then return end
     end
 
     local tmp_prefix
@@ -1002,11 +1025,13 @@ function miku_do_record(val, prefix, key, record, history, null_list, staticReco
     if typeStr == 'table' then
         for k,v in pairs(val) do
             local typeKStr = type(k)
+            local typeVStr = type(v)
+            local key = k
             if typeKStr == 'table' or typeKStr == 'userdata' or typeKStr == 'function' then
-                miku_do_record(k, tmp_prefix, v, record, history, null_list, staticRecord)
-            else
-                miku_do_record(v, tmp_prefix, k, record, history, null_list, staticRecord)
+                key = 'table:'
+                miku_do_record(k, tmp_prefix, 'table:', record, history, null_list, staticRecord)
             end
+            miku_do_record(v, tmp_prefix, key, record, history, null_list, staticRecord)
         end
 
     elseif typeStr == 'function' then
@@ -1027,10 +1052,6 @@ function miku_do_record(val, prefix, key, record, history, null_list, staticReco
     end
 
     local metaTable = getmetatable(val)
-    if metaTable then
-        miku_do_record(metaTable, tmp_prefix, 'metaTable', record, history, null_list, staticRecord)
-    end
-    metaTable = getmetatable(key)
     if metaTable then
         miku_do_record(metaTable, tmp_prefix, 'metaTable', record, history, null_list, staticRecord)
     end
