@@ -86,6 +86,7 @@ namespace MikuLuaProfiler
         public static bool IS_LUA_JIT = false;
 
         public static bool isHook = false;
+        public static bool isOpenLibs = false;
         #region index
         public static void lua_getglobal51(IntPtr luaState, string name)
         {
@@ -112,6 +113,7 @@ namespace MikuLuaProfiler
         private static LocalHook luaL_newstate_hook;
         private static LocalHook lua_close_hook;
         private static LocalHook lua_gc_hook;
+        private static LocalHook luaL_openlibs_hook;
         private static LocalHook luaL_ref_hook;
         private static LocalHook luaL_unref_hook;
         private static LocalHook luaL_loadbuffer_hook;
@@ -579,6 +581,16 @@ end
                 InstallHook(luaL_loadbuffer_hook);
             }
 
+            if (luaL_openlibs_hook == null)
+            {
+                IntPtr handle = GetProcAddress(moduleName, "luaL_openlibs");
+                luaL_openlibs = (luaL_openlibs_fun)Marshal.GetDelegateForFunctionPointer(handle, typeof(luaL_openlibs_fun));
+
+                luaL_openlibs_fun luaFun = new luaL_openlibs_fun(luaL_openlibs_replace);
+                luaL_openlibs_hook = LocalHook.Create(handle, luaFun, null);
+                InstallHook(luaL_openlibs_hook);
+            }
+
             if (toluaL_ref_hook == null)
             {
                 IntPtr handle = GetProcAddress(moduleName, "toluaL_ref");
@@ -835,14 +847,6 @@ end
             }
 
             {
-                IntPtr handle = GetProcAddress(moduleName, "luaL_openlibs");
-                if (handle != IntPtr.Zero)
-                {
-                    luaL_openlibs = (luaL_openlibs_fun)Marshal.GetDelegateForFunctionPointer(handle, typeof(luaL_openlibs_fun));
-                }
-            }
-
-            {
                 IntPtr handle = GetProcAddress(moduleName, "lua_tolstring");
                 if (handle != IntPtr.Zero)
                 {
@@ -967,6 +971,15 @@ end
         public static int luaL_loadfile_replace(IntPtr luaState, string filename)
         {
             return luaL_loadfile(luaState, filename);
+        }
+
+        public static void luaL_openlibs_replace(IntPtr luaState)
+        {
+            if (!isOpenLibs)
+            {
+                luaL_openlibs(luaState);
+                isOpenLibs = true;
+            }
         }
 
         public static int luaL_loadbuffer_replace(IntPtr luaState, IntPtr buff, IntPtr size, string name, IntPtr mode)

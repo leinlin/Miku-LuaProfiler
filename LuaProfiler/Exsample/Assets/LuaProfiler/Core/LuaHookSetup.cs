@@ -892,13 +892,13 @@ local EndMikuSample = MikuLuaProfiler.LuaProfiler.EndSample
 local coroutineTb = {}
 setmetatable(coroutineTb, weak_meta_key_table)
 local oldYiled = coroutine.yield
-local yield = function(...)
+coroutine.yield = function(...)
     EndMikuSample()
     return oldYiled(...)
 end
 
 local oldResume = coroutine.resume
-local resume = function(co, ...)
+coroutine.resume = function(co, ...)
     if coroutineTb[co] then
         BeginMikuSample('[lua]:coroutine.resume')
     else
@@ -906,15 +906,6 @@ local resume = function(co, ...)
     end
     oldResume(co, ...)
 end
-
-local temp_coroutine = {}
-
-for k,v in pairs(coroutine) do
-    temp_coroutine[k] = v
-end
-temp_coroutine['resume'] = resume
-temp_coroutine['yield'] = yield
-coroutine = temp_coroutine
 
 function miku_do_record(val, prefix, key, record, history, null_list, staticRecord)
     if val == staticRecord then

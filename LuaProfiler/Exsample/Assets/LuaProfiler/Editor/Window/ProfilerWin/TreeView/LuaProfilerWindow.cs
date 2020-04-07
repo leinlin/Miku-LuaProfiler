@@ -103,7 +103,10 @@ namespace MikuLuaProfiler
         private Texture2D fpsChart;
         private Texture2D pssChart;
         private Texture2D powrChart;
-
+        private Texture2D boxTex;
+        private GUIStyle currentStyle;
+        private GUIStyle m_gs;
+        private static Color boxColor = new Color32(70, 70, 70, 255);
         private static Color disableColor = new Color(0.5f, 0.5f, 0.5f, 1.0f);
         private static Color luaColor = new Color(0.2f, 0.5f, 0.7f, 1.0f);
         private static Color monoColor = new Color32(0, 180, 0, 255);
@@ -188,6 +191,10 @@ namespace MikuLuaProfiler
             Destory(pssChart);
             powrChart = null;
             Destory(powrChart);
+            Destory(boxTex);
+            boxTex = null;
+            m_gs = null;
+            currentStyle = null;
             m_SearchField.downOrUpArrowKeyPressed += m_TreeView.SetFocusAndEnsureSelectedItem;
             OpenLocalMode();
 
@@ -211,6 +218,8 @@ namespace MikuLuaProfiler
             pssChart = null;
             Destory(powrChart);
             powrChart = null;
+            Destory(boxTex);
+            boxTex = null;
             EditorApplication.update -= m_TreeView.DequeueSample;
             EditorApplication.update -= m_luaRefScrollView.DequeueLuaInfo;
         }
@@ -277,7 +286,6 @@ namespace MikuLuaProfiler
             if (disableChart == null)
             {
                 disableChart = GenTextureColor(15, 15, disableColor);
-
             }
             if (luaChart == null)
             {
@@ -689,26 +697,32 @@ namespace MikuLuaProfiler
 
             EditorGUILayout.EndVertical();
         }
+
         void DoChart()
         {
             EditorGUILayout.BeginVertical(new GUILayoutOption[0]);
-            EditorGUILayout.BeginHorizontal(new GUILayoutOption[0]);
             //curveScale = GUILayout.VerticalSlider(curveScale, 1f, 0.01f, this._surveScaleOption);
             EditorGUILayout.BeginVertical(new GUILayoutOption[0]);
-            EditorGUILayout.BeginVertical(EditorStyles.helpBox, new GUILayoutOption[]
+            if (currentStyle == null || currentStyle.normal.background == null)
+            {
+                currentStyle = new GUIStyle(EditorStyles.helpBox);
+                if (boxTex != null)
+                {
+                    Destory(boxTex);
+                    boxTex = null;
+                }
+                boxTex = GenTextureColor(15, 15, boxColor);
+                currentStyle.normal.background = boxTex;
+            }
+            EditorGUILayout.BeginVertical(currentStyle, new GUILayoutOption[]
                 {
                 GUILayout.MinHeight(50f),
                 GUILayout.ExpandWidth(true)
                 });
-            GUILayout.Space(3f);
-            Rect controlRect = EditorGUILayout.GetControlRect(false, this._frameInfoRectsOption);
-            GUI.Label(controlRect, GUIContent.none);
-            GUILayout.Space(3f);
             Rect controlRect2 = EditorGUILayout.GetControlRect(false, this._mainRectsOption);
             GUILayout.Space(5f);
             EditorGUILayout.EndVertical();
             EditorGUILayout.EndVertical();
-            EditorGUILayout.EndHorizontal();
 
             GUILayout.Space(7f);
             SplitterGUILayout.BeginHorizontalSplit(this._minmaxSlider, new GUILayoutOption[0]);
@@ -851,14 +865,16 @@ namespace MikuLuaProfiler
             int intervalCount = 15;
             float intervalDistance = ((xRect.yMax - xRect.yMin) / 6);
             Rect rect = new Rect(xRect.x, xRect.yMax, xRect.width, xRect.yMin);
-            Color c = GUI.color;
-            GUI.color = new Color32(255, 193, 37, 255);
-            for (int f = 0; f <= 90; f += intervalCount)
+            if (m_gs == null)
+            {
+                m_gs = new GUIStyle(GUI.skin.label);
+                m_gs.normal.textColor = fpsColor;
+            }
+            for (int f = 0; f <= 75; f += intervalCount)
             {
                 rect.y -= intervalDistance;
-                GUI.Label(rect, f.ToString());
+                GUI.Label(rect, f.ToString(), m_gs);
             }
-            GUI.color = c;
         }
 
         private void DrawLuaCurve(HistoryCurve curve, Rect rect)

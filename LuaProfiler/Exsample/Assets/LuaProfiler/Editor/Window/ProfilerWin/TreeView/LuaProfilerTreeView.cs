@@ -989,7 +989,8 @@ namespace MikuLuaProfiler
 
             if (m_nodeDict.TryGetValue(f, out item))
             {
-                needRebuild = needRebuild || item.AddSample(sample);
+                bool isAddSample = item.AddSample(sample);
+                needRebuild = needRebuild || isAddSample;
             }
             else
             {
