@@ -471,6 +471,7 @@ namespace MikuLuaProfiler
             LuaDiffInfo ld = LuaDiffInfo.Create();
             SetTable(nullObjectRef, ld.nullRef, ld.nullDetail);
 
+            LuaDLL.lua_unref(L, nullObjectRef);
             LuaDLL.isHook = true;
             return ld;
         }
@@ -932,7 +933,16 @@ function miku_do_record(val, prefix, key, record, history, null_list, staticReco
     if val == record then
         return
     end
+    if val == null_list thenn
+        return
+    end
     if val == miku_get_fun_info then
+        return
+    end
+    if val == MikuLuaProfilerStrTb then
+        return
+    end
+    if val == coroutine then
         return
     end
 
