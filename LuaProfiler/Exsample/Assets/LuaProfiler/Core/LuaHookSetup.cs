@@ -904,7 +904,7 @@ coroutine.resume = function(co, ...)
     else
         coroutineTb[co] = true
     end
-    oldResume(co, ...)
+    return oldResume(co, ...)
 end
 
 function miku_do_record(val, prefix, key, record, history, null_list, staticRecord)
