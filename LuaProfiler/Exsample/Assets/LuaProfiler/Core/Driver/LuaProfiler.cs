@@ -38,6 +38,7 @@ using System;
 using System.Collections.Generic;
 using System.Reflection;
 using RefDict = System.Collections.Generic.Dictionary<string, System.Collections.Generic.HashSet<string>>;
+using UnityEngine;
 #if UNITY_5_5_OR_NEWER
 using UnityEngine.Profiling;
 #endif
@@ -136,7 +137,7 @@ namespace MikuLuaProfiler
             }
             try
             {
-                int frameCount = SampleData.frameCount;
+                int frameCount = Time.frameCount;
 
                 if (m_currentFrame != frameCount)
                 {

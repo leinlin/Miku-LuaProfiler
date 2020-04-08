@@ -434,7 +434,7 @@ namespace MikuLuaProfiler
             s.currentTime = time;
             s.currentLuaMemory = memory;
             s.currentMonoMemory = (int)GC.GetTotalMemory(false);
-            s.frameCount = SampleData.frameCount;
+            s.frameCount = Time.frameCount;
             s.fps = SampleData.fps;
             s.pss = SampleData.pss;
             s.power = SampleData.power;
