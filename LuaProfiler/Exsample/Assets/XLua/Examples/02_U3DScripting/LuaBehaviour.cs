@@ -33,6 +33,7 @@ namespace XLuaTest
 
         private Action luaStart;
         private Action luaUpdate;
+        private Action luaLateUpdate;
         private Action luaOnDestroy;
 
         private LuaTable scriptEnv;
@@ -59,6 +60,7 @@ namespace XLuaTest
             Action luaAwake = scriptEnv.Get<Action>("awake");
             scriptEnv.Get("start", out luaStart);
             scriptEnv.Get("update", out luaUpdate);
+            scriptEnv.Get("lateupdate", out luaLateUpdate);
             scriptEnv.Get("ondestroy", out luaOnDestroy);
 
             if (luaAwake != null)
@@ -87,6 +89,14 @@ namespace XLuaTest
             {
                 luaEnv.Tick();
                 LuaBehaviour.lastGCTime = Time.time;
+            }
+        }
+
+        private void LateUpdate()
+        {
+            if (luaLateUpdate != null)
+            {
+                luaLateUpdate();
             }
         }
 

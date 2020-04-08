@@ -892,6 +892,45 @@ namespace MikuLuaProfiler
             }
         }
 
+        public int GetNextFrame(int start, bool isChange)
+        {
+            int ret = start;
+            int frameCount = history[start].frameCount;
+            for (int i = start + 1, imax = history.Count; i < imax; i++)
+            {
+                if (frameCount != history[i].frameCount)
+                {
+                    if (isChange)
+                    {
+                        ret = i;
+                    }
+                    break;
+                }
+                ret = i;
+            }
+            return Mathf.Max(Mathf.Min(ret, history.Count - 1), 0);
+        }
+
+        public int GetPreFrame(int start, bool isChange)
+        {
+            int ret = start;
+            int frameCount = history[start].frameCount;
+            for (int i = start - 1; i >= 0; i--)
+            {
+                if (frameCount != history[i].frameCount)
+                {
+                    if (isChange)
+                    {
+                        ret = i;
+                    }
+                    break;
+                }
+                ret = i;
+            }
+
+            return Mathf.Max(Mathf.Min(ret, history.Count - 1), 0);
+        }
+
         public int GetNextProgramFrame(int start)
         {
             int ret = start + 1;

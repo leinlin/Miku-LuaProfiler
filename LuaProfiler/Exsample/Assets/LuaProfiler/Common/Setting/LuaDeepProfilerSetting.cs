@@ -296,6 +296,20 @@ namespace MikuLuaProfiler
             }
         }
 
+        public bool isFrameRecord
+        {
+            get
+            {
+                return m_isFrameRecord;
+            }
+            set
+            {
+                if (m_isFrameRecord == value) return;
+                m_isFrameRecord = value;
+                EditorUtility.SetDirty(this);
+            }
+        }
+
         public List<string> luaDir
         {
             get
@@ -345,6 +359,7 @@ namespace MikuLuaProfiler
         private List<string> m_luaDir = new List<string>();
         private string m_luaIDE = "";
         private bool m_isNeedRecord = false;
+        private bool m_isFrameRecord = true;
     }
 }
 #endif

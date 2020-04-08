@@ -545,6 +545,7 @@ namespace MikuLuaProfiler
                 endFrame = count;
             }
 
+            instance.isFrameRecord = GUILayout.Toggle(instance.isFrameRecord, "Frame", EditorStyles.toolbarButton, GUILayout.Height(30));
             int oldStartFrame = startFrame;
             GUILayout.Label("start", EditorStyles.toolbarButton, GUILayout.Height(30), GUILayout.Width(45));
             startFrame = EditorGUILayout.IntSlider(startFrame, 0, count, GUILayout.Width(150));
@@ -1114,6 +1115,7 @@ namespace MikuLuaProfiler
 
             if (metricCount == 0) return;
 
+            bool isFrame = LuaDeepProfilerSetting.Instance.isFrameRecord;
             bool isEvent = false;
             bool isLeft = false;
             bool isRight = false;
@@ -1151,16 +1153,41 @@ namespace MikuLuaProfiler
             {
                 if (isLeft)
                 {
-                    startFrame--;
+                    if (isFrame)
+                    {
+                        endFrame = m_TreeView.GetPreFrame(startFrame, true);
+                        startFrame = m_TreeView.GetPreFrame(endFrame, false);
+                    }
+                    else
+                    {
+                        startFrame--;
+                    }
                 }
                 else if (isRight)
                 {
-                    endFrame++;
+                    if (isFrame)
+                    {
+                        startFrame = m_TreeView.GetNextFrame(endFrame, true);
+                        endFrame = m_TreeView.GetNextFrame(startFrame, false);
+                    }
+                    else
+                    {
+                        endFrame++;
+                    }
                 }
                 else
                 {
-                    startFrame = currentFrameIndex;
-                    endFrame = currentFrameIndex;
+                    if (isFrame)
+                    {
+                        startFrame = m_TreeView.GetPreFrame(currentFrameIndex, false);
+                        endFrame = m_TreeView.GetNextFrame(currentFrameIndex, false);
+                    }
+                    else
+                    {
+                        startFrame = currentFrameIndex;
+                        endFrame = currentFrameIndex;
+                    }
+
                 }
                 startFrame = Mathf.Min(Mathf.Max(0, startFrame), metricCount);
                 endFrame = Mathf.Min(Mathf.Max(0, endFrame), metricCount);
