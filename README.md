@@ -5,7 +5,7 @@
 
 ![](doc/use.gif)
 ### 部署和安装
-目前只支持Windows上编辑器进行使用，远程版还在开发中。直接将Exsample下的LuaProfiler文件夹拷贝到工程目录下。
+直接将example下的LuaProfiler文件夹拷贝到工程目录下。
 
 ### 使用说明
 在Windows菜单下也有个LuaProfiler选项，点击后即可打开窗口。开启DeepLua,运行游戏就能看到对应的数据。
