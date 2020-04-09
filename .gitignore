@@ -39,3 +39,4 @@ LuaDeepProfilerSetting.asset
 LuaDeepProfilerSetting.asset.meta
 Assembly-CSharp.csproj
 Assembly-CSharp-Editor.csproj
+/LuaProfiler/Tools/InjectLuaCPP/.vscode
