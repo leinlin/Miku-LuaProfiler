@@ -91,6 +91,11 @@ namespace MikuLuaProfiler
                 LuaDLL.HookLoadLibrary();
                 LuaDLL.BindEasyHook();
                 //LuaDLL.Install();
+
+                if (setting.isCleanMode)
+                {
+                    LuaProfilerPrecompileSetting.CompileLuaScript(false);
+                }
             }
 #endif
 

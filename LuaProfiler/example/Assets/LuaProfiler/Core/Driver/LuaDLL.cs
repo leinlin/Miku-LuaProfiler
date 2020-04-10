@@ -533,9 +533,9 @@ end
                 IntPtr handle = GetProcAddress(moduleName, "lua_gc");
                 lua_gc = (lua_gc_fun)Marshal.GetDelegateForFunctionPointer(handle, typeof(lua_gc_fun));
 
-                lua_gc_fun luaFun = new lua_gc_fun(lua_gc_replace);
-                lua_gc_hook = LocalHook.Create(handle, luaFun, null);
-                InstallHook(lua_gc_hook);
+                //lua_gc_fun luaFun = new lua_gc_fun(lua_gc_replace);
+                //lua_gc_hook = LocalHook.Create(handle, luaFun, null);
+                //InstallHook(lua_gc_hook);
             }
 
             if (luaL_ref_hook == null)
@@ -942,15 +942,7 @@ end
 
         public static int lua_gc_replace(IntPtr luaState, LuaGCOptions what, int data)
         {
-            lock (m_Lock)
-            {
-                if (what == LuaGCOptions.LUA_GCCOUNT ||
-                    what == LuaGCOptions.LUA_GCCOUNTB)
-                {
-                    return lua_gc(luaState, what, data);
-                }
-                return 0;
-            }
+            return lua_gc(luaState, what, data);
         }
 
         public static void lua_close_replace(IntPtr luaState)

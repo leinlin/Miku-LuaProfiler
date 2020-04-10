@@ -419,13 +419,19 @@ namespace MikuLuaProfiler
                     setting.discardInvalid = flag;
                 }
 
-                flag = GUILayout.Toggle(setting.isCleanMode, "PreCompile Lua(Use InjectLua.exe)", EditorStyles.toolbarButton);
+                flag = GUILayout.Toggle(setting.isCleanMode, "PreCompile Lua", EditorStyles.toolbarButton);
                 if (flag != setting.isCleanMode)
                 {
                     setting.isCleanMode = flag;
                     if (setting.isCleanMode)
                     {
                         setting.isDeepLuaProfiler = true;
+                        Selection.activeObject = LuaProfilerPrecompileSetting.Instance;
+#if UNITY_2018_2_OR_NEWER
+                        EditorApplication.ExecuteMenuItem("Window/General/Inspector");
+#else
+                        EditorApplication.ExecuteMenuItem("Window/Inspector");
+#endif
                     }
                     EditorApplication.isPlaying = false;
                 }

@@ -273,8 +273,8 @@ namespace MikuLuaProfiler
             {
                 frameCalls += sample.calls;
                 currentTime += sample.costTime;
-                _showMonoGC += sample.costMonoGC;
-                _showLuaGC += sample.costLuaGC;
+                _showMonoGC += Math.Max(sample.costMonoGC, 0);
+                _showLuaGC += Math.Max(sample.costLuaGC, 0);
                 selfCostTime += sample.selfCostTime;
             }
             else
@@ -286,10 +286,10 @@ namespace MikuLuaProfiler
                 selfCostTime = sample.selfCostTime;
             }
 
-            totalLuaMemory += sample.costLuaGC;
-            selfLuaMemory += sample.selfLuaGC;
-            totalMonoMemory += sample.costMonoGC;
-            selfMonoMemory += sample.selfMonoGC;
+            totalLuaMemory += Math.Max(sample.costLuaGC, 0);
+            selfLuaMemory += Math.Max(sample.selfLuaGC, 0);
+            totalMonoMemory += Math.Max(sample.costMonoGC, 0);
+            selfMonoMemory += Math.Max(sample.selfMonoGC, 0);
 
             totalTime += sample.costTime;
             totalCallTime += sample.calls;

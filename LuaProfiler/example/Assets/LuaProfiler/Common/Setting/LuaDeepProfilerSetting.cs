@@ -37,9 +37,9 @@ __________#_______####_______####______________
 namespace MikuLuaProfiler
 {
     using System.Collections.Generic;
-    using System.Reflection;
     using UnityEditor;
     using UnityEngine;
+
     public class LuaDeepProfilerSetting : ScriptableObject
     {
         #region instance

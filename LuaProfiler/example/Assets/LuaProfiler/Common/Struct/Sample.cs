@@ -469,8 +469,8 @@ namespace MikuLuaProfiler
         public void AddSample(Sample s)
         {
             calls += s.calls;
-            costLuaGC += s.costLuaGC;
-            costMonoGC += s.costMonoGC;
+            costLuaGC += Math.Max(s.costLuaGC, 0);
+            costMonoGC += Math.Max(s.costMonoGC, 0);
             costTime += s.costTime;
             for (int i = s.childs.Count - 1; i >= 0; i--)
             {
