@@ -82,8 +82,19 @@ namespace MikuLuaProfiler
 
     public class StringLoadInfo
     {
+        class StringOperate
+        {
+            public int start = 0;
+            public int removeLen = 0;
+            public string value = null;
+        }
+
+        private static Dictionary<int, StringOperate> operateDict = new Dictionary<int, StringOperate>(1024);
+        private static StringBuilder sbCache = new StringBuilder(1024);
         public StringLoadInfo(string s)
         {
+            operateDict.Clear();
+            sbCache.Remove(0, sbCache.Length);
             Str = new StringBuilder(s);
             Str.Append(' ');
             Pos = 0;
@@ -126,12 +137,18 @@ namespace MikuLuaProfiler
 
         public void Replace(int start, int len, string value)
         {
+            /*
             Str = Str.Remove(start, len);
             Str = Str.Insert(start, value);
             if ((start + len) <= Pos)
             {
                 Pos = Pos - (len - value.Length);
-            }
+            }*/
+            StringOperate op = new StringOperate();
+            op.start = start;
+            op.removeLen = len;
+            op.value = value;
+            operateDict.Add(start, op);
         }
         public string ReadString(int startPos, int len)
         {
@@ -144,16 +161,42 @@ namespace MikuLuaProfiler
             return new string(chars);
         }
 
-        public void InsertString(int startPos, string value)
+        public void InsertString(int start, string value)
         {
-            Str = Str.Insert(startPos, value);
-            Pos += value.Length;
+            //Str = Str.Insert(startPos, value);
+            //Pos += value.Length;
+            StringOperate op = new StringOperate();
+            op.start = start;
+            op.value = value;
+            operateDict.Add(start, op);
         }
         public string code
         {
             get
             {
-                return Str.ToString();
+                sbCache.Remove(0, sbCache.Length);
+                StringOperate op;
+                for (int i = 0, imax = Str.Length; i < imax; i++)
+                {
+                    if (operateDict.TryGetValue(i, out op))
+                    {
+                        sbCache.Append(op.value);
+                        if (op.removeLen == 0)
+                        {
+                            sbCache.Append(Str[i]);
+                        }
+                        else
+                        {
+                            i += op.removeLen;
+                        }
+                    }
+                    else
+                    {
+                        sbCache.Append(Str[i]);
+                    }
+                }
+                string result = sbCache.ToString();
+                return result;
             }
         }
         private StringBuilder Str;
