@@ -55,25 +55,25 @@ private:
     void _Next();
     void _SaveAndNext();
     void _Save(char c);
-    const char* _GetSavedString();
+    std::string _GetSavedString();
     void _ClearSaved();
     bool _CurrentIsNewLine();
     bool _CurrentIsDigit();
     bool _CurrentIsXDigit();
     bool _CurrentIsSpace();
     bool _CurrentIsAlpha();
-    bool _IsReserved(const char* identifier, TK& type);
-    bool IsReservedWord(const char* name);
+    bool _IsReserved(std::string& identifier, TK& type);
+    bool IsReservedWord(std::string& name);
     void _IncLineNumber();
-    const char* _ReadLongString(int sep, bool isComment);
-    void _EscapeError(const char* info, const char* msg);
+    std::string&_ReadLongString(int sep, bool isComment);
+    void _EscapeError(std::string& info, std::string& msg);
     uint8_t _ReadHexEscape();
     uint8_t _ReadDecEscape();
-    const char* _ReadString();
+    std::string& _ReadString();
     double _ReadNumber();
     bool O_Str2Decimal(const char* s, double& result);
-    void _Error(const char* error);
-    void _LexError(const char* info, const char* msg, int tokenType);
+    void _Error(std::string& error);
+    void _LexError(std::string& info, const char* msg, int tokenType);
     int _SkipSep();
     Token* _Lex();
 public:
@@ -93,6 +93,7 @@ public:
         m_loadInfo->Replace(start, end + 1 - start, value);
     }
     inline const char* ReadString(int start, int end) {
-         return m_loadInfo->ReadString(start, end);
+        int len = end - start + 1;
+         return m_loadInfo->ReadString(start, len);
     }
 };

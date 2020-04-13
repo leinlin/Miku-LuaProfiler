@@ -187,7 +187,7 @@ namespace MikuLuaProfiler
                         }
                         else
                         {
-                            i += op.removeLen;
+                            i += op.removeLen - 1;
                         }
                     }
                     else
