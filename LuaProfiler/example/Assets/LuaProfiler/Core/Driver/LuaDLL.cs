@@ -149,6 +149,10 @@ namespace MikuLuaProfiler
         public static luaL_loadbufferx_fun luaL_loadbufferx { get; private set; }
 
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        public delegate int luaL_loadbuffer_fun(IntPtr luaState, IntPtr buff, IntPtr size, string name);
+        public static luaL_loadbuffer_fun luaL_loadbuffer { get; private set; }
+
+        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
         public delegate int toluaL_ref_fun(IntPtr L);
         public static toluaL_ref_fun toluaL_ref { get; private set; }
 
@@ -352,7 +356,15 @@ end
                 UnInstallHook(luaL_loadbuffer_hook);
             }
             IntPtr intPtr = NativeUtility.ConvertByteArrayToPtr(buff);
-            int result = luaL_loadbufferx(luaState, intPtr, size, name, IntPtr.Zero);
+            int result;
+            if (LUA_VERSION > 510)
+            {
+                result = luaL_loadbufferx(luaState, intPtr, size, name, IntPtr.Zero);
+            }
+            else
+            {
+                result = luaL_loadbuffer(luaState, intPtr, size, name);
+            }
             if (luaL_loadbuffer_hook != null)
             {
                 InstallHook(luaL_loadbuffer_hook);
@@ -573,12 +585,24 @@ end
 
             if (luaL_loadbuffer_hook == null)
             {
-                IntPtr handle = GetProcAddress(moduleName, "luaL_loadbufferx");
-                luaL_loadbufferx = (luaL_loadbufferx_fun)Marshal.GetDelegateForFunctionPointer(handle, typeof(luaL_loadbufferx_fun));
+                if (LUA_VERSION > 510)
+                {
+                    IntPtr handle = GetProcAddress(moduleName, "luaL_loadbufferx");
+                    luaL_loadbufferx = (luaL_loadbufferx_fun)Marshal.GetDelegateForFunctionPointer(handle, typeof(luaL_loadbufferx_fun));
 
-                luaL_loadbufferx_fun luaFun = new luaL_loadbufferx_fun(luaL_loadbuffer_replace);
-                luaL_loadbuffer_hook = LocalHook.Create(handle, luaFun, null);
-                InstallHook(luaL_loadbuffer_hook);
+                    luaL_loadbufferx_fun luaFun = new luaL_loadbufferx_fun(luaL_loadbufferx_replace);
+                    luaL_loadbuffer_hook = LocalHook.Create(handle, luaFun, null);
+                    InstallHook(luaL_loadbuffer_hook);
+                }
+                else
+                {
+                    IntPtr handle = GetProcAddress(moduleName, "luaL_loadbuffer");
+                    luaL_loadbuffer = (luaL_loadbuffer_fun)Marshal.GetDelegateForFunctionPointer(handle, typeof(luaL_loadbuffer_fun));
+
+                    luaL_loadbuffer_fun luaFun = new luaL_loadbuffer_fun(luaL_loadbuffer_replace);
+                    luaL_loadbuffer_hook = LocalHook.Create(handle, luaFun, null);
+                    InstallHook(luaL_loadbuffer_hook);
+                }
             }
 
             if (luaL_openlibs_hook == null)
@@ -974,7 +998,7 @@ end
             }
         }
 
-        public static int luaL_loadbuffer_replace(IntPtr luaState, IntPtr buff, IntPtr size, string name, IntPtr mode)
+        public static int luaL_loadbufferx_replace(IntPtr luaState, IntPtr buff, IntPtr size, string name, IntPtr mode)
         {
             lock (m_Lock)
             {
@@ -992,6 +1016,27 @@ end
                     size = (IntPtr)buffer.Length;
                 }
                 return luaL_loadbufferx(luaState, buff, size, name, mode);
+            }
+        }
+
+        public static int luaL_loadbuffer_replace(IntPtr luaState, IntPtr buff, IntPtr size, string name)
+        {
+            lock (m_Lock)
+            {
+                if (isHook)
+                {
+                    byte[] buffer = new byte[(int)size];
+                    Marshal.Copy(buff, buffer, 0, buffer.Length);
+                    // dostring
+                    if (name.Length == (int)size)
+                    {
+                        name = "chunk";
+                    }
+                    buffer = LuaHook.Hookloadbuffer(luaState, buffer, name);
+                    buff = NativeUtility.ConvertByteArrayToPtr(buffer);
+                    size = (IntPtr)buffer.Length;
+                }
+                return luaL_loadbuffer(luaState, buff, size, name);
             }
         }
 
