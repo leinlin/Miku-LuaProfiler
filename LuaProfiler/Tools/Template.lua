@@ -35,7 +35,11 @@ function()
 end
 
 function()
-    return fk--fkyou
+	if xx then
+		return fk--fkyou
+	elseif yy then
+		return fk--fkyou
+	end
 end
 
 function()
