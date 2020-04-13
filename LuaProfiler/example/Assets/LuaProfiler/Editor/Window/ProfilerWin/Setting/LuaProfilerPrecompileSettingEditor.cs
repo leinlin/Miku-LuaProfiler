@@ -53,6 +53,8 @@ namespace MikuLuaProfiler
             EditorGUI.BeginChangeCheck();
 
             EditorGUILayout.BeginVertical();
+
+            #region lua folders
             var dirList = settings.luaDirList;
             EditorGUILayout.LabelField("Lua Folder");
             for (int i = dirList.Count - 1, imin = 0; i >= imin; i--)
@@ -63,6 +65,7 @@ namespace MikuLuaProfiler
                 {
                     dirList.RemoveAt(i);
                     EditorUtility.SetDirty(settings);
+                    AssetDatabase.SaveAssets();
                 }
                 EditorGUILayout.EndHorizontal();
             }
@@ -77,9 +80,46 @@ namespace MikuLuaProfiler
                     item.scriptFolder = LuaProfilerPrecompileSetting.MakePathRelative(newPath);
                     dirList.Add(item);
                     EditorUtility.SetDirty(settings);
+                    AssetDatabase.SaveAssets();
                     Repaint();
                 }
             }
+            #endregion
+
+            #region lua filter folders
+            var filterDirList = settings.luaFilterDirList;
+            EditorGUILayout.LabelField("Lua filter Folder");
+            for (int i = filterDirList.Count - 1, imin = 0; i >= imin; i--)
+            {
+                EditorGUILayout.BeginHorizontal();
+                EditorGUILayout.TextField(filterDirList[i]);
+                if (GUILayout.Button("remove", GUILayout.ExpandWidth(false)))
+                {
+                    filterDirList.RemoveAt(i);
+                    EditorUtility.SetDirty(settings);
+                    AssetDatabase.SaveAssets();
+                }
+                EditorGUILayout.EndHorizontal();
+            }
+
+            if (GUILayout.Button("Add Lua Filter Folder", GUILayout.Height(50)))
+            {
+                GUI.FocusControl(null);
+                string defaultPath = null;
+                if (dirList.Count > 0)
+                {
+                    defaultPath = dirList[0].scriptFolder;
+                }
+                string newPath = EditorUtility.OpenFolderPanel("Add Lua Folder", defaultPath, null);
+                if (!string.IsNullOrEmpty(newPath))
+                {
+                    filterDirList.Add(LuaProfilerPrecompileSetting.MakePathRelative(newPath));
+                    EditorUtility.SetDirty(settings);
+                    AssetDatabase.SaveAssets();
+                    Repaint();
+                }
+            }
+            #endregion
 
             EditorGUILayout.BeginHorizontal();
             EditorGUILayout.LabelField("Lua suffix:", GUILayout.Width(80));
@@ -102,7 +142,7 @@ namespace MikuLuaProfiler
                 {
                     settings.outFolder = LuaProfilerPrecompileSetting.MakePathRelative(newPath);
                     EditorUtility.SetDirty(settings);
-                    Repaint();
+                    AssetDatabase.SaveAssets();
                 }
             }
             EditorGUILayout.EndHorizontal();
@@ -122,10 +162,16 @@ namespace MikuLuaProfiler
                     Debug.LogError("fail");
                 }
                 EditorUtility.SetDirty(settings);
+                AssetDatabase.SaveAssets();
             }
 
             if (GUILayout.Button("Clear", GUILayout.Height(50)))
             {
+                foreach (var item in settings.luaDirList)
+                {
+                    item.ClearDict();
+                }
+
                 var outFiles = Directory.GetFiles(settings.outFolder, settings.luaSuffix, SearchOption.AllDirectories);
                 for (int i = 0, imax = outFiles.Length; i < imax; i++)
                 {
@@ -137,6 +183,7 @@ namespace MikuLuaProfiler
                     Directory.Delete(outFolder[i], true);
                 }
                 EditorUtility.SetDirty(settings);
+                AssetDatabase.SaveAssets();
 
             }
             EditorGUILayout.EndVertical();

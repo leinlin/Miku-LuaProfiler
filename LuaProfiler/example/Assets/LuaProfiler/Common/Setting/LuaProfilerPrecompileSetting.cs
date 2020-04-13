@@ -68,6 +68,11 @@ namespace MikuLuaProfiler
                 lastModifyDictValues.Add(item.Value);
             }
         }
+        public void ClearDict()
+        {
+            lastModifyDictKeys.Clear();
+            lastModifyDictValues.Clear();
+        }
     }
 
     public class LuaProfilerPrecompileSetting : ScriptableObject
@@ -100,6 +105,20 @@ namespace MikuLuaProfiler
         public List<PreCompileFolderInfo> luaDirList = new List<PreCompileFolderInfo>();
         public string outFolder = "LuaOut";
         public string luaSuffix = "*.lua";
+        public List<string> luaFilterDirList = new List<string>();
+
+        public bool CheckIsFilterDir(string outPath)
+        {
+            foreach (var item in luaFilterDirList)
+            {
+                if (outPath.Contains(item))
+                {
+                    return true;
+                }
+                ;
+            }
+            return false;
+        }
         #endregion
 
         #region static
@@ -128,6 +147,10 @@ namespace MikuLuaProfiler
                         var fileInfo = new FileInfo(luaFile);
                         string outPath = luaFile.Replace(item.scriptFolder, settings.outFolder);
                         string outFolder = Path.GetDirectoryName(outPath);
+                        if (settings.CheckIsFilterDir(MakePathRelative(luaFile)))
+                        {
+                            continue;
+                        }
                         compiledFiles.Add(outPath);
                         long tick = -1;
                         long fileTick = fileInfo.CreationTimeUtc.Ticks;
@@ -168,12 +191,16 @@ namespace MikuLuaProfiler
                         if (!compiledFiles.Contains(key))
                         {
                             dict.Remove(key);
-                            File.Delete(key);
+                            if (File.Exists(key))
+                            {
+                                File.Delete(key);
+                            }
                         }
                     }
                     item.SaveDict(dict);
                 }
                 EditorUtility.SetDirty(settings);
+                AssetDatabase.SaveAssets();
             }
             catch (Exception e)
             {
