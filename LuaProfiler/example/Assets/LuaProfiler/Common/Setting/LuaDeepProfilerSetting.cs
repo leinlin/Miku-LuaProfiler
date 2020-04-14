@@ -324,6 +324,7 @@ namespace MikuLuaProfiler
             {
                 m_luaDir.Add(path);
                 EditorUtility.SetDirty(this);
+                AssetDatabase.SaveAssets();
             }
         }
 
@@ -338,6 +339,7 @@ namespace MikuLuaProfiler
                 if (m_luaIDE == value) return;
                 m_luaIDE = value;
                 EditorUtility.SetDirty(this);
+                AssetDatabase.SaveAssets();
             }
         }
 
@@ -356,7 +358,9 @@ namespace MikuLuaProfiler
         public int m_port = 2333;
 
         private bool m_isRecord = false;
+        [SerializeField]
         private List<string> m_luaDir = new List<string>();
+        [SerializeField]
         private string m_luaIDE = "";
         private bool m_isNeedRecord = false;
         private bool m_isFrameRecord = true;

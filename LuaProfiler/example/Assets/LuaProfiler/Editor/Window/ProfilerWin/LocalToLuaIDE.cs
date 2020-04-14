@@ -245,6 +245,7 @@ namespace MikuLuaProfiler {
         {
             LuaDeepProfilerSetting.Instance.luaDir.Clear();
             LuaDeepProfilerSetting.Instance.luaIDE = "";
+            AssetDatabase.SaveAssets();
             Debug.Log("Clear Suceess");
         }
 
