@@ -87,6 +87,7 @@ namespace MikuLuaProfiler
             public int start = 0;
             public int removeLen = 0;
             public string value = null;
+            public StringOperate sibling;
         }
 
         private static Dictionary<int, StringOperate> operateDict = new Dictionary<int, StringOperate>(1024);
@@ -148,7 +149,18 @@ namespace MikuLuaProfiler
             op.start = start;
             op.removeLen = len;
             op.value = value;
-            operateDict.Add(start, op);
+
+            StringOperate tmp;
+            if (!operateDict.TryGetValue(start, out tmp))
+            {
+                operateDict.Add(start, op);
+            }
+            else
+            {
+                // 处理 beginSample和 endSample 写到一起的导致插入位置是同一个的问题
+                // function()end
+                tmp.sibling = op;
+            }
         }
         public string ReadString(int startPos, int len)
         {
@@ -168,7 +180,18 @@ namespace MikuLuaProfiler
             StringOperate op = new StringOperate();
             op.start = start;
             op.value = value;
-            operateDict.Add(start, op);
+
+            StringOperate tmp;
+            if (!operateDict.TryGetValue(start, out tmp))
+            {
+                operateDict.Add(start, op);
+            }
+            else
+            {
+                // 处理 beginSample和 endSample 写到一起的导致插入位置是同一个的问题
+                // function()end
+                tmp.sibling = op;
+            }
         }
         public string code
         {
@@ -181,13 +204,29 @@ namespace MikuLuaProfiler
                     if (operateDict.TryGetValue(i, out op))
                     {
                         sbCache.Append(op.value);
-                        if (op.removeLen == 0)
+                        if (op.sibling != null)
                         {
-                            sbCache.Append(Str[i]);
+                            op = op.sibling;
+                            sbCache.Append(op.value);
+                            if (op.removeLen == 0)
+                            {
+                                sbCache.Append(Str[i]);
+                            }
+                            else
+                            {
+                                i += op.removeLen - 1;
+                            }
                         }
                         else
                         {
-                            i += op.removeLen - 1;
+                            if (op.removeLen == 0)
+                            {
+                                sbCache.Append(Str[i]);
+                            }
+                            else
+                            {
+                                i += op.removeLen - 1;
+                            }
                         }
                     }
                     else
