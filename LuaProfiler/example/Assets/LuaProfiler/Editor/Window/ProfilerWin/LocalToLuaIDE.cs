@@ -232,7 +232,7 @@ namespace MikuLuaProfiler {
             {
 #if UNITY_EDITOR_WIN
                 IntPtr hwd = FindWindow("SunAwtFrame", null);
-                if (hwd != IntPtr.Zero && IsWindowVisible(hwd))
+                if (hwd != IntPtr.Zero)
                 {
                     ShowWindow(hwd, 3);
                 }
