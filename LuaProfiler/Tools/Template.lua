@@ -11,6 +11,10 @@ end
 local self.x3 = function()
 end
 
+self['x4'] = function()end
+
+self['x5'] = function()return(fk)end
+
 local xx = function()
 
 end
