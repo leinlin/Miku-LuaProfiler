@@ -47,3 +47,5 @@ Precompile Lua：有的人实在跑不起来我这套东西，你可以用Tools�
 <span id="contact_zh"></span>
 ### [联系](#zh)
 如果您发现任何错误或有任何建议加入QQ群：[882425563](https://jq.qq.com/?_wv=1027&k=5QkOBSc) 与我们联系
+##
+![](doc/meizi.gif)
