@@ -270,7 +270,7 @@ namespace MikuLuaProfiler
             string hookedValue = "";
 
             string fileName = name.Replace(".lua", "");
-            fileName = fileName.Replace("@", "").Replace('.', '/');
+            fileName = fileName.Replace("@", "").Replace('.', '/').Replace('\\', '/');
             // utf-8
             if (buff[0] == 239 && buff[1] == 187 && buff[2] == 191)
             {
