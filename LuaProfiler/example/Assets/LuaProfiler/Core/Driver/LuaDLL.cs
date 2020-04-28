@@ -112,7 +112,6 @@ namespace MikuLuaProfiler
         #region hooks
         private static LocalHook luaL_newstate_hook;
         private static LocalHook lua_close_hook;
-        private static LocalHook lua_gc_hook;
         private static LocalHook luaL_openlibs_hook;
         private static LocalHook luaL_ref_hook;
         private static LocalHook luaL_unref_hook;
@@ -540,16 +539,6 @@ end
                 InstallHook(lua_close_hook);
             }
 
-            if (lua_gc_hook == null)
-            {
-                IntPtr handle = GetProcAddress(moduleName, "lua_gc");
-                lua_gc = (lua_gc_fun)Marshal.GetDelegateForFunctionPointer(handle, typeof(lua_gc_fun));
-
-                //lua_gc_fun luaFun = new lua_gc_fun(lua_gc_replace);
-                //lua_gc_hook = LocalHook.Create(handle, luaFun, null);
-                //InstallHook(lua_gc_hook);
-            }
-
             if (luaL_ref_hook == null)
             {
                 IntPtr handle = GetProcAddress(moduleName, "luaL_ref");
@@ -693,6 +682,11 @@ end
                 {
                     lua_gettop = (lua_gettop_fun)Marshal.GetDelegateForFunctionPointer(handle, typeof(lua_gettop_fun));
                 }
+            }
+
+            {
+                IntPtr handle = GetProcAddress(moduleName, "lua_gc");
+                lua_gc = (lua_gc_fun)Marshal.GetDelegateForFunctionPointer(handle, typeof(lua_gc_fun));
             }
 
             {

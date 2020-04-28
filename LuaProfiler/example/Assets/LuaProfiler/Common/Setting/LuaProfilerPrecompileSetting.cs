@@ -171,7 +171,7 @@ namespace MikuLuaProfiler
                             if (showProcess)
                             {
 #if UNITY_EDITOR
-                                EditorUtility.DisplayProgressBar("", $"compile file {outPath}", (float)(i + 1) / length);
+                                EditorUtility.DisplayProgressBar("", string.Format("compile file {0}", outPath), (float)(i + 1) / length);
 #endif
                             }
                             string str = File.ReadAllText(luaFile);
