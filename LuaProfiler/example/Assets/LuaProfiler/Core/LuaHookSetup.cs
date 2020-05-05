@@ -66,6 +66,12 @@ namespace MikuLuaProfiler
         }
         #endregion
 
+#if UNITY_EDITOR_WIN
+        [System.Runtime.InteropServices.DllImport("kernel32.dll")]
+        private extern static IntPtr LoadLibrary(string path);
+#endif
+
+
 #if UNITY_5 || UNITY_2017_1_OR_NEWER
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
 #endif
@@ -73,6 +79,19 @@ namespace MikuLuaProfiler
         {
 #if UNITY_EDITOR
             if (!Application.isPlaying) return;
+#endif
+#if UNITY_EDITOR_WIN
+            System.Diagnostics.StackTrace st = new System.Diagnostics.StackTrace(true);
+            System.Diagnostics.StackFrame sf = st.GetFrame(0);
+            string path = sf.GetFileName();
+
+            path = path.Replace("Core\\LuaHookSetup.cs", "Plugins\\EasyHook64.dll");
+            IntPtr ptr = LoadLibrary(path);
+            if (ptr == null)
+            {
+                Debug.LogError("dont't move dll file to other place");
+                return;
+            }
 #endif
             if (isInite) return;
 
