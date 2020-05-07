@@ -298,6 +298,7 @@ namespace MikuLuaProfiler
 
         public static void luaL_initlibs(IntPtr luaState)
         {
+            LuaDLL.isOpenLibs = false;
             luaL_openlibs(luaState);
             if (LUA_VERSION > 510)
             {

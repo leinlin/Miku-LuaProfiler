@@ -89,18 +89,10 @@ namespace MikuLuaProfiler
                 LuaDeepProfilerAssetSetting.Instance.isDeepLuaProfiler = value;
             }
         }
-        private bool _isLocalSet = false;
         public bool isLocal
         {
             get
             {
-                if (!_isLocalSet)
-                {
-                    var isLocal = LuaDeepProfilerAssetSetting.Instance.isLocal;
-                    System.Type t = System.Type.GetType("MikuLuaProfiler.NetWorkServer,Assembly-CSharp-Editor.dll");
-                    LuaDeepProfilerAssetSetting.Instance.isLocal = t != null && isLocal;
-                    _isLocalSet = true;
-                }
                 return LuaDeepProfilerAssetSetting.Instance.isLocal;
             }
             set

@@ -799,8 +799,8 @@ namespace MikuLuaProfiler
         const string get_ref_string = @"
 local weak_meta_table = {__mode = 'k'}
 local infoTb = {}
-local funAddrTb = {}
 setmetatable(infoTb, weak_meta_table)
+local funAddrTb = {}
 setmetatable(funAddrTb, weak_meta_table)
 
 function miku_get_fun_info(fun)
