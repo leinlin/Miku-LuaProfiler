@@ -1237,7 +1237,7 @@ namespace MikuLuaProfiler
         #endregion
 
         // Add menu named "My Window" to the Window menu
-        [MenuItem("Window/Lua Profiler Window")]
+        [MenuItem("Window/Lua Profiler Window &#l")]
         static public void ShowWindow()
         {
             // Get existing open window or if none, make a new one:

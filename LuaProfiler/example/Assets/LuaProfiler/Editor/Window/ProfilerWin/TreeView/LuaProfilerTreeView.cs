@@ -129,6 +129,7 @@ namespace MikuLuaProfiler
                 return m_isLua;
             }
         }
+        public bool isError = false;
         public int line = 1;
         public string filePath { private set; get; }
         private string m_originName;
@@ -172,6 +173,10 @@ namespace MikuLuaProfiler
                             line = int.Parse(array[1].Split(splitLine, 2)[1]);
                         }
                     }
+                }
+                else
+                {
+                    isError = sample.name == "exception happen clear stack";
                 }
 
                 _showMonoGC = sample.costMonoGC;
@@ -241,6 +246,7 @@ namespace MikuLuaProfiler
         {
             filePath = item.filePath;
             m_isLua = item.m_isLua;
+            isError = item.isError;
 
             _showMonoGC = item._showMonoGC;
             _showLuaGC = item._showLuaGC;
@@ -377,6 +383,7 @@ namespace MikuLuaProfiler
         private static Color m_selectColor = new Color(1.0f, 1.0f, 0.0f, 1.0f);
         private static Color m_luaColor = new Color(0.2f, 0.5f, 0.7f, 1.0f);
         private static Color m_monoColor = new Color32(0, 180, 0, 255);
+        private static Color m_errorColor = new Color32(255, 0, 0, 255);
         private List<int> m_expandIds = new List<int>();
         private readonly LuaProfilerTreeViewItem m_root;
         private readonly List<TreeViewItem> m_treeViewItems = new List<TreeViewItem>();
@@ -1219,6 +1226,10 @@ namespace MikuLuaProfiler
                 if (item.isLua)
                 {
                     m_gs.normal.textColor = m_luaColor;
+                }
+                else if (item.isError)
+                {
+                    m_gs.normal.textColor = m_errorColor;
                 }
                 else
                 {

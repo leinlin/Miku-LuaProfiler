@@ -234,6 +234,12 @@ namespace MikuLuaProfiler
                         sbCache.Append(Str[i]);
                     }
                 }
+
+                if (operateDict.TryGetValue(Str.Length, out op))
+                {
+                    sbCache.Append(op.value);
+                }
+
                 string result = sbCache.ToString();
                 return result;
             }

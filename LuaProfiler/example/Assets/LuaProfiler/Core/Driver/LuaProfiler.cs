@@ -51,6 +51,7 @@ namespace MikuLuaProfiler
         private static IntPtr _mainL = IntPtr.Zero;
         private static readonly Stack<Sample> beginSampleMemoryStack = new Stack<Sample>();
         private static int m_currentFrame = 0;
+        private static int m_gcFrame = 0;
         public static int mainThreadId = -100;
         const long MaxB = 1024;
         const long MaxK = MaxB * 1024;
@@ -137,10 +138,16 @@ namespace MikuLuaProfiler
             }
             try
             {
-                int frameCount = Time.frameCount;
+                int frameCount = SampleData.frameCount;
+                if (frameCount - m_gcFrame >= 300)
+                {
+                    LuaDLL.lua_gc_unhook(luaState, LuaGCOptions.LUA_GCCOLLECT, 0);
+                    m_gcFrame = frameCount;
+                }
 
                 if (m_currentFrame != frameCount)
                 {
+                    LuaDLL.lua_gc_unhook(luaState, LuaGCOptions.LUA_GCSTOP, 0);
                     m_currentFrame = frameCount;
                     PopAllSampleWhenLateUpdate(luaState);
                 }
@@ -149,8 +156,9 @@ namespace MikuLuaProfiler
                 sample.needShow = needShow;
                 beginSampleMemoryStack.Push(sample);
             }
-            catch
+            catch(Exception e)
             {
+                Debug.LogError(e);
             }
         }
         private static List<Sample> popChilds = new List<Sample>();
@@ -158,6 +166,8 @@ namespace MikuLuaProfiler
         {
             while(beginSampleMemoryStack.Count > 0)
             {
+                EndSample(luaState);
+                /*
                 var item = beginSampleMemoryStack.Pop();
                 if (item.fahter == null)
                 {
@@ -201,9 +211,8 @@ namespace MikuLuaProfiler
                         }
                     }
                     //item.Restore();
-                }
+                }*/
             }
-            beginSampleMemoryStack.Clear();
         }
         public static void EndSample(IntPtr luaState)
         {

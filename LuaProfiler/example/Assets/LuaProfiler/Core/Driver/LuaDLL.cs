@@ -112,6 +112,8 @@ namespace MikuLuaProfiler
         #region hooks
         private static LocalHook luaL_newstate_hook;
         private static LocalHook lua_close_hook;
+        private static LocalHook lua_gc_hook;
+        private static LocalHook lua_error_hook;
         private static LocalHook luaL_openlibs_hook;
         private static LocalHook luaL_ref_hook;
         private static LocalHook luaL_unref_hook;
@@ -146,6 +148,10 @@ namespace MikuLuaProfiler
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
         public delegate int luaL_loadbufferx_fun(IntPtr luaState, IntPtr buff, IntPtr size, string name, IntPtr mode);
         public static luaL_loadbufferx_fun luaL_loadbufferx { get; private set; }
+
+        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        public delegate int lua_error_fun(IntPtr luaState);
+        public static lua_error_fun lua_error { get; private set; }
 
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
         public delegate int luaL_loadbuffer_fun(IntPtr luaState, IntPtr buff, IntPtr size, string name);
@@ -469,6 +475,12 @@ end
                 toluaL_unref_hook.Dispose();
                 toluaL_unref_hook = null;
             }
+
+            if (lua_error_hook != null)
+            {
+                lua_error_hook.Dispose();
+                lua_error_hook = null;
+            }
         }
 
         public static void BindEasyHook()
@@ -538,6 +550,26 @@ end
                 lua_close_fun luaFun = new lua_close_fun(lua_close_replace);
                 lua_close_hook = LocalHook.Create(handle, luaFun, null);
                 InstallHook(lua_close_hook);
+            }
+
+            if (lua_gc_hook == null)
+            {
+                IntPtr handle = GetProcAddress(moduleName, "lua_gc");
+                lua_gc = (lua_gc_fun)Marshal.GetDelegateForFunctionPointer(handle, typeof(lua_gc_fun));
+
+                lua_gc_fun luaFun = new lua_gc_fun(lua_gc_replace);
+                lua_gc_hook = LocalHook.Create(handle, luaFun, null);
+                InstallHook(lua_gc_hook);
+            }
+
+            if (lua_error_hook == null)
+            {
+                IntPtr handle = GetProcAddress(moduleName, "lua_error");
+                lua_error = (lua_error_fun)Marshal.GetDelegateForFunctionPointer(handle, typeof(lua_error_fun));
+
+                lua_error_fun luaFun = new lua_error_fun(lua_error_replace);
+                lua_error_hook = LocalHook.Create(handle, luaFun, null);
+                InstallHook(lua_error_hook);
             }
 
             if (luaL_ref_hook == null)
@@ -683,11 +715,6 @@ end
                 {
                     lua_gettop = (lua_gettop_fun)Marshal.GetDelegateForFunctionPointer(handle, typeof(lua_gettop_fun));
                 }
-            }
-
-            {
-                IntPtr handle = GetProcAddress(moduleName, "lua_gc");
-                lua_gc = (lua_gc_fun)Marshal.GetDelegateForFunctionPointer(handle, typeof(lua_gc_fun));
             }
 
             {
@@ -959,9 +986,33 @@ end
             }
         }
 
+        public static int lua_gc_unhook(IntPtr luaState, LuaGCOptions what, int data)
+        {
+            var tmp = isHook;
+            isHook = false;
+            int ret = lua_gc(luaState, what, data);
+            isHook = tmp;
+
+            return ret;
+        }
+
+        public static int lua_error_replace(IntPtr luaState)
+        {
+            LuaProfiler.BeginSample(luaState, "exception happen clear stack", true);
+            LuaProfiler.PopAllSampleWhenLateUpdate(luaState);
+            return lua_error(luaState);
+        }
+
         public static int lua_gc_replace(IntPtr luaState, LuaGCOptions what, int data)
         {
-            return lua_gc(luaState, what, data);
+            lock (m_Lock)
+            {
+                if (!isHook)
+                {
+                    return lua_gc(luaState, what, data);
+                }
+                return 0;
+            }
         }
 
         public static void lua_close_replace(IntPtr luaState)
@@ -1001,8 +1052,9 @@ end
                 {
                     byte[] buffer = new byte[(int)size];
                     Marshal.Copy(buff, buffer, 0, buffer.Length);
+
                     // dostring
-                    if (name.Length == (int)size) 
+                    if (name.Length == (int)size)
                     {
                         name = "chunk";
                     }
@@ -1022,6 +1074,7 @@ end
                 {
                     byte[] buffer = new byte[(int)size];
                     Marshal.Copy(buff, buffer, 0, buffer.Length);
+
                     // dostring
                     if (name.Length == (int)size)
                     {

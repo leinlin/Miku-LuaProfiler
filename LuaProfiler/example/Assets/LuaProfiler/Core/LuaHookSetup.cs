@@ -299,11 +299,8 @@ namespace MikuLuaProfiler
             {
                 value = Encoding.UTF8.GetString(buff);
             }
-
             hookedValue = Parse.InsertSample(value, fileName);
-
             buff = Encoding.UTF8.GetBytes(hookedValue);
-
             return buff;
         }
 
@@ -364,7 +361,6 @@ namespace MikuLuaProfiler
         }
         #endregion
 
-
         #region check
         public static int staticHistoryRef = -100;
         public static LuaDiffInfo RecordStatic()
@@ -381,7 +377,7 @@ namespace MikuLuaProfiler
             // 调用C# LuaTable LuaFunction WeakTable的析构 来清理掉lua的 ref
             GC.Collect();
             // 清理掉C#强ref后，顺便清理掉很多弱引用
-            LuaDLL.lua_gc(L, LuaGCOptions.LUA_GCCOLLECT, 0);
+            LuaDLL.lua_gc_unhook(L, LuaGCOptions.LUA_GCCOLLECT, 0);
 
             int oldTop = LuaDLL.lua_gettop(L);
             LuaDLL.lua_getglobal(L, "miku_handle_error");
@@ -448,7 +444,7 @@ namespace MikuLuaProfiler
             // 调用C# LuaTable LuaFunction WeakTable的析构 来清理掉lua的 ref
             GC.Collect();
             // 清理掉C#强ref后，顺便清理掉很多弱引用
-            LuaDLL.lua_gc(L, LuaGCOptions.LUA_GCCOLLECT, 0);
+            LuaDLL.lua_gc_unhook(L, LuaGCOptions.LUA_GCCOLLECT, 0);
 
             int oldTop = LuaDLL.lua_gettop(L);
             LuaDLL.lua_getglobal(L, "miku_handle_error");
@@ -613,7 +609,7 @@ namespace MikuLuaProfiler
             // 调用C# LuaTable LuaFunction WeakTable的析构 来清理掉lua的 ref
             GC.Collect();
             // 清理掉C#强ref后，顺便清理掉很多弱引用
-            LuaDLL.lua_gc(L, LuaGCOptions.LUA_GCCOLLECT, 0);
+            LuaDLL.lua_gc_unhook(L, LuaGCOptions.LUA_GCCOLLECT, 0);
 
 
             if (staticHistoryRef == -100)
@@ -675,8 +671,8 @@ namespace MikuLuaProfiler
             long result = 0;
             if (LuaProfiler.m_hasL)
             {
-                result = LuaDLL.lua_gc(luaState, LuaGCOptions.LUA_GCCOUNT, 0);
-                result = result * 1024 + LuaDLL.lua_gc(luaState, LuaGCOptions.LUA_GCCOUNTB, 0);
+                result = LuaDLL.lua_gc_unhook(luaState, LuaGCOptions.LUA_GCCOUNT, 0);
+                result = result * 1024 + LuaDLL.lua_gc_unhook(luaState, LuaGCOptions.LUA_GCCOUNTB, 0);
             }
             return result;
         }
