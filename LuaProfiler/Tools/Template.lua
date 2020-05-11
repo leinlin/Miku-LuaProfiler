@@ -20,7 +20,17 @@ local xx = function()
 end
 
 function()
+	if true then
+		return
+	end
+end
+
+function()
     return
+end
+
+function()
+    local a = function() return print("\u888fk")end
 end
 
 function()
