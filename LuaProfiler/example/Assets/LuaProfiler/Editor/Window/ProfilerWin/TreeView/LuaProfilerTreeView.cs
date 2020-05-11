@@ -441,6 +441,8 @@ namespace MikuLuaProfiler
             //NetWorkClient.ConnectServer("127.0.0.1", 23333);
 
             //LuaProfiler.SetSampleEnd(LoadRootSample);
+            showAlternatingRowBackgrounds = true;
+            showBorder = true;
             m_root = LuaProfilerTreeViewItem.Create(null, -1, null);
             needRebuild = true;
             multiColumnHeader.sortingChanged += (header) => { needRebuild = true; };

@@ -187,6 +187,11 @@ namespace MikuLuaProfiler
                     case (int)TK.RETURN:
                         int insertPos = lastPos - 1;
 
+                        if (lastStackToken == (int)TK.FUNCTION && tokens.Count == 1)
+                        {
+                            hasReturn = true;
+                        }
+
                         if (tokens.Count == 0)
                         {
                             needLastSample = false;
@@ -238,11 +243,6 @@ namespace MikuLuaProfiler
                                 }
                                 break;
                             }
-                        }
-
-                        if (lastStackToken != (int)TK.IF)
-                        {
-                            hasReturn = true;
                         }
                         break;
                     case (int)TK.END:
