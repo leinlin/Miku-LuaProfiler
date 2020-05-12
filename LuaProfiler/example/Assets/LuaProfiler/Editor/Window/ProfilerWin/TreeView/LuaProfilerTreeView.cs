@@ -397,7 +397,15 @@ namespace MikuLuaProfiler
         private float m_power = 0;
         private long m_catchLuaMemory = 0;
 
-        public bool needRebuild = true;
+        private bool _needRebuild = false;
+        public bool needRebuild {
+            get {
+                return _needRebuild;
+            }
+            set {
+                _needRebuild = value;
+            }
+        }
         public readonly HistoryCurve historyCurve = new HistoryCurve(1024);
         public readonly List<Sample> history = new List<Sample>(2160);
         public string startUrl = null;

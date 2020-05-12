@@ -806,7 +806,12 @@ namespace MikuLuaProfiler
         {
             if (m_TreeView == null) return;
             Rect rect = GUILayoutUtility.GetRect(0, 100000, 0, 100000);
-            m_TreeView.Reload();
+            rect.x += 4;
+            rect.width -= 4;
+            if (m_TreeView.needRebuild)
+            {
+                m_TreeView.Reload();
+            }
             m_TreeView.OnGUI(rect);
             sortColIndex = m_TreeView.multiColumnHeader.sortedColumnIndex;
             if (sortColIndex > 0)

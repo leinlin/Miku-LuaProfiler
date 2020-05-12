@@ -52,6 +52,7 @@ namespace MikuLuaProfiler
         private static readonly Stack<Sample> beginSampleMemoryStack = new Stack<Sample>();
         private static int m_currentFrame = 0;
         private static int m_gcFrame = 0;
+        private static long m_gcMemory = 0;
         public static int mainThreadId = -100;
         const long MaxB = 1024;
         const long MaxK = MaxB * 1024;
@@ -139,10 +140,13 @@ namespace MikuLuaProfiler
             try
             {
                 int frameCount = SampleData.frameCount;
-                if (frameCount - m_gcFrame >= 300)
+                long memoryCount = LuaLib.GetLuaMemory(luaState);
+                if (frameCount - m_gcFrame >= 300 && memoryCount >= m_gcMemory)
                 {
                     LuaDLL.lua_gc_unhook(luaState, LuaGCOptions.LUA_GCCOLLECT, 0);
+                    memoryCount = LuaLib.GetLuaMemory(luaState);
                     m_gcFrame = frameCount;
+                    m_gcMemory = memoryCount * 3 / 2;
                 }
 
                 if (m_currentFrame != frameCount)
@@ -151,7 +155,6 @@ namespace MikuLuaProfiler
                     m_currentFrame = frameCount;
                     PopAllSampleWhenLateUpdate(luaState);
                 }
-                long memoryCount = LuaLib.GetLuaMemory(luaState);
                 Sample sample = Sample.Create(getcurrentTime, (int)memoryCount, name);
                 sample.needShow = needShow;
                 beginSampleMemoryStack.Push(sample);
@@ -167,51 +170,6 @@ namespace MikuLuaProfiler
             while(beginSampleMemoryStack.Count > 0)
             {
                 EndSample(luaState);
-                /*
-                var item = beginSampleMemoryStack.Pop();
-                if (item.fahter == null)
-                {
-                    if (beginSampleMemoryStack.Count > 0)
-                    {
-                        long mono_gc = 0;
-                        long lua_gc = 0;
-                        long cost_time = 0;
-                        for (int i = 0, imax = item.childs.Count; i < imax; i++)
-                        {
-                            Sample c = item.childs[i];
-                            lua_gc += c.costLuaGC;
-                            mono_gc += c.costMonoGC;
-                            cost_time += c.costTime;
-                        }
-                        item.costLuaGC = (int)Math.Max(lua_gc, 0);
-                        item.costMonoGC = (int)Math.Max(mono_gc, 0);
-                        item.costTime = (int)cost_time;
-
-                        popChilds.Add(item);
-                    }
-                    else
-                    {
-                        item.costLuaGC = (int)LuaLib.GetLuaMemory(luaState) - item.currentLuaMemory;
-                        item.costTime = (int)(getcurrentTime - item.currentTime);
-                        item.costMonoGC = (int)(GC.GetTotalMemory(false) - item.currentMonoMemory);
-                        item.currentLuaMemory = (int)LuaLib.GetLuaMemory(luaState);
-                        for (int i = 0, imax = popChilds.Count; i < imax; i++)
-                        {
-                            popChilds[i].fahter = item;
-                        }
-                        popChilds.Clear();
-                        var setting = LuaDeepProfilerSetting.Instance;
-                        if (!setting.isLocal)
-                        {
-                            NetWorkClient.SendMessage(item);
-                        }
-                        else if (m_onReceiveSample != null)
-                        {
-                            m_onReceiveSample(item);
-                        }
-                    }
-                    //item.Restore();
-                }*/
             }
         }
         public static void EndSample(IntPtr luaState)
