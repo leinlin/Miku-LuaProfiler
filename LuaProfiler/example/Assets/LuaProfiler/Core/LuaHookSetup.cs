@@ -780,15 +780,18 @@ namespace MikuLuaProfiler
             LuaDLL.lua_pushstdcallcfunction(L, checkType);
             LuaDLL.lua_setglobal(L, "miku_check_type");
 
-            LuaDLL.lua_pushstdcallcfunction(L, handleError);
-            LuaDLL.lua_setglobal(L, "miku_handle_error");
-
             LuaDLL.lua_newtable(L);
             LuaDLL.lua_setglobal(L, "MikuLuaProfilerStrTb");
 
             LuaLib.DoString(L, get_ref_string);
             LuaLib.DoString(L, null_script);
             LuaLib.DoString(L, diff_script);
+        }
+
+        public static void RegisterError(IntPtr L)
+        {
+            LuaDLL.lua_pushstdcallcfunction(L, handleError);
+            LuaDLL.lua_setglobal(L, "miku_handle_error");
         }
 
 #region script

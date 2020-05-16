@@ -446,6 +446,7 @@ namespace MikuLuaProfiler
             s.childs.Clear();
             s.captureUrl = null;
             s._fullName = null;
+            s.needShow = false;
 
             return s;
         }

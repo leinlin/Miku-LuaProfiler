@@ -113,6 +113,7 @@ namespace MikuLuaProfiler
         private static LocalHook luaL_newstate_hook;
         private static LocalHook lua_close_hook;
         private static LocalHook lua_gc_hook;
+        private static LocalHook lua_call_hook;
         private static LocalHook lua_error_hook;
         private static LocalHook luaL_openlibs_hook;
         private static LocalHook luaL_ref_hook;
@@ -198,6 +199,10 @@ namespace MikuLuaProfiler
         public static lua_remove_fun lua_remove { get; private set; }
 
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        public delegate void lua_rotate_fun(IntPtr luaState, int idx, int n);
+        public static lua_rotate_fun lua_rotate { get; private set; }
+
+        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
         public delegate void lua_insert_fun(IntPtr luaState, int idx);
         public static lua_insert_fun lua_insert { get; private set; }
 
@@ -253,9 +258,17 @@ namespace MikuLuaProfiler
 
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
         public delegate int lua_pcallk_fun(IntPtr luaState, int nArgs, int nResults, int errfunc, int ctx, IntPtr k);
+        public static lua_pcallk_fun lua_pcallk { get; private set; }
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
         public delegate int lua_pcall_fun(IntPtr luaState, int nArgs, int nResults, int errfunc);
         public static lua_pcall_fun lua_pcall { get; private set; }
+
+        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        public delegate int lua_callk_fun(IntPtr luaState, int nArgs, int nResults, int ctx, IntPtr k);
+        public static lua_callk_fun lua_callk;
+        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        public delegate int lua_call_fun(IntPtr luaState, int nArgs, int nResults);
+        public static lua_call_fun lua_call;
 
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
         public delegate int lua_gc_fun(IntPtr luaState, LuaGCOptions what, int data);
@@ -505,6 +518,8 @@ end
                 LuaIndexes.LUA_REGISTRYINDEX = -1001000;
                 // starting with Lua 5.2, there is no longer a LUA_GLOBALSINDEX pseudo-index. Instead the global table is stored in the registry at LUA_RIDX_GLOBALS
                 LuaIndexes.LUA_GLOBALSINDEX = 2;
+                IntPtr handle = GetProcAddress(moduleName, "lua_rotate");
+                lua_rotate = (lua_rotate_fun)Marshal.GetDelegateForFunctionPointer(handle, typeof(lua_rotate_fun));
             }
             else if (GetProcAddress(moduleName, "lua_open") != IntPtr.Zero)
             {
@@ -567,9 +582,12 @@ end
                 IntPtr handle = GetProcAddress(moduleName, "lua_error");
                 lua_error = (lua_error_fun)Marshal.GetDelegateForFunctionPointer(handle, typeof(lua_error_fun));
 
+#if HOOK_LUA_ERROR
                 lua_error_fun luaFun = new lua_error_fun(lua_error_replace);
                 lua_error_hook = LocalHook.Create(handle, luaFun, null);
                 InstallHook(lua_error_hook);
+
+#endif
             }
 
             if (luaL_ref_hook == null)
@@ -739,6 +757,10 @@ end
                 {
                     lua_remove = (lua_remove_fun)Marshal.GetDelegateForFunctionPointer(handle, typeof(lua_remove_fun));
                 }
+                else
+                {
+                    lua_remove = lua_remove53;
+                }
             }
 
             {
@@ -746,6 +768,10 @@ end
                 if (handle != IntPtr.Zero)
                 {
                     lua_insert = (lua_insert_fun)Marshal.GetDelegateForFunctionPointer(handle, typeof(lua_insert_fun));
+                }
+                else 
+                {
+                    lua_insert = lua_insert53;
                 }
             }
 
@@ -758,7 +784,7 @@ end
             }
 
             {
-                if (LUA_VERSION == 520)
+                if (LUA_VERSION >= 520)
                 {
                     IntPtr handle = GetProcAddress(moduleName, "lua_tonumberx");
                     if (handle != IntPtr.Zero)
@@ -861,15 +887,15 @@ end
             }
 
             {
-                if (LUA_VERSION == 520)
+                if (LUA_VERSION >= 520)
                 {
                     IntPtr handle = GetProcAddress(moduleName, "lua_pcallk");
                     if (handle != IntPtr.Zero)
                     {
-                        var pcallkFun = (lua_pcallk_fun)Marshal.GetDelegateForFunctionPointer(handle, typeof(lua_pcallk_fun));
+                        lua_pcallk = (lua_pcallk_fun)Marshal.GetDelegateForFunctionPointer(handle, typeof(lua_pcallk_fun));
                         lua_pcall = (IntPtr luaState, int nArgs, int nResults, int errfunc) =>
                         {
-                            return pcallkFun(luaState, nArgs, nResults, errfunc, 0, IntPtr.Zero);
+                            return lua_pcallk(luaState, nArgs, nResults, errfunc, 0, IntPtr.Zero);
                         };
                     }
                 }
@@ -979,6 +1005,7 @@ end
                 IntPtr intPtr = luaL_newstate();
                 if (isHook)
                 {
+                    MikuLuaProfilerLuaProfilerWrap.RegisterError(intPtr);
                     LuaProfiler.mainL = intPtr;
                     MikuLuaProfilerLuaProfilerWrap.__Register(intPtr);
                 }
@@ -994,6 +1021,17 @@ end
             isHook = tmp;
 
             return ret;
+        }
+
+        public static void lua_remove53(IntPtr luaState, int idx)
+        {
+            lua_rotate(luaState, (idx), -1);
+            lua_pop(luaState, 1);
+        }
+
+        public static void lua_insert53(IntPtr luaState, int idx)
+        {
+            lua_rotate(luaState, (idx), 1);
         }
 
         public static int lua_error_replace(IntPtr luaState)
@@ -1064,6 +1102,44 @@ end
                 }
                 return luaL_loadbufferx(luaState, buff, size, name, mode);
             }
+        }
+
+        public static int lua_callk_replace(IntPtr luaState, int nArgs, int nResults, int ctx, IntPtr k)
+        {
+            int oldTop = lua_gettop(luaState) - nArgs - 1; //函数调用之前的栈顶索引
+            lua_getglobal(luaState, "miku_handle_error");
+            lua_insert(luaState, oldTop + 1);
+            int result = lua_pcallk(luaState, nArgs, nResults, oldTop + 1, ctx, k);
+            if (result == 0)
+            {
+                lua_remove(luaState, oldTop + 1);
+            }
+            else
+            {
+                lua_remove(luaState, oldTop + 1); //errorFunc 出栈
+                lua_pop(luaState, 1); //抛出异常
+            }
+
+            return result;
+        }
+
+        public static int lua_call_replace(IntPtr luaState, int nArgs, int nResults)
+        {
+            int oldTop = lua_gettop(luaState) - nArgs - 1; //函数调用之前的栈顶索引
+            lua_getglobal(luaState, "miku_handle_error");
+            lua_insert(luaState, oldTop + 1);
+            int result = lua_pcall(luaState, nArgs, nResults, oldTop + 1);
+            if (result == 0)
+            {
+                lua_remove(luaState, oldTop + 1);
+            }
+            else
+            {
+                lua_remove(luaState, oldTop + 1); //errorFunc 出栈
+                lua_pop(luaState, 1); //抛出异常
+            }
+
+            return result;
         }
 
         public static int luaL_loadbuffer_replace(IntPtr luaState, IntPtr buff, IntPtr size, string name)
