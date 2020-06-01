@@ -85,7 +85,7 @@ namespace MikuLuaProfiler
             System.Diagnostics.StackFrame sf = st.GetFrame(0);
             string path = sf.GetFileName();
 
-            path = path.Replace("Core\\LuaHookSetup.cs", "Plugins\\EasyHook64.dll");
+            path = path.Replace("Core\\LuaHookSetup.cs", "Plugins\\EasyHook64.bin");
             IntPtr ptr = LoadLibrary(path);
             if (ptr == null)
             {
