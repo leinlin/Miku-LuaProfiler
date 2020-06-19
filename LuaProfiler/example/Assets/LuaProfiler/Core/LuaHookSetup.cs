@@ -81,15 +81,24 @@ namespace MikuLuaProfiler
             if (!Application.isPlaying) return;
 #endif
 #if UNITY_EDITOR_WIN
-            System.Diagnostics.StackTrace st = new System.Diagnostics.StackTrace(true);
-            System.Diagnostics.StackFrame sf = st.GetFrame(0);
-            string path = sf.GetFileName();
-
-            path = path.Replace("Core\\LuaHookSetup.cs", "Plugins\\EasyHook64.bin");
-            IntPtr ptr = LoadLibrary(path);
-            if (ptr == null)
+            string path = null;
+            var files = System.IO.Directory.GetFiles(Application.dataPath, "EasyHook64.bin", System.IO.SearchOption.AllDirectories);
+            if (files.Length > 0)
             {
-                Debug.LogError("dont't move dll file to other place");
+                path = files[0];
+            }
+            if (!string.IsNullOrEmpty(path))
+            {
+                IntPtr ptr = LoadLibrary(path);
+                if (ptr == null)
+                {
+                    Debug.LogError("dont't move dll file to other place");
+                    return;
+                }
+            }
+            else 
+            {
+                Debug.LogError("no EasyHook64.bin");
                 return;
             }
 #endif
