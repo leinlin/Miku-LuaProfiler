@@ -1088,6 +1088,10 @@ end
             {
                 if (isHook)
                 {
+                    if (name == null)
+                    {
+                        name = "chunk";
+                    }
                     byte[] buffer = new byte[(int)size];
                     Marshal.Copy(buff, buffer, 0, buffer.Length);
 
