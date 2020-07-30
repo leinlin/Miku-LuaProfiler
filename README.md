@@ -10,9 +10,23 @@
 ### 使用说明
 在Windows菜单下也有个LuaProfiler选项，点击后即可打开窗口。开启DeepLua,运行游戏就能看到对应的数据。
 
+### 数据说明
+| Name                    | Descriptions                                                                                              |
+| ----------------------- | -------------------------------------------------------------------------------------------------------   |
+| `Overview`              | 函数名称                                                                                                  |
+| `totalLuaMemory`        | 此函数生成的所有Lua GC的总和                                                                              |
+| `self`                  | 函数本身产生的GC量                                                                                        |
+| `totalMonoMemory`       | 此函数生成的所有Mono GC的总和                                                                             |
+| `self`                  | 函数本身产生的GC量                                                                                        |
+| `currentTime`           | 函数在当前帧中运行所需的时间                                                                              |
+| `averageTime`           | 计算在函数上花费的时间的平均值                                                                            |
+| `totalTime`             | 此功能消耗的所有时间                                                                                      |
+| `LuaGC`                 | 由当前帧生成的Lua GC                                                                                      |
+| `MonoGC`                | 由当前帧生成的Mono GC                                                                                     |
+| `totalCalls`            | 游戏开始后此功能的运行次数                                                                                |
+| `Calls`                 | 函数当前帧的执行次数                                                                                      |
+
 ### FAQ
-运行起来提示找不到EasyHook64.dll
->从文件夹下找到EasyHook64.dll,Copy出来放到Unity编辑器exe同目录下即可。
 
 运行起来后totalLuaMemory为负数
 >底层统计lua内存申请采用记录lua虚拟机总量来记录对应的GC，如果函数运行的中间发生了GC就会导致内存差值为负数，你可以把自动GC关闭掉后进行统计。
