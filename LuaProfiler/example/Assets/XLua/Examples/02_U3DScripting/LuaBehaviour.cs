@@ -41,6 +41,8 @@ namespace XLuaTest
         void Awake()
         {
             luaEnv = new LuaEnv();
+            Debug.Log(XLua.LuaDLL.Lua.lua_tonumber(luaEnv.L, 0));
+
             scriptEnv = luaEnv.NewTable();
 
             // 为每个脚本设置一个独立的环境，可一定程度上防止脚本间全局变量、函数冲突

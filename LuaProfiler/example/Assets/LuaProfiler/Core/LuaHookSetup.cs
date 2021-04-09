@@ -77,6 +77,8 @@ namespace MikuLuaProfiler
 #endif
         public static void OnStartGame()
         {
+			LuaDLL.TestNewHook();
+			return;
 #if UNITY_EDITOR
             if (!Application.isPlaying) return;
 #endif
