@@ -937,7 +937,29 @@ end
             m_hooked = true;
         }
 
-        public static void HookLoadLibrary()
+        public static double lua_tonumber_replace(IntPtr luaState, int idx) 
+        {
+            UnityEngine.Debug.Log("fdkfdkjhf");
+            return lua_tonumber(luaState, idx);//0;// 
+        }
+
+        public static void TestNewHook()
+		{
+			string moduleName = CheckHasLuaDLL();
+
+			IntPtr handle = GetProcAddress(moduleName, "lua_tonumber");
+            lua_tonumber_fun luaFun = new lua_tonumber_fun(lua_tonumber_replace);
+
+            NativeHooker hooker = new NativeHooker(handle, Marshal.GetFunctionPointerForDelegate(luaFun));
+			hooker.Install();
+
+			lua_tonumber = (lua_tonumber_fun)hooker.GetProxyFun(typeof(lua_tonumber_fun));
+
+			//luaL_newstate_hook = LocalHook.Create(handle, luaFun, null);
+			//InstallHook(luaL_newstate_hook);
+		}
+
+		public static void HookLoadLibrary()
         {
             IntPtr handle = GetProcAddress("KernelBase.dll", "LoadLibraryExW");
             if (handle == IntPtr.Zero)
@@ -1000,6 +1022,7 @@ end
 
         public static IntPtr luaL_newstate_replace()
         {
+			UnityEngine.Debug.Log("test newstate success");
             lock (m_Lock)
             {
                 IntPtr intPtr = luaL_newstate();
@@ -1230,6 +1253,5 @@ end
         }
     }
 #endif
-      
       
       
