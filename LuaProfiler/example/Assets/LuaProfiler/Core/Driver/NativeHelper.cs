@@ -243,7 +243,11 @@ namespace MikuLuaProfiler
 				}
 
 				uint length = LDasm.ldasm((void*)pOld, data, is64);
-				pOld = (byte*)((ulong)pOld + length);
+                pOld = (byte*)((ulong)pOld + length);
+				if (OpcodeLen == 0)
+				{
+					pRes += length;
+				}
 			}
 
 
