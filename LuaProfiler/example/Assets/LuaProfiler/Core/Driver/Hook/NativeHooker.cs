@@ -149,7 +149,7 @@ namespace MikuLuaProfiler
 
 			int jumpBufferSize = 0;
 			NativeHelper.FixedProxyBuff(_targetPtr, requireSize, _proxyBuff, out jumpBufferSize);
-			long addrOffset = (_targetPtr.ToInt64() + requireSize) - (_proxyBuff.ToInt64() + jumpBufferSize + requireSize + 5);
+			long addrOffset = (_targetPtr.ToInt64() + requireSize) - (_proxyBuff.ToInt64() + jumpBufferSize + 5);
 			if (addrOffset != (int)addrOffset)
 			{
 				throw new Exception("no match address");
@@ -160,7 +160,7 @@ namespace MikuLuaProfiler
 				*((int*)p) = (int)addrOffset;
 			}
 
-			pTarget = (byte*)_proxyBuff.ToPointer() + jumpBufferSize + requireSize;
+			pTarget = (byte*)_proxyBuff.ToPointer() + jumpBufferSize;
 			if (pTarget != null)
 			{
 				for (int i = 0, imax = Jumper.Length; i < imax; i++)
