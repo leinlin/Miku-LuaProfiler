@@ -132,7 +132,7 @@ namespace MikuLuaProfiler
 
 		public static unsafe void FixedProxyBuff(IntPtr InEntryPoint, int InEPSize, IntPtr Buffer, out int OutRelocSize)
 		{
-			OutRelocSize = 0;
+			OutRelocSize = InEPSize;
 
 			byte b1 = 0;
 			byte b2 = 0;
@@ -229,17 +229,6 @@ namespace MikuLuaProfiler
 							}
 							break;
 					}
-
-					/* such conversions shouldnt be necessary in general...
-					   maybe the method was already hooked or uses some hook protection or is just
-					   bad programmed. EasyHook is capable of hooking the same method
-					   many times simultanously. Even if other (unknown) hook libraries are hooking methods that
-					   are already hooked by EasyHook. Only if EasyHook hooks methods that are already
-					   hooked with other libraries there can be problems if the other libraries are not
-					   capable of such a "bad" circumstance.
-					*/
-
-					OutRelocSize = (int)((ulong)pRes - (ulong)Buffer);
 				}
 
 				uint length = LDasm.ldasm((void*)pOld, data, is64);
@@ -250,7 +239,7 @@ namespace MikuLuaProfiler
 				}
 			}
 
-
+			OutRelocSize = (int)((ulong)pRes - (ulong)Buffer);
 
 		}
 
