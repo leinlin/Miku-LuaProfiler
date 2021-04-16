@@ -238,6 +238,11 @@ namespace MikuLuaProfiler
                 if (operateDict.TryGetValue(Str.Length, out op))
                 {
                     sbCache.Append(op.value);
+                    if (op.sibling != null)
+                    {
+                        op = op.sibling;
+                        sbCache.Append(op.value);
+                    }
                 }
 
                 string result = sbCache.ToString();

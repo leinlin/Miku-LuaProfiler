@@ -42,13 +42,14 @@ namespace MikuLuaProfiler
     {
         public static readonly string LOCAL_PROFILER =
             "local BeginMikuSample = MikuLuaProfiler.LuaProfiler.BeginSample "
-            + "local EndMikuSample = MikuLuaProfiler.LuaProfiler.EndSample " + "local miku_unpack_return_value = miku_unpack_return_value ";
+            + "local EndMikuSample = MikuLuaProfiler.LuaProfiler.EndSample " + "local miku_unpack_return_value = miku_unpack_return_value local MikuMainChunkFun = function(...) ";
         #region parse
         public static string InsertSample(string value, string name)
         {
             LLex l = new LLex(new StringLoadInfo(value), name);
             string sampleStr = string.Format("{0}BeginMikuSample(\"[lua]:require {1},{1}&line:1\")", LOCAL_PROFILER, name);
             l.InsertString(0, sampleStr);
+
             int lastPos = 0;
             int nextPos = l.pos;
             l.Next();
@@ -58,6 +59,7 @@ namespace MikuLuaProfiler
             nextPos = l.pos;
 
             InsertSample(l, ref lastPos, ref nextPos, tokenType, false);
+            l.InsertString(l.Length, "\n end return MikuMainChunkFun(...)");
 
             return l.code;
         }
