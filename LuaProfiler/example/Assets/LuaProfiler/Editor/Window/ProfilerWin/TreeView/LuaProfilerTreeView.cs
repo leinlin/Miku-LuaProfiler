@@ -911,6 +911,7 @@ namespace MikuLuaProfiler
 
         public int GetNextFrame(int start, bool isChange)
         {
+            start = Math.Max(1, Math.Min(start, history.Count - 1));
             int ret = start;
             int frameCount = history[start].frameCount;
             for (int i = start + 1, imax = history.Count; i < imax; i++)
@@ -930,6 +931,9 @@ namespace MikuLuaProfiler
 
         public int GetPreFrame(int start, bool isChange)
         {
+            if (history.Count <= 0) return 0;
+
+            start = Math.Max(1, Math.Min(start, history.Count - 1));
             int ret = start;
             int frameCount = history[start].frameCount;
             for (int i = start - 1; i >= 0; i--)
@@ -950,7 +954,10 @@ namespace MikuLuaProfiler
 
         public int GetNextProgramFrame(int start)
         {
+            if (history.Count <= 0) return 0;
+            start = Math.Max(1, Math.Min(start, history.Count - 1));
             int ret = start + 1;
+            if (ret >= history.Count) return history.Count - 1;
 
             var setting = LuaDeepProfilerSetting.Instance;
             for (int i = start + 1, imax = history.Count; i < imax; i++)
