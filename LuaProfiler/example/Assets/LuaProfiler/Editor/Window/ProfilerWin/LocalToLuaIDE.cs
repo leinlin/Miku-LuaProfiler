@@ -41,7 +41,7 @@ using UnityEditor;
 using UnityEngine;
 
 namespace MikuLuaProfiler {
-    public class LocalToLuaIDE : Editor
+    public class LocalToLuaIDE
     {
 
 #if UNITY_EDITOR_WIN
