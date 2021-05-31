@@ -1049,6 +1049,14 @@ end
                 {
                     return lua_gc(luaState, what, data);
                 }
+                else if (what == LuaGCOptions.LUA_GCCOUNT)
+                {
+                    return lua_gc(luaState, what, data);
+                }
+                else if (what == LuaGCOptions.LUA_GCCOUNTB)
+                {
+                    return lua_gc(luaState, what, data);
+                }
                 return 0;
             }
         }
