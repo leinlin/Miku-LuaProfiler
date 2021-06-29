@@ -805,6 +805,9 @@ namespace MikuLuaProfiler
 
 #region script
         const string get_ref_string = @"
+package.loaded['MikuLuaProfiler'] = MikuLuaProfiler
+package.loaded['miku_unpack_return_value'] = miku_unpack_return_value
+
 local weak_meta_table = {__mode = 'k'}
 local infoTb = {}
 setmetatable(infoTb, weak_meta_table)

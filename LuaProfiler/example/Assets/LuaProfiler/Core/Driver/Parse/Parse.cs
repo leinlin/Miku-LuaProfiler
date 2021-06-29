@@ -41,8 +41,8 @@ namespace MikuLuaProfiler
     public static class Parse
     {
         public static readonly string LOCAL_PROFILER =
-            "local BeginMikuSample = rawget(_G, 'MikuLuaProfiler').LuaProfiler.BeginSample "
-            + "local EndMikuSample = rawget(_G, 'MikuLuaProfiler').LuaProfiler.EndSample " + "local miku_unpack_return_value = rawget(_G, 'miku_unpack_return_value') local MikuMainChunkFun = function(...) ";
+            "local BeginMikuSample = require('MikuLuaProfiler').LuaProfiler.BeginSample "
+            + "local EndMikuSample = require('MikuLuaProfiler').LuaProfiler.EndSample " + "local miku_unpack_return_value = require('miku_unpack_return_value') local MikuMainChunkFun = function(...) ";
         #region parse
         public static string InsertSample(string value, string name)
         {
