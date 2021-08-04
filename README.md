@@ -28,6 +28,16 @@
 
 ### FAQ
 
+关于XLua demo跑不起来的问题
+> 把Demo里面LuaBehaviour 中 internal static LuaEnv luaEnv = new LuaEnv()的赋值改到Awake里面
+
+关于自定义profiler点
+```
+MikuLuaProfiler.LuaProfiler.BeginSampleCustom("profiler name")
+-- your code
+MikuLuaProfiler.LuaProfiler.EndSampleCustom()
+```
+
 运行起来后totalLuaMemory为负数
 >底层统计lua内存申请采用记录lua虚拟机总量来记录对应的GC，如果函数运行的中间发生了GC就会导致内存差值为负数，你可以把自动GC关闭掉后进行统计。
 
