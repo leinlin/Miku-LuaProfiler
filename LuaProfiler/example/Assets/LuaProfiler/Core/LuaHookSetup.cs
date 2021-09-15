@@ -296,9 +296,6 @@ namespace MikuLuaProfiler
 
             string value = "";
             string hookedValue = "";
-
-            string fileName = name.Replace(".lua", "");
-            fileName = fileName.Replace("@", "").Replace('.', '/').Replace('\\', '/');
             // utf-8
             if (buff[0] == 239 && buff[1] == 187 && buff[2] == 191)
             {
@@ -307,6 +304,12 @@ namespace MikuLuaProfiler
             else
             {
                 value = Encoding.UTF8.GetString(buff);
+            }
+            string fileName = name.Replace(".lua", "");
+            fileName = fileName.Replace("@", "").Replace('.', '/').Replace('\\', '/');
+            if (fileName == value)
+            {
+                fileName = "chunk";
             }
             hookedValue = Parse.InsertSample(value, fileName);
             buff = Encoding.UTF8.GetBytes(hookedValue);

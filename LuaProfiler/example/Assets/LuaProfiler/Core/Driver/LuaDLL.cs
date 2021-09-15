@@ -314,6 +314,10 @@ namespace MikuLuaProfiler
         {
             return lua_type(luaState, n) == LuaTypes.LUA_TTABLE;
         }
+        public static bool lua_isuserdata(IntPtr luaState, int n)
+        {
+            return lua_type(luaState, n) == LuaTypes.LUA_TUSERDATA;
+        }
 
         public static void luaL_initlibs(IntPtr luaState)
         {
