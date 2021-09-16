@@ -150,7 +150,7 @@ namespace MikuLuaProfiler
                     }
                     memoryCount = LuaLib.GetLuaMemory(luaState);
                     m_gcFrame = frameCount;
-                    m_gcMemory = memoryCount * 3 / 2;
+                    m_gcMemory = (long)(memoryCount * 1.2f);
                 }
 
                 if (m_currentFrame != frameCount)
