@@ -148,20 +148,29 @@ namespace MikuLuaProfiler
             }
         }
 
-        public string assMd5
+        public string GetAssMD5ByPath(string path)
         {
-            get
+            var index = m_assMd5Key.IndexOf(path);
+            if (index < 0)
             {
-                return this.m_assMd5;
+                return "";
             }
-            set
+            return m_assMd5[index];
+        }
+
+        public void SetAssMD5ByPath(string path, string value)
+        {
+            var index = m_assMd5Key.IndexOf(path);
+            if (index < 0)
             {
-                if (!(this.m_assMd5 == value))
-                {
-                    this.m_assMd5 = value;
-                    EditorUtility.SetDirty(this);
-                }
+                m_assMd5Key.Add(path);
+                m_assMd5.Add(value);
             }
+            else
+            {
+                m_assMd5[index] = value;
+            }
+            EditorUtility.SetDirty(this);
         }
 
         public bool isInited
@@ -342,7 +351,8 @@ namespace MikuLuaProfiler
         public int m_captureLuaGC = 51200;
         public bool m_isNeedCapture = false;
         public bool m_discardInvalid = true;
-        public string m_assMd5 = "";
+        public List<string> m_assMd5Key = new List<string>();
+        public List<string> m_assMd5 = new List<string>();
         public bool m_isInited = false;
         public int m_captureMonoGC = 51200;
         public int m_captureFrameRate = 30;

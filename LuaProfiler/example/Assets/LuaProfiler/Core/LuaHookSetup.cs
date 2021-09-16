@@ -1183,8 +1183,19 @@ end";
         [MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]
         static int HandleError(IntPtr L)
         {
+            int oldTop = LuaDLL.lua_gettop(L);
+            LuaDLL.lua_getglobal(L, "debug");
+            LuaDLL.lua_getfield(L, -1, "traceback");
+            LuaDLL.lua_remove(L, -2);
+            LuaDLL.lua_pushvalue(L, 1);
+            LuaDLL.lua_pushnumber(L, 2);
+            LuaDLL.lua_call(L, 2, 1);
+            string debugInfo = LuaDLL.lua_tostring(L, -1);
+
             string error = LuaHook.GetRefString(L, 1);
-            Debug.LogError(error);
+            LuaDLL.lua_settop(L, oldTop);
+
+            Debug.LogError(string.Format("{0}\n{1}", error, debugInfo));
             return 0;
         }
 

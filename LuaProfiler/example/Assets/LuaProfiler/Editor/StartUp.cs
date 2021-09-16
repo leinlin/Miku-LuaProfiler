@@ -67,16 +67,48 @@ namespace MikuLuaProfiler
         #region try finally
         public static void InjectAllMethods()
         {
-            if (EditorApplication.isCompiling)
+            if (EditorApplication.isCompiling) 
             {
                 Debug.LogError("is compiling");
                 return;
             }
 
-            var projectPath = System.Reflection.Assembly.Load("Assembly-CSharp").ManifestModule.FullyQualifiedName;
-            var profilerPath = (typeof(LuaProfiler).Assembly).ManifestModule.FullyQualifiedName;
+            //var projectPath = System.Reflection.Assembly.Load("Assembly-CSharp").ManifestModule.FullyQualifiedName;
+            var ass = typeof(LuaProfiler).Assembly;
+            var profilerPath = ass.ManifestModule.FullyQualifiedName;
+            var paths = FindReferenceAssembly(ass.GetName().Name);
+            if (!paths.Contains(profilerPath))
+            {
+                paths.Add(profilerPath);
+            }
+            foreach (var path in paths)
+            {
+                InjectAllMethods(path, profilerPath);
+            }
+        }
 
-            InjectAllMethods(projectPath, profilerPath);
+        public static List<string> FindReferenceAssembly(string name)
+        {
+            List<string> result = new List<string>();
+
+            var asms = AppDomain.CurrentDomain.GetAssemblies(); 
+            foreach (var item in asms)
+            {
+                var refs = item.GetReferencedAssemblies();
+                foreach (var refAss in refs)
+                {
+                    if (refAss.FullName.Contains(name))
+                    {
+                        string path = item.ManifestModule.FullyQualifiedName;
+                        if (!result.Contains(path) && !path.Contains("Editor"))
+                        {
+                            result.Add(path);
+                        }
+                        break;
+                    }
+                }
+            }
+            return result;
         }
 
         private static bool IsMonoBehavior(TypeDefinition td)
@@ -104,7 +136,7 @@ namespace MikuLuaProfiler
         {
             string md5 = null;
             md5 = new FileInfo(injectPath).LastWriteTimeUtc.Ticks.ToString();
-            if (md5 == LuaDeepProfilerSetting.Instance.assMd5) return;
+            if (md5 == LuaDeepProfilerSetting.Instance.GetAssMD5ByPath(injectPath)) return;
 
             AssemblyDefinition injectAss = LoadAssembly(injectPath);
             AssemblyDefinition profilerAss = null;
@@ -133,6 +165,10 @@ namespace MikuLuaProfiler
             foreach (var type in injectAss.MainModule.Types)
             {
                 if (type.FullName.Contains("MikuLuaProfiler"))
+                {
+                    continue;
+                }
+                if (type.FullName.Contains("XLua."))
                 {
                     continue;
                 }
@@ -181,7 +217,7 @@ namespace MikuLuaProfiler
             }
 
             WriteAssembly(injectPath, injectAss);
-            LuaDeepProfilerSetting.Instance.assMd5 = new FileInfo(injectPath).LastWriteTimeUtc.Ticks.ToString();
+            LuaDeepProfilerSetting.Instance.SetAssMD5ByPath(injectPath, new FileInfo(injectPath).LastWriteTimeUtc.Ticks.ToString());
         }
 
         private static string GetReflectionName(this TypeReference type)

@@ -137,13 +137,17 @@ namespace MikuLuaProfiler
             {
                 return;
             }
+
             try
             {
                 int frameCount = SampleData.frameCount;
                 long memoryCount = LuaLib.GetLuaMemory(luaState);
                 if (frameCount - m_gcFrame >= 300 && memoryCount >= m_gcMemory)
                 {
-                    LuaDLL.lua_gc_unhook(luaState, LuaGCOptions.LUA_GCCOLLECT, 0);
+                    if (luaState != IntPtr.Zero)
+                    {
+                        LuaDLL.lua_gc_unhook(luaState, LuaGCOptions.LUA_GCCOLLECT, 0);
+                    }
                     memoryCount = LuaLib.GetLuaMemory(luaState);
                     m_gcFrame = frameCount;
                     m_gcMemory = memoryCount * 3 / 2;
@@ -151,7 +155,10 @@ namespace MikuLuaProfiler
 
                 if (m_currentFrame != frameCount)
                 {
-                    LuaDLL.lua_gc_unhook(luaState, LuaGCOptions.LUA_GCSTOP, 0);
+                    if (luaState != IntPtr.Zero)
+                    {
+                        LuaDLL.lua_gc_unhook(luaState, LuaGCOptions.LUA_GCSTOP, 0);
+                    }
                     m_currentFrame = frameCount;
                     PopAllSampleWhenLateUpdate(luaState);
                 }
@@ -164,7 +171,7 @@ namespace MikuLuaProfiler
                 Debug.LogError(e);
             }
         }
-        private static List<Sample> popChilds = new List<Sample>();
+
         public static void PopAllSampleWhenLateUpdate(IntPtr luaState)
         {
             while(beginSampleMemoryStack.Count > 0)

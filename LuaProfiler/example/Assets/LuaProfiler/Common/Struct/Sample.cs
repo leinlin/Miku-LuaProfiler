@@ -391,7 +391,7 @@ namespace MikuLuaProfiler
                     for (int i = 0,imax = childList.Count;i<imax;i++)
                     {
                         var item = childList[i];
-                        if ((object)(item.name) == (object)(name))
+                        if (item.name == name)
                         {
                             needAdd = false;
                             item.AddSample(this);
@@ -419,7 +419,7 @@ namespace MikuLuaProfiler
         #region pool
         private static string capturePath = "";
         private static Dictionary<object, Dictionary<object, string>> m_fullNamePool = new Dictionary<object, Dictionary<object, string>>();
-        private static ObjectPool<Sample> samplePool = new ObjectPool<Sample>(4096);
+        public static ObjectPool<Sample> samplePool = new ObjectPool<Sample>(8192);
         public static Sample Create()
         {
             Sample s = samplePool.GetObject();
