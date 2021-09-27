@@ -306,11 +306,11 @@ namespace MikuLuaProfiler
                 value = Encoding.UTF8.GetString(buff);
             }
             string fileName = name.Replace(".lua", "");
-            fileName = fileName.Replace("@", "").Replace('.', '/').Replace('\\', '/');
-            if (fileName == value)
+            if (name == value)
             {
                 fileName = "chunk";
             }
+            fileName = fileName.Replace("@", "").Replace('.', '/').Replace('\\', '/');
             hookedValue = Parse.InsertSample(value, fileName);
             buff = Encoding.UTF8.GetBytes(hookedValue);
             return buff;
