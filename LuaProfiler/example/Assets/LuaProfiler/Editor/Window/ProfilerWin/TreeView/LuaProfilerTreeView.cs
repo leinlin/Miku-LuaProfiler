@@ -500,7 +500,7 @@ namespace MikuLuaProfiler
                     sortingArrowAlignment = TextAlignment.Right,
                     width = 300,
                     minWidth = 200,
-                    maxWidth = 1000,
+                    maxWidth = 10000,
                     autoResize = true,
                     canSort = false,
                     allowToggleVisibility = true
