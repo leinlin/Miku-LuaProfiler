@@ -33,9 +33,10 @@
 
 关于自定义profiler点
 ```
-MikuLuaProfiler.LuaProfiler.BeginSampleCustom("profiler name")
+local LuaProfiler = require('MikuLuaProfiler').LuaProfiler
+LuaProfiler.BeginSampleCustom("profiler name")
 -- your code
-MikuLuaProfiler.LuaProfiler.EndSampleCustom()
+LuaProfiler.EndSampleCustom()
 ```
 
 运行起来后totalLuaMemory为负数
