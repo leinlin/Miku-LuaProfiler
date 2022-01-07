@@ -90,7 +90,7 @@ namespace MikuLuaProfiler
             if (!string.IsNullOrEmpty(path))
             {
                 IntPtr ptr = LoadLibrary(path);
-                if (ptr == null)
+                if (ptr == IntPtr.Zero)
                 {
                     Debug.LogError("dont't move dll file to other place");
                     return;
@@ -338,17 +338,8 @@ namespace MikuLuaProfiler
         {
             return stringDict.TryGetValue(p.ToInt64(), out result);
         }
-        public static void RefString(IntPtr strPoint, int index, object s, IntPtr L)
+        public static void RefString(IntPtr strPoint, object s)
         {
-            int oldTop = LuaDLL.lua_gettop(L);
-            //把字符串ref了之后就不GC了
-            LuaDLL.lua_getglobal(L, "MikuLuaProfilerStrTb");
-            int len = LuaDLL.lua_objlen(L, -1);
-            LuaDLL.lua_pushnumber(L, len + 1);
-            LuaDLL.lua_pushvalue(L, index);
-            LuaDLL.lua_rawset(L, -3);
-
-            LuaDLL.lua_settop(L, oldTop);
             stringDict[(long)strPoint] = s;
         }
         public static string GetRefString(IntPtr L, int index)
@@ -367,7 +358,7 @@ namespace MikuLuaProfiler
                 {
                     text = "nil";
                 }
-                RefString(intPtr, index, text, L);
+                RefString(intPtr, text);
             }
             return (string)text;
         }
@@ -791,9 +782,6 @@ namespace MikuLuaProfiler
 
             LuaDLL.lua_pushstdcallcfunction(L, checkType);
             LuaDLL.lua_setglobal(L, "miku_check_type");
-
-            LuaDLL.lua_newtable(L);
-            LuaDLL.lua_setglobal(L, "MikuLuaProfilerStrTb");
 
             LuaLib.DoString(L, get_ref_string);
             LuaLib.DoString(L, null_script);
