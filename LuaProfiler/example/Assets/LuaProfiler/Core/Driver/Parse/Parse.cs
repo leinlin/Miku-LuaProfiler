@@ -43,7 +43,7 @@ namespace MikuLuaProfiler
         // MikuSample = {BeginMikuSample, EndMikuSample, miku_unpack_return_value}
         public static readonly string LOCAL_PROFILER =
             "local MikuSample = {rawget(_G, 'MikuLuaProfiler').LuaProfiler.BeginSample, rawget(_G, 'MikuLuaProfiler').LuaProfiler.EndSample, rawget(_G, 'miku_unpack_return_value')}"
-            + " local MikuMainChunkFun = function(...) ";
+            + " return (function(...) ";
         #region parse
         public static string InsertSample(string value, string name)
         {
@@ -60,7 +60,7 @@ namespace MikuLuaProfiler
             nextPos = l.pos;
 
             InsertSample(l, ref lastPos, ref nextPos, tokenType, false);
-            l.InsertString(l.Length, "\n end return MikuMainChunkFun(...)");
+            l.InsertString(l.Length, "\n end)(...)");
 
             return l.code;
         }
