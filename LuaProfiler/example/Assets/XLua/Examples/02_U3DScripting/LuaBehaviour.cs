@@ -41,7 +41,6 @@ namespace XLuaTest
         void Awake()
         {
             luaEnv = new LuaEnv();
-            Debug.Log(XLua.LuaDLL.Lua.lua_tonumber(luaEnv.L, 0));
 
             scriptEnv = luaEnv.NewTable();
 

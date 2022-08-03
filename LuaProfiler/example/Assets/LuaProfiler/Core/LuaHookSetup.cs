@@ -77,32 +77,8 @@ namespace MikuLuaProfiler
 #endif
         public static void OnStartGame()
         {
-			LuaDLL.TestNewHook();
-			return;
 #if UNITY_EDITOR
             if (!Application.isPlaying) return;
-#endif
-#if UNITY_EDITOR_WIN
-            string path = null;
-            var files = System.IO.Directory.GetFiles(Application.dataPath, "EasyHook64.bin", System.IO.SearchOption.AllDirectories);
-            if (files.Length > 0)
-            {
-                path = files[0];
-            }
-            if (!string.IsNullOrEmpty(path))
-            {
-                IntPtr ptr = LoadLibrary(path);
-                if (ptr == IntPtr.Zero)
-                {
-                    Debug.LogError("dont't move dll file to other place");
-                    return;
-                }
-            }
-            else 
-            {
-                Debug.LogError("no EasyHook64.bin");
-                return;
-            }
 #endif
             if (isInite) return;
 
@@ -200,7 +176,7 @@ namespace MikuLuaProfiler
             NetWorkClient.Close();
 #endif
         }
-
+        
 #if UNITY_EDITOR
         int desotryCount = 0;
         private void WaitDestory()
@@ -213,6 +189,7 @@ namespace MikuLuaProfiler
                 {
                     LuaDLL.lua_close(LuaProfiler.mainL);
                 }
+                LuaDLL.Uninstall();
                 LuaProfiler.mainL = IntPtr.Zero;
                 NetWorkClient.Close();
                 desotryCount = 0;
