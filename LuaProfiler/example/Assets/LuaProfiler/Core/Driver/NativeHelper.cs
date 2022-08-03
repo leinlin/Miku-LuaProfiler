@@ -69,6 +69,22 @@ namespace MikuLuaProfiler
 		public const uint PAGE_EXECUTE_READWRITE = 0x40;
 		public const uint PAGE_EXECUTE_WRITECOPY = 0x80;
 
+		[DllImport("kernel32.dll", CharSet = CharSet.Unicode)]
+		public static extern IntPtr GetModuleHandle(string InPath);
+		
+		[DllImport("kernel32.dll", CharSet = CharSet.Ansi)]
+		public static extern IntPtr GetProcAddress(IntPtr InModule, string InProcName);
+
+		public static IntPtr GetProcAddress(string InPath, string InProcName)
+		{
+			var ptr = GetModuleHandle(InPath);
+			if (ptr != IntPtr.Zero)
+			{
+				return GetProcAddress(ptr, InProcName);
+			}
+
+			return IntPtr.Zero;
+		}
 
 		[DllImport("kernel32.dll", SetLastError = true)]
 		public static extern void GetSystemInfo(ref SYSTEM_INFO lpSystemInfo);
