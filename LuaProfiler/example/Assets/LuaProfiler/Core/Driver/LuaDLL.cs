@@ -477,8 +477,6 @@ end
         private static bool isBinding = false;
         public static void BindEasyHook()
         {
-
-
             lock (m_Lock)
             {
                 if (m_hooked) return;
@@ -565,15 +563,15 @@ end
                     lua_gc_hook = hooker;
                 }
 
-                if (lua_error_hook == null)
-                {
-                    IntPtr handle = GetProcAddress(moduleName, "lua_error");
-                    lua_error_fun luaFun = new lua_error_fun(lua_error_replace);
-                    NativeHooker hooker = new NativeHooker(handle, Marshal.GetFunctionPointerForDelegate(luaFun));
-                    hooker.Install();
-                    lua_error = (lua_error_fun)hooker.GetProxyFun(typeof(lua_error_fun));
-                    lua_error_hook = hooker;
-                }
+                // if (lua_error_hook == null)
+                // {
+                //     IntPtr handle = GetProcAddress(moduleName, "lua_error");
+                //     lua_error_fun luaFun = new lua_error_fun(lua_error_replace);
+                //     NativeHooker hooker = new NativeHooker(handle, Marshal.GetFunctionPointerForDelegate(luaFun));
+                //     hooker.Install();
+                //     lua_error = (lua_error_fun)hooker.GetProxyFun(typeof(lua_error_fun));
+                //     lua_error_hook = hooker;
+                // }
 
                 if (luaL_ref_hook == null)
                 {
@@ -917,6 +915,7 @@ end
                 isHook = true;
                 m_hooked = true;
                 isBinding = false;
+                load_dll_hook.Uninstall();
             }
         }
 

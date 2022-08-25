@@ -199,6 +199,13 @@ namespace MikuLuaProfiler
                         } 
                     }
 
+                    if (item.DeclaringType.Namespace == ("XLua") ||
+                        item.DeclaringType.Namespace == ("XLua.LuaDLL")
+                        )
+                    {
+                        continue;
+                    }
+
                     if (item.IsAbstract)
                     {
                         continue;
