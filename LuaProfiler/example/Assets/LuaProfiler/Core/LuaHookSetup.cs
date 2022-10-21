@@ -295,19 +295,19 @@ namespace MikuLuaProfiler
             return buff;
         }
 
-        public static void HookRef(IntPtr L, int reference, LuaDLL.tolua_getref_fun refFun = null)
+        public static void HookRef(IntPtr L, int reference)
         {
             if (LuaDLL.isHook)
             {
-                LuaLib.DoRefLuaFun(L, "lua_miku_add_ref_fun_info", reference, refFun);
+                LuaLib.DoRefLuaFun(L, "lua_miku_add_ref_fun_info", reference);
             }
         }
 
-        public static void HookUnRef(IntPtr L, int reference, LuaDLL.tolua_getref_fun refFun = null)
+        public static void HookUnRef(IntPtr L, int reference)
         {
             if (LuaDLL.isHook)
             {
-                LuaLib.DoRefLuaFun(L, "lua_miku_remove_ref_fun_info", reference, refFun);
+                LuaLib.DoRefLuaFun(L, "lua_miku_remove_ref_fun_info", reference);
             }
         }
 
@@ -678,17 +678,10 @@ namespace MikuLuaProfiler
             LuaDLL.isHook = true;
             LuaDLL.lua_settop(L, oldTop);
         }
-        public static void DoRefLuaFun(IntPtr L, string funName, int reference, LuaDLL.tolua_getref_fun refFun)
+        public static void DoRefLuaFun(IntPtr L, string funName, int reference)
         {
             int moreOldTop = LuaDLL.lua_gettop(L);
-            if (refFun == null)
-            {
-                LuaDLL.lua_getref(L, reference);
-            }
-            else
-            {
-                refFun(L, reference);
-            }
+            LuaDLL.lua_getref(L, reference);
 
             if (LuaDLL.lua_isfunction(L, -1) || LuaDLL.lua_istable(L, -1))
             {

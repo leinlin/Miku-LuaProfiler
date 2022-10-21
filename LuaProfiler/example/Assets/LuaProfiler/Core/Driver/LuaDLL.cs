@@ -156,18 +156,6 @@ namespace MikuLuaProfiler
         public static luaL_loadbuffer_fun luaL_loadbuffer { get; private set; }
 
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-        public delegate int toluaL_ref_fun(IntPtr L);
-        public static toluaL_ref_fun toluaL_ref { get; private set; }
-
-        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-        public delegate void toluaL_unref_fun(IntPtr L, int reference);
-        public static toluaL_unref_fun toluaL_unref { get; private set; }
-
-        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-        public delegate void tolua_getref_fun(IntPtr luaState, int reference);
-        public static tolua_getref_fun tolua_Getref_Fun = new tolua_getref_fun(toluaL_get_ref);
-
-        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
         public delegate void lua_getglobal_fun(IntPtr luaState, string name);
         public static lua_getglobal_fun lua_getglobal;
 
@@ -1185,38 +1173,7 @@ end
                 LuaDLL.luaL_unref(luaState, registryIndex, reference);
             }
         }
-
-        public static void toluaL_get_ref(IntPtr L, int reference)
-        {
-            // _R[5] table放到栈顶
-            lua_getref(L, 5);
-            lua_rawgeti(L, -1, reference);
-        }
-
-        public static int toluaL_ref_replace(IntPtr L)
-        {
-            lock (m_Lock)
-            {
-                int num = toluaL_ref(L);
-                if (isHook)
-                {
-                    LuaHook.HookRef(L, num, tolua_Getref_Fun);
-                }
-                return num;
-            }
-        }
-
-        public static void toluaL_unref_replace(IntPtr L, int reference)
-        {
-            lock (m_Lock)
-            {
-                if (isHook)
-                {
-                    LuaHook.HookUnRef(L, reference, tolua_Getref_Fun);
-                }
-                toluaL_unref(L, reference);
-            }
-        }
+        
         #endregion
 
 
