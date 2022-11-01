@@ -138,6 +138,12 @@ namespace MikuLuaProfiler
                 return;
             }
 
+            // 放弃协程
+            if (luaState != _mainL)
+            {
+                return;
+            }
+
             try
             {
                 int frameCount = SampleData.frameCount;
@@ -182,6 +188,12 @@ namespace MikuLuaProfiler
         public static void EndSample(IntPtr luaState)
         {
             if (!IsMainThread)
+            {
+                return;
+            }
+
+            // 放弃协程
+            if (luaState != _mainL)
             {
                 return;
             }

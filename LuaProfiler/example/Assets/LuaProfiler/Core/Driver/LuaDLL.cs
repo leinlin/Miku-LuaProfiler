@@ -873,6 +873,30 @@ end
                     }
                 }
 
+                {
+                    if (LUA_VERSION >= 520)
+                    {
+                        IntPtr handle = GetProcAddress(moduleName, "lua_callk");
+                        if (handle != IntPtr.Zero)
+                        {
+                            lua_callk =
+                                (lua_callk_fun)Marshal.GetDelegateForFunctionPointer(handle, typeof(lua_callk_fun));
+                            lua_call = (IntPtr luaState, int nArgs, int nResults) =>
+                            {
+                                return lua_callk(luaState, nArgs, nResults,  0, IntPtr.Zero);
+                            };
+                        }
+                    }
+                    else
+                    {
+                        IntPtr handle = GetProcAddress(moduleName, "lua_call");
+                        if (handle != IntPtr.Zero)
+                        {
+                            lua_call =
+                                (lua_call_fun)Marshal.GetDelegateForFunctionPointer(handle, typeof(lua_call_fun));
+                        }
+                    }
+                }
 
                 {
                     IntPtr handle = GetProcAddress(moduleName, "lua_next");

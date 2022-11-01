@@ -24,7 +24,7 @@
         ###       ###        ###               
          ##       ###        ###               
 __________#_______####_______####______________
-                我们的未来没有BUG                
+                既见未来为何不拜                
 * ==============================================================================
 * Filename: LuaHookSetup
 * Created:  2018/7/2 11:36:16
@@ -317,8 +317,17 @@ namespace MikuLuaProfiler
         {
             return stringDict.TryGetValue(p.ToInt64(), out result);
         }
-        public static void RefString(IntPtr strPoint, object s)
+        public static void RefString(IntPtr strPoint, int index, object s, IntPtr L)
         {
+            int oldTop = LuaDLL.lua_gettop(L);
+            //把字符串ref了之后就不GC了
+            LuaDLL.lua_getglobal(L, "MikuLuaProfilerStrTb");
+            int len = LuaDLL.lua_objlen(L, -1);
+            LuaDLL.lua_pushnumber(L, len + 1);
+            LuaDLL.lua_pushvalue(L, index);
+            LuaDLL.lua_rawset(L, -3);
+
+            LuaDLL.lua_settop(L, oldTop);
             stringDict[(long)strPoint] = s;
         }
         public static string GetRefString(IntPtr L, int index)
@@ -337,7 +346,7 @@ namespace MikuLuaProfiler
                 {
                     text = "nil";
                 }
-                RefString(intPtr, text);
+                RefString(intPtr, index, text, L);
             }
             return (string)text;
         }
@@ -755,6 +764,9 @@ namespace MikuLuaProfiler
             LuaDLL.lua_pushstdcallcfunction(L, checkType);
             LuaDLL.lua_setglobal(L, "miku_check_type");
 
+            LuaDLL.lua_newtable(L);
+            LuaDLL.lua_setglobal(L, "MikuLuaProfilerStrTb");
+
             LuaLib.DoString(L, get_ref_string);
             LuaLib.DoString(L, null_script);
             LuaLib.DoString(L, diff_script);
@@ -768,8 +780,6 @@ namespace MikuLuaProfiler
 
 #region script
         const string get_ref_string = @"
-package.loaded['MikuLuaProfiler'] = MikuLuaProfiler
-package.loaded['miku_unpack_return_value'] = miku_unpack_return_value
 
 local weak_meta_table = {__mode = 'k'}
 local infoTb = {}
@@ -887,24 +897,30 @@ local infoTb = {}
 local cache_key = 'miku_record_prefix_cache'
 
 local BeginMikuSample = MikuLuaProfiler.LuaProfiler.BeginSample
-local EndMikuSample = MikuLuaProfiler.LuaProfiler.EndSample
-
-local coroutineTb = {}
-setmetatable(coroutineTb, weak_meta_key_table)
-local oldYiled = coroutine.yield
-coroutine.yield = function(...)
-    EndMikuSample()
-    return oldYiled(...)
-end
+local EndMikuSample = miku_unpack_return_value
 
 local oldResume = coroutine.resume
+local oldWrap = coroutine.wrap
+
 coroutine.resume = function(co, ...)
-    if coroutineTb[co] then
-        BeginMikuSample('[lua]:coroutine.resume')
+    local sampleName = '[lua]:coroutine.resume'
+    local info = debug.getinfo(co, 1, 'nSl')
+    -- 这里有GC不过可以考虑在C#那边直接拿到协同的调用信息，把lua的GC转移到C#那边
+    if info then
+        BeginMikuSample(string.format('[lua]:%s,%s&line:%d', info.name, info.short_src, info.currentline))
     else
-        coroutineTb[co] = true
+        BeginMikuSample('[lua]:coroutine.resume')
     end
-    return oldResume(co, ...)
+
+    return EndMikuSample(oldResume(co, ...))
+end
+
+coroutine.wrap = function(f)
+    local result = oldWrap(f)
+    return function()
+        BeginMikuSample('[lua]:coroutine.resume')
+        return EndMikuSample(result())
+    end
 end
 
 function miku_do_record(val, prefix, key, record, history, null_list, staticRecord)

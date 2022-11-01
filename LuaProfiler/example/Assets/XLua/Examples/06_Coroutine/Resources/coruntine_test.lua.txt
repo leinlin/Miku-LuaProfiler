@@ -6,6 +6,11 @@
 
 local cs_coroutine = (require 'cs_coroutine')
 
+local function test()
+	coroutine.yield(CS.UnityEngine.WaitForSeconds(1))
+	print('i am coroutine a')
+end
+
 local a = cs_coroutine.start(function()
     print('coroutine a started')
 
@@ -17,8 +22,7 @@ local a = cs_coroutine.start(function()
 	print('coroutine b finish')
 
 	while true do
-		coroutine.yield(CS.UnityEngine.WaitForSeconds(1))
-		print('i am coroutine a')
+		test()
 	end
 end)
 
