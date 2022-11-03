@@ -512,7 +512,7 @@ namespace MikuLuaProfiler
 
         public void Replace(int start, int end, string value)
         {
-            LoadInfo.Replace(start, end + 1 - start, value);
+            LoadInfo.Replace(start, end - start, value);
         }
 
         public string ReadString(int start, int end)
