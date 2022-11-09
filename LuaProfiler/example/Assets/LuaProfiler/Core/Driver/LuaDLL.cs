@@ -584,7 +584,7 @@ end
                     catch
                     {
                         hooker.Uninstall();
-                        hooker = new NativeHooker(handle + 5, Marshal.GetFunctionPointerForDelegate(luaFun));
+                        hooker = new NativeHooker((IntPtr)((ulong)handle + 5), Marshal.GetFunctionPointerForDelegate(luaFun));
                         hooker.Install();
                     }
 
