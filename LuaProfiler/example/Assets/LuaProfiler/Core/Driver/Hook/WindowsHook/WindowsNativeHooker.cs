@@ -1,15 +1,74 @@
-#if UNITY_EDITOR_WIN || USE_LUA_PROFILER
+#if UNITY_EDITOR_WIN || (USE_LUA_PROFILER && UNITY_STANDALONE_WIN)
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Runtime.InteropServices;
-using System.Text;
 
 namespace MikuLuaProfiler
 {
-	public unsafe class NativeHooker
+	public class WindowsNativeUtil : NativeUtilInterface
 	{
-		public bool isHooked { get; private set; }
+		[DllImport("kernel32.dll", CharSet = CharSet.Unicode)]
+		private static extern IntPtr GetModuleHandle(string InPath);
+		
+		[DllImport("kernel32.dll", CharSet = CharSet.Ansi)]
+		private static extern IntPtr GetProcAddress(IntPtr InModule, string InProcName);
+
+		public IntPtr GetProcAddress(string InPath, string InProcName)
+		{
+			var ptr = GetModuleHandle(InPath);
+			if (ptr != IntPtr.Zero)
+			{
+				return GetProcAddress(ptr, InProcName);
+			}
+			return IntPtr.Zero;
+		}
+
+		public IntPtr GetProcAddressByHandle(IntPtr InModule, string InProcName)
+		{
+			return GetProcAddress(InModule, InProcName);
+		}
+
+		public INativeHooker CreateHook()
+		{
+			return new WindowsNativeHooker();
+		}
+
+		[UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+		public delegate IntPtr LoadLibraryExW_t(IntPtr lpFileName, IntPtr hFile, int dwFlags);
+		public static LoadLibraryExW_t LoadLibraryExW_dll;
+
+		public void HookLoadLibrary(Action<IntPtr> callBack)
+		{
+			IntPtr handle = GetProcAddress("KernelBase.dll", "LoadLibraryExW");
+			if (handle == IntPtr.Zero)
+				handle = GetProcAddress("kernel32.dll", "LoadLibraryExW");
+			if (handle != IntPtr.Zero)
+			{
+				// LoadLibraryExW is called by the other LoadLibrary functions, so we
+				// only need to hook it.
+				WindowsNativeHooker hooker = null;
+				LoadLibraryExW_t fun = new LoadLibraryExW_t((IntPtr lpFileName, IntPtr hFile, int dwFlags) =>
+				{
+					var ret = LoadLibraryExW_dll(lpFileName, hFile, dwFlags);
+					if (GetProcAddressByHandle(ret, "luaL_newstate") != IntPtr.Zero)
+					{
+						callBack(ret);
+					}
+					hooker.Uninstall();
+					return ret;
+				});
+				hooker = new WindowsNativeHooker();
+				hooker.Init(handle, Marshal.GetFunctionPointerForDelegate(fun));
+				hooker.Install();
+				
+				LoadLibraryExW_dll = (LoadLibraryExW_t)hooker.GetProxyFun(typeof(LoadLibraryExW_t));
+			}
+		}
+
+	}
+
+	public unsafe class WindowsNativeHooker : INativeHooker
+	{
+		public  bool isHooked { get; set; }
 
 		private IntPtr _targetPtr;          // 目标方法被 jit 后的地址指针
 		private IntPtr _replacementPtr;
@@ -31,19 +90,14 @@ namespace MikuLuaProfiler
 			0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,     // $val
 		};
 		private static readonly int s_addrOffset = 1;
-		/// <summary>
-		/// 创建一个 Hook
-		/// </summary>
-		/// <param name="targetMethod">需要替换的目标方法</param>
-		/// <param name="replacementMethod">准备好的替换方法</param>
-		/// <param name="proxyMethod">如果还需要调用原始目标方法，可以通过此参数的方法调用，如果不需要可以填 null</param>
-		public NativeHooker(IntPtr targetPtr, IntPtr replacementPtr)
+
+		public void Init(IntPtr targetPtr, IntPtr replacementPtr)
 		{
 			_targetPtr = targetPtr;
 			_replacementPtr = replacementPtr;
 		}
 
-		static NativeHooker()
+		static WindowsNativeHooker()
 		{
 			if (IntPtr.Size == 4)
 			{
@@ -57,7 +111,8 @@ namespace MikuLuaProfiler
 			}
 
 		}
-		~NativeHooker()
+
+		~WindowsNativeHooker()
 		{
 			Uninstall();
 		}

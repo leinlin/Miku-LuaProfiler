@@ -503,7 +503,7 @@ namespace MikuLuaProfiler
         {
             if (LuaDeepProfilerSetting.Instance.isDeepMonoProfiler)
             {
-                InjectAllMethods(projectPath, profilerPath);
+                //InjectAllMethods(projectPath, profilerPath);
             }
         }
 #endif

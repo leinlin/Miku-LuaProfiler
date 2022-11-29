@@ -36,7 +36,6 @@ __________#_______####_______####______________
 #if UNITY_EDITOR_WIN || USE_LUA_PROFILER
 using System;
 using System.Diagnostics;
-using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Text;
 
@@ -109,24 +108,26 @@ namespace MikuLuaProfiler
         #endregion
 
         #region hooks
-        private static NativeHooker luaL_newstate_hook;
-        private static NativeHooker lua_close_hook;
-        private static NativeHooker lua_gc_hook;
-        private static NativeHooker lua_call_hook;
-        private static NativeHooker lua_error_hook;
-        private static NativeHooker luaL_openlibs_hook;
-        private static NativeHooker luaL_ref_hook;
-        private static NativeHooker luaL_unref_hook;
-        private static NativeHooker luaL_loadbuffer_hook;
-        private static NativeHooker luaL_loadfile_hook;
-        private static NativeHooker load_dll_hook;
+        private static INativeHooker luaL_newstate_hook;
+        private static INativeHooker lua_close_hook;
+        private static INativeHooker lua_gc_hook;
+        private static INativeHooker lua_call_hook;
+        private static INativeHooker lua_error_hook;
+        private static INativeHooker luaL_openlibs_hook;
+        private static INativeHooker luaL_ref_hook;
+        private static INativeHooker luaL_unref_hook;
+        private static INativeHooker luaL_loadbuffer_hook;
+        private static INativeHooker luaL_loadfile_hook;
+
+        #if UNITY_EDITOR_WIN || UNITY_STANDALONE_WIN
+        private static NativeUtilInterface nativeUtil = new WindowsNativeUtil();
+        #elif UNITY_ANDROID
+        private static NativeUtilInterface nativeUtil = new AndroidNativeHooker();
+        #endif
+
         #endregion
 
         #region 通用操作
-        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-        public delegate IntPtr LoadLibraryExW_t(IntPtr lpFileName, IntPtr hFile, int dwFlags);
-        public static LoadLibraryExW_t LoadLibraryExW_dll;
-
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
         public delegate IntPtr luaL_newstate_fun();
         public static luaL_newstate_fun luaL_newstate;
@@ -407,24 +408,8 @@ end
         private static bool m_hooked = false;
         private static object m_Lock = 1;
 
-        public static void InstallHook(NativeHooker hook)
-        {
-            hook.Install();
-        }
-
-        public static void UnInstallHook(NativeHooker hook)
-        {
-            hook.Uninstall();
-        }
-
         public static void Uninstall()
         {
-            if (load_dll_hook != null)
-            {
-                load_dll_hook.Uninstall();
-                load_dll_hook = null;
-            }
-
             if (luaL_newstate_hook != null)
             {
                 luaL_newstate_hook.Uninstall();
@@ -475,6 +460,7 @@ end
                 if (m_hooked) return;
                 if (string.IsNullOrEmpty(moduleName))
                 {
+                    HookLoadLibrary();
                     return;
                 }
 
@@ -525,7 +511,8 @@ end
                 {
                     IntPtr handle = GetProcAddress(moduleName, "luaL_newstate");
                     luaL_newstate_fun luaFun = new luaL_newstate_fun(luaL_newstate_replace);
-                    NativeHooker hooker = new NativeHooker(handle, Marshal.GetFunctionPointerForDelegate(luaFun));
+                    INativeHooker hooker = nativeUtil.CreateHook();
+                    hooker.Init(handle, Marshal.GetFunctionPointerForDelegate(luaFun));
                     hooker.Install();
                     luaL_newstate = (luaL_newstate_fun)hooker.GetProxyFun(typeof(luaL_newstate_fun));
                     luaL_newstate_hook = hooker;
@@ -535,7 +522,8 @@ end
                 {
                     IntPtr handle = GetProcAddress(moduleName, "lua_close");
                     lua_close_fun luaFun = new lua_close_fun(lua_close_replace);
-                    NativeHooker hooker = new NativeHooker(handle, Marshal.GetFunctionPointerForDelegate(luaFun));
+                    INativeHooker hooker = nativeUtil.CreateHook();
+                    hooker.Init(handle, Marshal.GetFunctionPointerForDelegate(luaFun));
                     hooker.Install();
                     lua_close = (lua_close_fun)hooker.GetProxyFun(typeof(lua_close_fun));
                     lua_close_hook = hooker;
@@ -545,7 +533,8 @@ end
                 {
                     IntPtr handle = GetProcAddress(moduleName, "lua_gc");
                     lua_gc_fun luaFun = new lua_gc_fun(lua_gc_replace);
-                    NativeHooker hooker = new NativeHooker(handle, Marshal.GetFunctionPointerForDelegate(luaFun));
+                    INativeHooker hooker = nativeUtil.CreateHook();
+                    hooker.Init(handle, Marshal.GetFunctionPointerForDelegate(luaFun));
                     hooker.Install();
                     lua_gc = (lua_gc_fun)hooker.GetProxyFun(typeof(lua_gc_fun));
                     lua_gc_hook = hooker;
@@ -565,7 +554,8 @@ end
                 {
                     IntPtr handle = GetProcAddress(moduleName, "luaL_ref");
                     luaL_ref_fun luaFun = new luaL_ref_fun(luaL_ref_replace);
-                    NativeHooker hooker = new NativeHooker(handle, Marshal.GetFunctionPointerForDelegate(luaFun));
+                    INativeHooker hooker = nativeUtil.CreateHook();
+                    hooker.Init(handle, Marshal.GetFunctionPointerForDelegate(luaFun));
                     hooker.Install();
                     luaL_ref = (luaL_ref_fun)hooker.GetProxyFun(typeof(luaL_ref_fun));
                     luaL_ref_hook = hooker;
@@ -575,7 +565,8 @@ end
                 {
                     IntPtr handle = GetProcAddress(moduleName, "luaL_unref");
                     luaL_unref_fun luaFun = new luaL_unref_fun(luaL_unref_replace);
-                    NativeHooker hooker = new NativeHooker(handle, Marshal.GetFunctionPointerForDelegate(luaFun));
+                    INativeHooker hooker = nativeUtil.CreateHook();
+                    hooker.Init(handle, Marshal.GetFunctionPointerForDelegate(luaFun));
                     // release版本 开始的位置有个 test 短跳，占用5字节，如果碰上就直接 跳过这5字节
                     try
                     {
@@ -584,7 +575,8 @@ end
                     catch
                     {
                         hooker.Uninstall();
-                        hooker = new NativeHooker((IntPtr)((ulong)handle + 5), Marshal.GetFunctionPointerForDelegate(luaFun));
+                        hooker = nativeUtil.CreateHook();
+                        hooker.Init((IntPtr)((ulong)handle + 5), Marshal.GetFunctionPointerForDelegate(luaFun));
                         hooker.Install();
                     }
 
@@ -598,7 +590,8 @@ end
                     {
                         IntPtr handle = GetProcAddress(moduleName, "luaL_loadbufferx");
                         luaL_loadbufferx_fun luaFun = new luaL_loadbufferx_fun(luaL_loadbufferx_replace);
-                        NativeHooker hooker = new NativeHooker(handle, Marshal.GetFunctionPointerForDelegate(luaFun));
+                        INativeHooker hooker = nativeUtil.CreateHook();
+                        hooker.Init(handle, Marshal.GetFunctionPointerForDelegate(luaFun));
                         hooker.Install();
                         luaL_loadbufferx = (luaL_loadbufferx_fun)hooker.GetProxyFun(typeof(luaL_loadbufferx_fun));
                         luaL_loadbuffer_hook = hooker;
@@ -607,7 +600,8 @@ end
                     {
                         IntPtr handle = GetProcAddress(moduleName, "luaL_loadbuffer");
                         luaL_loadbuffer_fun luaFun = new luaL_loadbuffer_fun(luaL_loadbuffer_replace);
-                        NativeHooker hooker = new NativeHooker(handle, Marshal.GetFunctionPointerForDelegate(luaFun));
+                        INativeHooker hooker = nativeUtil.CreateHook();
+                        hooker.Init(handle, Marshal.GetFunctionPointerForDelegate(luaFun));
                         hooker.Install();
                         luaL_loadbuffer = (luaL_loadbuffer_fun)hooker.GetProxyFun(typeof(luaL_loadbuffer_fun));
                         luaL_loadbuffer_hook = hooker;
@@ -618,7 +612,8 @@ end
                 {
                     IntPtr handle = GetProcAddress(moduleName, "luaL_openlibs");
                     luaL_openlibs_fun luaFun = new luaL_openlibs_fun(luaL_openlibs_replace);
-                    NativeHooker hooker = new NativeHooker(handle, Marshal.GetFunctionPointerForDelegate(luaFun));
+                    INativeHooker hooker = nativeUtil.CreateHook();
+                    hooker.Init(handle, Marshal.GetFunctionPointerForDelegate(luaFun));
                     hooker.Install();
 
                     luaL_openlibs =
@@ -927,43 +922,21 @@ end
                 isHook = true;
                 m_hooked = true;
                 isBinding = false;
-                load_dll_hook.Uninstall();
             }
         }
 
         public static void HookLoadLibrary()
         {
-            IntPtr handle = GetProcAddress("KernelBase.dll", "LoadLibraryExW");
-            if (handle == IntPtr.Zero)
-                handle = GetProcAddress("kernel32.dll", "LoadLibraryExW");
-            if (handle != IntPtr.Zero)
+            nativeUtil.HookLoadLibrary((ret) =>
             {
-                // LoadLibraryExW is called by the other LoadLibrary functions, so we
-                // only need to hook it.
-
-
-                // destroy these functions.
-                LoadLibraryExW_t fun = new LoadLibraryExW_t(LoadLibraryExW_replace);
-                NativeHooker hooker = new NativeHooker(handle, Marshal.GetFunctionPointerForDelegate(fun));
-                hooker.Install();
-
-                LoadLibraryExW_dll = (LoadLibraryExW_t)hooker.GetProxyFun(typeof(LoadLibraryExW_t));
-                load_dll_hook = hooker;
-            }
-        }
-
-        public static IntPtr LoadLibraryExW_replace(IntPtr lpFileName, IntPtr hFile, int dwFlags)
-        {
-            var ret = LoadLibraryExW_dll(lpFileName, hFile, dwFlags);
-
-            if (!m_hooked)
-            {
-                if (NativeHelper.GetProcAddress(ret, "luaL_newstate") != IntPtr.Zero)
+                if (!m_hooked)
                 {
-                    BindEasyHook();
+                    if (nativeUtil.GetProcAddressByHandle(ret, "luaL_newstate") != IntPtr.Zero)
+                    {
+                        BindEasyHook();
+                    }
                 }
-            }
-            return ret;
+            });
         }
 
         private static IntPtr GetProcAddress(string moduleName, string funName)
@@ -971,7 +944,7 @@ end
             IntPtr result = IntPtr.Zero;
             try
             {
-                result = NativeHelper.GetProcAddress(moduleName, funName);
+                result = nativeUtil.GetProcAddress(moduleName, funName);
             }
             catch{}
             return result;
@@ -994,6 +967,7 @@ end
             return result;
         }
 
+        [MonoPInvokeCallbackAttribute(typeof(luaL_newstate_fun))]
         public static IntPtr luaL_newstate_replace()
         {
 			UnityEngine.Debug.Log("test newstate success");
@@ -1031,6 +1005,7 @@ end
             lua_rotate(luaState, (idx), 1);
         }
 
+        [MonoPInvokeCallbackAttribute(typeof(lua_error_fun))]
         public static int lua_error_replace(IntPtr luaState)
         {
             LuaProfiler.BeginSample(luaState, "exception happen clear stack", true);
@@ -1038,6 +1013,7 @@ end
             return lua_error(luaState);
         }
 
+        [MonoPInvokeCallbackAttribute(typeof(lua_gc_fun))]
         public static int lua_gc_replace(IntPtr luaState, LuaGCOptions what, int data)
         {
             lock (m_Lock)
@@ -1058,6 +1034,7 @@ end
             }
         }
 
+        [MonoPInvokeCallbackAttribute(typeof(lua_close_fun))]
         public static void lua_close_replace(IntPtr luaState)
         {
             lock (m_Lock)
@@ -1073,11 +1050,13 @@ end
             }
         }
 
+        [MonoPInvokeCallbackAttribute(typeof(luaL_loadfile_fun))]
         public static int luaL_loadfile_replace(IntPtr luaState, string filename)
         {
             return luaL_loadfile(luaState, filename);
         }
 
+        [MonoPInvokeCallbackAttribute(typeof(luaL_openlibs_fun))]
         public static void luaL_openlibs_replace(IntPtr luaState)
         {
             if (!isOpenLibs)
@@ -1087,6 +1066,7 @@ end
             }
         }
 
+        [MonoPInvokeCallbackAttribute(typeof(luaL_loadbufferx_fun))]
         public static int luaL_loadbufferx_replace(IntPtr luaState, IntPtr buff, IntPtr size, string name, IntPtr mode)
         {
             lock (m_Lock)
@@ -1113,6 +1093,7 @@ end
             }
         }
 
+        [MonoPInvokeCallbackAttribute(typeof(lua_callk_fun))]
         public static int lua_callk_replace(IntPtr luaState, int nArgs, int nResults, int ctx, IntPtr k)
         {
             int oldTop = lua_gettop(luaState) - nArgs - 1; //函数调用之前的栈顶索引
@@ -1132,6 +1113,7 @@ end
             return result;
         }
 
+        [MonoPInvokeCallbackAttribute(typeof(lua_call_fun))]
         public static int lua_call_replace(IntPtr luaState, int nArgs, int nResults)
         {
             int oldTop = lua_gettop(luaState) - nArgs - 1; //函数调用之前的栈顶索引
@@ -1151,12 +1133,17 @@ end
             return result;
         }
 
+        [MonoPInvokeCallbackAttribute(typeof(luaL_loadbuffer_fun))]
         public static int luaL_loadbuffer_replace(IntPtr luaState, IntPtr buff, IntPtr size, string name)
         {
             lock (m_Lock)
             {
                 if (isHook)
                 {
+                    if (name == null)
+                    {
+                        name = "chunk";
+                    }
                     byte[] buffer = new byte[(int)size];
                     Marshal.Copy(buff, buffer, 0, buffer.Length);
 
@@ -1173,6 +1160,7 @@ end
             }
         }
 
+        [MonoPInvokeCallbackAttribute(typeof(luaL_ref_fun))]
         public static int luaL_ref_replace(IntPtr luaState, int t)
         {
             lock (m_Lock)
@@ -1186,6 +1174,7 @@ end
             }
         }
 
+        [MonoPInvokeCallbackAttribute(typeof(luaL_unref_fun))]
         public static void luaL_unref_replace(IntPtr luaState, int registryIndex, int reference)
         {
             lock (m_Lock)

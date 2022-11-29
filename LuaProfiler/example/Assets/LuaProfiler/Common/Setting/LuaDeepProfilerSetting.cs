@@ -37,7 +37,9 @@ __________#_______####_______####______________
 namespace MikuLuaProfiler
 {
     using System.Collections.Generic;
+    #if UNITY_EDITOR_WIN
     using UnityEditor;
+    #endif
     using UnityEngine;
 
     public class LuaDeepProfilerSetting : ScriptableObject

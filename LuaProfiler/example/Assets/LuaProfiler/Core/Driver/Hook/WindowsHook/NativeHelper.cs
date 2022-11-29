@@ -32,13 +32,11 @@ __________#_______####_______####______________
 * Purpose:  
 * ==============================================================================
 */
-#if UNITY_EDITOR_WIN || USE_LUA_PROFILER
+#if UNITY_EDITOR_WIN || (USE_LUA_PROFILER && UNITY_STANDALONE_WIN)
 namespace MikuLuaProfiler
 {
     using System;
-    using System.Diagnostics;
     using System.Runtime.InteropServices;
-    using UnityEngine;
 
 #if UNITY_5_5_OR_NEWER
     using UnityEngine.Profiling;
@@ -68,23 +66,6 @@ namespace MikuLuaProfiler
 		public const uint PAGE_EXECUTE_READ = 0x20;
 		public const uint PAGE_EXECUTE_READWRITE = 0x40;
 		public const uint PAGE_EXECUTE_WRITECOPY = 0x80;
-
-		[DllImport("kernel32.dll", CharSet = CharSet.Unicode)]
-		public static extern IntPtr GetModuleHandle(string InPath);
-		
-		[DllImport("kernel32.dll", CharSet = CharSet.Ansi)]
-		public static extern IntPtr GetProcAddress(IntPtr InModule, string InProcName);
-
-		public static IntPtr GetProcAddress(string InPath, string InProcName)
-		{
-			var ptr = GetModuleHandle(InPath);
-			if (ptr != IntPtr.Zero)
-			{
-				return GetProcAddress(ptr, InProcName);
-			}
-
-			return IntPtr.Zero;
-		}
 
 		[DllImport("kernel32.dll", SetLastError = true)]
 		public static extern void GetSystemInfo(ref SYSTEM_INFO lpSystemInfo);

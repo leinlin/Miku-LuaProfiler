@@ -1,5 +1,6 @@
 using System;
 
+#if UNITY_EDITOR_WIN || (USE_LUA_PROFILER && UNITY_STANDALONE_WIN)
 namespace MikuLuaProfiler
 {
 	/// <summary>
@@ -867,3 +868,4 @@ namespace MikuLuaProfiler
 		}
 	}
 }
+#endif
