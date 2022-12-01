@@ -405,14 +405,6 @@ namespace MikuLuaProfiler
                     EditorApplication.isPlaying = false;
                 }
 
-                flag = GUILayout.Toggle(setting.isDeepMonoProfiler, "Deep Mono", EditorStyles.toolbarButton);
-                if (flag != setting.isDeepMonoProfiler)
-                {
-                    setting.isDeepMonoProfiler = flag;
-                    EditorApplication.isPlaying = false;
-                    InjectMethods.Recompile();
-                }
-
                 flag = GUILayout.Toggle(setting.discardInvalid, "Discard Invalid", EditorStyles.toolbarButton);
                 if (flag != setting.discardInvalid)
                 {
@@ -605,16 +597,6 @@ namespace MikuLuaProfiler
             }
 
             GUILayout.Space(25);
-            GUILayout.Label("capture lua gc", EditorStyles.toolbarButton, GUILayout.Height(30), GUILayout.Width(80));
-            LuaDeepProfilerSetting.Instance.captureLuaGC
-                = EditorGUILayout.IntField(LuaDeepProfilerSetting.Instance.captureLuaGC, GUILayout.Height(16), GUILayout.Width(50));
-            LuaDeepProfilerSetting.Instance.captureLuaGC = Mathf.Max(0, LuaDeepProfilerSetting.Instance.captureLuaGC);
-
-            GUILayout.Label("capture mono gc", EditorStyles.toolbarButton, GUILayout.Height(30), GUILayout.Width(100));
-            LuaDeepProfilerSetting.Instance.captureMonoGC
-                = EditorGUILayout.IntField(LuaDeepProfilerSetting.Instance.captureMonoGC, GUILayout.Height(16), GUILayout.Width(50));
-            LuaDeepProfilerSetting.Instance.captureMonoGC = Mathf.Max(0, LuaDeepProfilerSetting.Instance.captureMonoGC);
-
             GUILayout.Label("capture frame rate", EditorStyles.toolbarButton, GUILayout.Height(30), GUILayout.Width(100));
             LuaDeepProfilerSetting.Instance.captureFrameRate
                 = EditorGUILayout.IntField(LuaDeepProfilerSetting.Instance.captureFrameRate, GUILayout.Height(16), GUILayout.Width(40));

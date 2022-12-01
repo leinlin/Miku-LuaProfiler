@@ -54,7 +54,6 @@ namespace MikuLuaProfiler
         private float deltaTime = 0f;
 
         public const float DELTA_TIME = 0.1f;
-        public float currentTime = 0;
         private static bool isInite = false;
         private static Queue<Action> actionQueue = new Queue<Action>();
         public static void RegisterAction(Action a)
@@ -65,11 +64,6 @@ namespace MikuLuaProfiler
             }
         }
         #endregion
-
-#if UNITY_EDITOR_WIN
-        [System.Runtime.InteropServices.DllImport("kernel32.dll")]
-        private extern static IntPtr LoadLibrary(string path);
-#endif
 
 
 #if UNITY_5 || UNITY_2017_1_OR_NEWER
@@ -85,10 +79,6 @@ namespace MikuLuaProfiler
             isInite = true;
             setting = LuaDeepProfilerSetting.Instance;
             LuaProfiler.mainThreadId = System.Threading.Thread.CurrentThread.ManagedThreadId;
-            if (setting.isNeedCapture)
-            {
-                Screen.SetResolution(480, 270, true);
-            }
 
 #if UNITY_EDITOR
             if (setting.isDeepLuaProfiler)
@@ -105,7 +95,7 @@ namespace MikuLuaProfiler
             }
 #endif
 
-            if (setting.isDeepLuaProfiler || setting.isDeepMonoProfiler || setting.isCleanMode)
+            if (setting.isDeepLuaProfiler || setting.isCleanMode)
             {
                 GameObject go = new GameObject();
                 go.name = "MikuLuaProfiler";
@@ -144,12 +134,6 @@ namespace MikuLuaProfiler
                 SampleData.fps = count / deltaTime;
                 count = 0;
                 deltaTime = 0f;
-            }
-            if (Time.unscaledTime - currentTime > DELTA_TIME)
-            {
-                SampleData.pss = NativeHelper.GetPass();
-                SampleData.power = NativeHelper.GetBatteryLevel();
-                currentTime = Time.unscaledTime;
             }
             LuaProfiler.SendFrameSample();
             if (Input.touchCount == 4 || Input.GetKeyDown(KeyCode.Delete))

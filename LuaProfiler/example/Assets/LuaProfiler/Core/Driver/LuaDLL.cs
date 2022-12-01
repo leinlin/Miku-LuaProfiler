@@ -122,7 +122,7 @@ namespace MikuLuaProfiler
         #if UNITY_EDITOR_WIN || UNITY_STANDALONE_WIN
         private static NativeUtilInterface nativeUtil = new WindowsNativeUtil();
         #elif UNITY_ANDROID
-        private static NativeUtilInterface nativeUtil = new AndroidNativeHooker();
+        private static NativeUtilInterface nativeUtil = new AndroidNativeUtil();
         #endif
 
         #endregion

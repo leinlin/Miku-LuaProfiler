@@ -51,10 +51,10 @@ namespace MikuLuaProfiler
     {
         static StartUp()
         {
-            if (LuaDeepProfilerSetting.Instance.isDeepMonoProfiler)
-            {
-                InjectMethods.InjectAllMethods();
-            }
+            // if (LuaDeepProfilerSetting.Instance.isDeepMonoProfiler)
+            // {
+            //     InjectMethods.InjectAllMethods();
+            // }
         }
     }
 
@@ -136,7 +136,7 @@ namespace MikuLuaProfiler
         {
             string md5 = null;
             md5 = new FileInfo(injectPath).LastWriteTimeUtc.Ticks.ToString();
-            if (md5 == LuaDeepProfilerSetting.Instance.GetAssMD5ByPath(injectPath)) return;
+            //if (md5 == LuaDeepProfilerSetting.Instance.GetAssMD5ByPath(injectPath)) return;
 
             AssemblyDefinition injectAss = LoadAssembly(injectPath);
             AssemblyDefinition profilerAss = null;
@@ -224,7 +224,7 @@ namespace MikuLuaProfiler
             }
 
             WriteAssembly(injectPath, injectAss);
-            LuaDeepProfilerSetting.Instance.SetAssMD5ByPath(injectPath, new FileInfo(injectPath).LastWriteTimeUtc.Ticks.ToString());
+            //LuaDeepProfilerSetting.Instance.SetAssMD5ByPath(injectPath, new FileInfo(injectPath).LastWriteTimeUtc.Ticks.ToString());
         }
 
         private static string GetReflectionName(this TypeReference type)
@@ -501,10 +501,10 @@ namespace MikuLuaProfiler
         [UnityEditor.Callbacks.PostProcessScene]
         private static void OnPostprocessScene()
         {
-            if (LuaDeepProfilerSetting.Instance.isDeepMonoProfiler)
-            {
-                //InjectAllMethods(projectPath, profilerPath);
-            }
+            // if (LuaDeepProfilerSetting.Instance.isDeepMonoProfiler)
+            // {
+            //     InjectAllMethods(projectPath, profilerPath);
+            // }
         }
 #endif
     }

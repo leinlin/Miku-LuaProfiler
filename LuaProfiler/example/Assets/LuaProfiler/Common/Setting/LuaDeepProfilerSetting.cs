@@ -33,16 +33,17 @@ __________#_______####_______####______________
 * ==============================================================================
 */
 
+using System;
+using System.IO;
+
 #if UNITY_EDITOR_WIN || USE_LUA_PROFILER
 namespace MikuLuaProfiler
 {
     using System.Collections.Generic;
-    #if UNITY_EDITOR_WIN
-    using UnityEditor;
-    #endif
     using UnityEngine;
 
-    public class LuaDeepProfilerSetting : ScriptableObject
+    [Serializable]
+    public class LuaDeepProfilerSetting
     {
         #region instance
         private static LuaDeepProfilerSetting instance;
@@ -52,56 +53,51 @@ namespace MikuLuaProfiler
             {
                 if (instance == null)
                 {
-                    instance = AssetDatabase.LoadAssetAtPath<LuaDeepProfilerSetting>("Assets/LuaDeepProfilerSetting.asset");
-                    if (instance == null)
-                    {
-                        UnityEngine.Debug.Log("Lua Profiler: cannot find integration settings, creating default settings");
-                        instance = CreateInstance<LuaDeepProfilerSetting>();
-                        instance.name = "Lua Profiler LuaDeepProfiler Setting";
-#if UNITY_EDITOR
-                        AssetDatabase.CreateAsset(instance, "Assets/LuaDeepProfilerSetting.asset");
-#endif
-                    }
+                    instance = new LuaDeepProfilerSetting();
                 }
                 return instance;
             }
         }
         #endregion
 
-        public bool isDeepMonoProfiler
-        {
-            get
-            {
-                return LuaDeepProfilerAssetSetting.Instance.isDeepMonoProfiler;
-            }
-            set
-            {
-                LuaDeepProfilerAssetSetting.Instance.isDeepMonoProfiler = value;
-            }
-        }
-
         public bool isDeepLuaProfiler
         {
             get
             {
+                #if UNITY_EDITOR
                 return LuaDeepProfilerAssetSetting.Instance.isDeepLuaProfiler;
+                #else
+                return m_isDeepLuaProfiler;
+                #endif
             }
             set
             {
+                m_isDeepLuaProfiler = value;
+                Save();
+#if UNITY_EDITOR
                 LuaDeepProfilerAssetSetting.Instance.isDeepLuaProfiler = value;
+#endif
             }
         }
+
         public bool isLocal
         {
             get
             {
+#if UNITY_EDITOR
                 return LuaDeepProfilerAssetSetting.Instance.isLocal;
+#else
+                return false;
+#endif
             }
             set
             {
+#if UNITY_EDITOR
                 LuaDeepProfilerAssetSetting.Instance.isLocal = value;
+#endif
             }
         }
+
         public bool isCleanMode
         {
             get
@@ -113,83 +109,11 @@ namespace MikuLuaProfiler
                 if (this.m_isCleanMode != value)
                 {
                     this.m_isCleanMode = value;
-                    EditorUtility.SetDirty(this);
+                    Save();
                 }
             }
         }
-
-        public int captureLuaGC
-        {
-            get
-            {
-                return this.m_captureLuaGC;
-            }
-            set
-            {
-                if (this.m_captureLuaGC != value)
-                {
-                    this.m_captureLuaGC = value;
-                    EditorUtility.SetDirty(this);
-                }
-            }
-        }
-
-        public bool isNeedCapture
-        {
-            get
-            {
-                return this.m_isNeedCapture;
-            }
-            set
-            {
-                if (this.m_isNeedCapture != value)
-                {
-                    this.m_isNeedCapture = value;
-                    EditorUtility.SetDirty(this);
-                }
-            }
-        }
-
-        public string GetAssMD5ByPath(string path)
-        {
-            var index = m_assMd5Key.IndexOf(path);
-            if (index < 0)
-            {
-                return "";
-            }
-            return m_assMd5[index];
-        }
-
-        public void SetAssMD5ByPath(string path, string value)
-        {
-            var index = m_assMd5Key.IndexOf(path);
-            if (index < 0)
-            {
-                m_assMd5Key.Add(path);
-                m_assMd5.Add(value);
-            }
-            else
-            {
-                m_assMd5[index] = value;
-            }
-            EditorUtility.SetDirty(this);
-        }
-
-        public bool isInited
-        {
-            get
-            {
-                return this.m_isInited;
-            }
-            set
-            {
-                if (this.m_isInited != value)
-                {
-                    this.m_isInited = value;
-                    EditorUtility.SetDirty(this);
-                }
-            }
-        }
+        
 
         public bool discardInvalid
         {
@@ -202,23 +126,7 @@ namespace MikuLuaProfiler
                 if (m_discardInvalid != value)
                 {
                     m_discardInvalid = value;
-                    EditorUtility.SetDirty(this);
-                }
-            }
-        }
-
-        public int captureMonoGC
-        {
-            get
-            {
-                return this.m_captureMonoGC;
-            }
-            set
-            {
-                if (this.m_captureMonoGC != value)
-                {
-                    this.m_captureMonoGC = value;
-                    EditorUtility.SetDirty(this);
+                    Save();
                 }
             }
         }
@@ -234,7 +142,7 @@ namespace MikuLuaProfiler
                 if (this.m_captureFrameRate != value)
                 {
                     this.m_captureFrameRate = value;
-                    EditorUtility.SetDirty(this);
+                    Save();
                 }
             }
         }
@@ -250,7 +158,7 @@ namespace MikuLuaProfiler
                 if (!(this.m_ip == value))
                 {
                     this.m_ip = value;
-                    EditorUtility.SetDirty(this);
+                    Save();
                 }
             }
         }
@@ -266,7 +174,7 @@ namespace MikuLuaProfiler
                 if (this.m_port != value)
                 {
                     this.m_port = value;
-                    EditorUtility.SetDirty(this);
+                    Save();
                 }
             }
         }
@@ -281,7 +189,7 @@ namespace MikuLuaProfiler
             {
                 if (m_isRecord == value) return;
                 m_isRecord = value;
-                EditorUtility.SetDirty(this);
+                Save();
             }
         }
 
@@ -295,7 +203,7 @@ namespace MikuLuaProfiler
             {
                 if (m_isNeedRecord == value) return;
                 m_isNeedRecord = value;
-                EditorUtility.SetDirty(this);
+                Save();
             }
         }
 
@@ -309,7 +217,7 @@ namespace MikuLuaProfiler
             {
                 if (m_isFrameRecord == value) return;
                 m_isFrameRecord = value;
-                EditorUtility.SetDirty(this);
+                Save();
             }
         }
 
@@ -326,8 +234,7 @@ namespace MikuLuaProfiler
             if (!m_luaDir.Contains(path))
             {
                 m_luaDir.Add(path);
-                EditorUtility.SetDirty(this);
-                AssetDatabase.SaveAssets();
+                Save();
             }
         }
 
@@ -341,22 +248,16 @@ namespace MikuLuaProfiler
             {
                 if (m_luaIDE == value) return;
                 m_luaIDE = value;
-                EditorUtility.SetDirty(this);
-                AssetDatabase.SaveAssets();
+               Save();
             }
         }
 
         public const string SettingsAssetName = "LuaDeepProfilerSettings";
-        public bool m_isDeepMonoProfiler = false;
+        public bool m_isNeedRecord = false;
         public bool m_isDeepLuaProfiler = false;
         public bool m_isCleanMode = false;
-        public int m_captureLuaGC = 51200;
-        public bool m_isNeedCapture = false;
         public bool m_discardInvalid = true;
-        public List<string> m_assMd5Key = new List<string>();
-        public List<string> m_assMd5 = new List<string>();
-        public bool m_isInited = false;
-        public int m_captureMonoGC = 51200;
+        public bool m_isFrameRecord = false;
         public int m_captureFrameRate = 30;
         public string m_ip = "127.0.0.1";
         public int m_port = 2333;
@@ -366,8 +267,67 @@ namespace MikuLuaProfiler
         private List<string> m_luaDir = new List<string>();
         [SerializeField]
         private string m_luaIDE = "";
-        private bool m_isNeedRecord = false;
-        private bool m_isFrameRecord = true;
+        
+#if UNITY_EDITOR
+        public void Save()
+        {
+            string path = null;
+            var files = System.IO.Directory.GetFiles(Application.dataPath, "LuaDeepProfilerSetting.cs", System.IO.SearchOption.AllDirectories);
+            if (files.Length > 0)
+            {
+                var f = files[0];
+                f = f.Replace("\\", "/");
+                var dirPath = f.Replace("LuaDeepProfilerSetting.cs", "Resources");
+                if (!Directory.Exists(dirPath))
+                {
+                    Directory.CreateDirectory(dirPath);
+                }
+
+                path = f.Replace("LuaDeepProfilerSetting.cs", "Resources/LuaDeepProfilerSetting.txt");
+            }
+            else
+            {
+                throw new Exception("你改了我的文件名，自己想办法拯救吧");
+            }
+
+            string v = JsonUtility.ToJson(this);
+            File.WriteAllText(path, v);
+        }
+#else
+        public void Save()
+        {}
+#endif
+        public static LuaDeepProfilerSetting Load()
+        {
+            LuaDeepProfilerSetting result = null;
+            var ta = Resources.Load<TextAsset>("LuaDeepProfilerSetting");
+            if (ta == null)
+            {
+                result = new LuaDeepProfilerSetting();
+#if UNITY_EDITOR
+                result.Save();
+#endif
+            }
+            else
+            {
+                string json = ta.text;
+                Resources.UnloadAsset(ta);
+
+                try
+                {
+                    JsonUtility.FromJson<LuaDeepProfilerSetting>(json);
+                }
+                catch
+                {
+                    result = new LuaDeepProfilerSetting();
+#if UNITY_EDITOR
+                    result.Save();
+#endif
+                }
+            }
+            return result;
+        }
+
     }
 }
 #endif

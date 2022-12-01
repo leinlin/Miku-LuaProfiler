@@ -225,26 +225,6 @@ namespace MikuLuaProfiler
             {
                 var setting = LuaDeepProfilerSetting.Instance;
                 if (setting == null) return;
-                if (setting != null && setting.isNeedCapture)
-                {
-                    //迟钝了
-                    if (sample.costTime >= (1 / (float)(setting.captureFrameRate)) * 10000000)
-                    {
-                        sample.captureUrl = Sample.Capture();
-                    }
-                    else if (sample.costLuaGC > setting.captureLuaGC)
-                    {
-                        sample.captureUrl = Sample.Capture();
-                    }
-                    else if (sample.costMonoGC > setting.captureMonoGC)
-                    {
-                        sample.captureUrl = Sample.Capture();
-                    }
-                    else
-                    {
-                        sample.captureUrl = null;
-                    }
-                }
                 if (!setting.isLocal)
                 {
                     NetWorkClient.SendMessage(sample);

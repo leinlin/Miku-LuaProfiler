@@ -33,7 +33,7 @@ __________#_______####_______####______________
 * ==============================================================================
 */
 
-#if UNITY_EDITOR_WIN || USE_LUA_PROFILER
+#if UNITY_EDITOR_WIN
 using UnityEngine;
 using UnityEditor;
 

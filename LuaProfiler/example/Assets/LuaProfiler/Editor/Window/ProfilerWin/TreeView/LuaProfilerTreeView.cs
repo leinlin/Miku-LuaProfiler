@@ -955,7 +955,7 @@ namespace MikuLuaProfiler
         public int GetNextProgramFrame(int start)
         {
             if (history.Count <= 0) return 0;
-            start = Math.Max(1, Math.Min(start, history.Count - 1));
+            start = Math.Max(0, Math.Min(start, history.Count - 1));
             int ret = start + 1;
             if (ret >= history.Count) return history.Count - 1;
 
@@ -964,11 +964,11 @@ namespace MikuLuaProfiler
             {
                 ret = i;
                 var s = history[i];
-                if (s.costLuaGC > setting.captureLuaGC)
+                if (s.costLuaGC > 0)
                 {
                     break;
                 }
-                else if (s.costMonoGC > setting.captureMonoGC)
+                else if (s.costMonoGC > 0)
                 {
                     break;
                 }
@@ -990,11 +990,11 @@ namespace MikuLuaProfiler
             {
                 ret = i;
                 var s = history[i];
-                if (s.costLuaGC > setting.captureLuaGC)
+                if (s.costLuaGC > 0)
                 {
                     break;
                 }
-                else if (s.costMonoGC > setting.captureMonoGC)
+                else if (s.costMonoGC > 0)
                 {
                     break;
                 }
