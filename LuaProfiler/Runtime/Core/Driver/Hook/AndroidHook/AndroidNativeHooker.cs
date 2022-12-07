@@ -78,7 +78,6 @@ namespace MikuLuaProfiler
     {
         public Delegate GetProxyFun(Type t)
         {
-            UnityEngine.Debug.LogError($"_proxyFun:{(IntPtr)_proxyFun}");
             if (_proxyFun == null) return null;
             return Marshal.GetDelegateForFunctionPointer((IntPtr)_proxyFun, t);
         }

@@ -949,7 +949,6 @@ end
             {
                 if (!m_hooked)
                 {
-                    UnityEngine.Debug.LogError("HookLoadLibrary");
                     BindEasyHook(ret);
                 }
             });
