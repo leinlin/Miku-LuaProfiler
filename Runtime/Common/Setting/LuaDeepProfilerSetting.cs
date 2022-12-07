@@ -271,23 +271,11 @@ namespace MikuLuaProfiler
 #if UNITY_EDITOR
         public void Save()
         {
-            string path = null;
-            var files = System.IO.Directory.GetFiles(Application.dataPath, "LuaDeepProfilerSetting.cs", System.IO.SearchOption.AllDirectories);
-            if (files.Length > 0)
+            string path = Application.dataPath+ "/Resources/LuaDeepProfilerSetting.txt";
+            string dir = Application.dataPath + "/Resources";
+            if (!Directory.Exists(dir))
             {
-                var f = files[0];
-                f = f.Replace("\\", "/");
-                var dirPath = f.Replace("LuaDeepProfilerSetting.cs", "Resources");
-                if (!Directory.Exists(dirPath))
-                {
-                    Directory.CreateDirectory(dirPath);
-                }
-
-                path = f.Replace("LuaDeepProfilerSetting.cs", "Resources/LuaDeepProfilerSetting.txt");
-            }
-            else
-            {
-                throw new Exception("你改了我的文件名，自己想办法拯救吧");
+                Directory.CreateDirectory(dir);
             }
 
             string v = JsonUtility.ToJson(this);
