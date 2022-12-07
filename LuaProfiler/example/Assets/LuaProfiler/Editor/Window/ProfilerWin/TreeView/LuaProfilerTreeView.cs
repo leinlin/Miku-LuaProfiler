@@ -336,7 +336,6 @@ namespace MikuLuaProfiler
             s.name = m_originName;
             s.costTime = (int)totalTime;
 
-            s.captureUrl = "";
             s.currentLuaMemory = 0;
             s.currentMonoMemory = 0;
             return s;
@@ -359,7 +358,6 @@ namespace MikuLuaProfiler
                 Sample child = childs[i].CopyToSample();
                 child.fahter = s;
             }
-            s.captureUrl = "";
             s.currentLuaMemory = 0;
             s.currentMonoMemory = 0;
             return s;
@@ -772,15 +770,6 @@ namespace MikuLuaProfiler
             Clear(false);
             end = Mathf.Max(Mathf.Min(end, history.Count - 1), 0);
             start = Mathf.Max(Mathf.Min(start, history.Count - 1), 0);
-
-            //if (end == start)
-            //{
-            //    LoadRootSample(history[start], false, true);
-            //    return;
-            //}
-
-            startUrl = history[start].captureUrl;
-            endUrl = history[end].captureUrl;
 
             end = Mathf.Min(history.Count - 1, end);
             m_catchLuaMemory = 0;

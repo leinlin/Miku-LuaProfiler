@@ -1,295 +1,333 @@
-﻿/*
-               #########                       
-              ############                     
-              #############                    
-             ##  ###########                   
-            ###  ###### #####                  
-            ### #######   ####                 
-           ###  ########## ####                
-          ####  ########### ####               
-         ####   ###########  #####             
-        #####   ### ########   #####           
-       #####   ###   ########   ######         
-      ######   ###  ###########   ######       
-     ######   #### ##############  ######      
-    #######  #####################  ######     
-    #######  ######################  ######    
-   #######  ###### #################  ######   
-   #######  ###### ###### #########   ######   
-   #######    ##  ######   ######     ######   
-   #######        ######    #####     #####    
-    ######        #####     #####     ####     
-     #####        ####      #####     ###      
-      #####       ###        ###      #        
-        ###       ###        ###               
-         ##       ###        ###               
-__________#_______####_______####______________
-                我们的未来没有BUG                
-* ==============================================================================
-* Filename: NetWorkClient
-* Created:  2018/7/13 14:29:22
-* Author:   エル・プサイ・コングリィ
-* Purpose:  
-* ==============================================================================
-*/
-#if UNITY_EDITOR_WIN || USE_LUA_PROFILER
+﻿using System;
+using System.Collections.Generic;
+using System.IO;
 
 namespace MikuLuaProfiler
 {
-    using System;
-    using System.Collections.Generic;
-    using System.IO;
-    using System.Net.Sockets;
-    using System.Text;
-    using System.Threading;
-
-    public static class NetWorkClient
+    [PacketMsg(MsgHead.ProfileSampleData)]
+    public class Sample: PacketBase<Sample>
     {
-        private static TcpClient m_client = null;
-        private static Thread m_sendThread;
-        private static Thread m_receiveThread;
-        private static Queue<NetBase> m_sampleQueue = new Queue<NetBase>(256);
-        private const int PACK_HEAD = 0x23333333;
-        private static NetworkStream ns;
-        public static MBinaryWriter bw;
-        private static BinaryReader br;
-        private static int m_frameCount = 0;
+        #region head
+        public override MsgHead MsgHead => MsgHead.ProfileSampleData;
 
-        #region public
-        public static void ConnectServer(string host, int port)
+        public int currentLuaMemory;
+        public int currentMonoMemory;
+        public long currentTime;
+
+        public int calls;
+        public int frameCount;
+        public float fps;
+        public uint pss;
+        public float power;
+
+        public int costLuaGC;
+        public int costMonoGC;
+        public string name;
+        public int costTime;
+        public MList<Sample> childs = new MList<Sample>(16);
+
+        #region property
+        public Sample _father;
+        private string _fullName;
+        public bool needShow = false;
+
+        public bool isCopy = false;
+        public long copySelfLuaGC = -1;
+        public long selfLuaGC
         {
-            if (m_client != null) return;
-            m_client = new TcpClient();
-
-            m_client.NoDelay = true;
-            try
+            get
             {
-                m_client.Connect(host, port);
-
-                UnityEngine.Debug.Log("<color=#00ff00>connect success</color>");
-                m_client.Client.SendTimeout = 30000;
-                //m_sampleDict.Clear();
-                m_strDict.Clear();
-                m_key = 0;
-                ns = m_client.GetStream();
-                bw = new MBinaryWriter(ns);
-                br = new BinaryReader(ns);
-
-                m_sendThread = new Thread(new ThreadStart(DoSendMessage));
-                m_sendThread.Start();
-                m_receiveThread = new Thread(new ThreadStart(DoRecieveMessage));
-                m_receiveThread.Priority = ThreadPriority.Lowest;
-                m_receiveThread.Start();
-            }
-            catch (Exception e)
-            {
-                UnityEngine.Debug.Log(e);
-                Close();
-            }
-        }
-
-        public static void Close()
-        {
-            try
-            {
-                if (m_client != null)
+                if (isCopy) return copySelfLuaGC;
+                long result = costLuaGC;
+                for (int i = 0, imax = childs.Count; i < imax; i++)
                 {
-                    if (m_client.Connected)
-                    {
-                        m_client.Close();
-                    }
-                    m_client = null;
+                    var item = childs[i];
+                    result -= item.costLuaGC;
                 }
-                m_sampleQueue.Clear();
-            }
-            catch (Exception e)
-            {
-                UnityEngine.Debug.Log(e);
-            }
-            finally
-            {
-                m_strDict.Clear();
-            }
-
-            if (m_receiveThread != null)
-            {
-                var tmp = m_receiveThread;
-                m_receiveThread = null;
-                tmp.Abort();
-            }
-
-            if (m_sendThread != null)
-            {
-                var tmp = m_sendThread;
-                m_sendThread = null;
-                tmp.Abort();
+                return Math.Max(result, 0);
             }
         }
 
-        //private static Dictionary<string, Sample> m_sampleDict = new Dictionary<string, Sample>(256);
+        public long copySelfMonoGC = -1;
 
-        public static void SendMessage(NetBase sample)
+        public long selfMonoGC
         {
-            if (m_client == null)
+            get
             {
-                sample.Restore();
-                return;
+                if (isCopy) return copySelfMonoGC;
+                long result = costMonoGC;
+                for (int i = 0, imax = childs.Count; i < imax; i++)
+                {
+                    var item = childs[i];
+                    result -= item.costMonoGC;
+                }
+
+                return Math.Max(result, 0);
             }
-            lock (m_sampleQueue)
+        }
+
+        public int copySelfCostTime = -1;
+        public int selfCostTime
+        {
+            get
             {
-                m_sampleQueue.Enqueue(sample);
+                if (isCopy) return copySelfCostTime;
+                int result = costTime;
+                for (int i = 0, imax = childs.Count; i < imax; i++)
+                {
+                    var item = childs[i];
+                    result -= item.costTime;
+                }
+
+                return Math.Max(result, 0);
+            }
+        }
+
+        public bool CheckSampleValid()
+        {
+            bool result = false;
+            do
+            {
+                if (needShow)
+                {
+                    result = true;
+                    break;
+                }
+                var setting = LuaDeepProfilerSetting.Instance;
+                if (setting != null && !setting.discardInvalid)
+                {
+                    result = true;
+                    break;
+                }
+
+                if (costLuaGC != 0)
+                {
+                    result = true;
+                    break;
+                }
+
+                if (costMonoGC != 0)
+                {
+                    result = true;
+                    break;
+                }
+
+                if (costTime > 10000)
+                {
+                    result = true;
+                    break;
+                }
+
+            } while (false);
+
+
+            return result;
+        }
+
+        private static Dictionary<string, Dictionary<string, string>> m_fullNamePool = new Dictionary<string, Dictionary<string, string>>();
+        public string fullName
+        {
+            get
+            {
+                if (_father == null) return name;
+
+                if (_fullName == null)
+                {
+                    Dictionary<string, string> childDict;
+                    if (!m_fullNamePool.TryGetValue(_father.fullName, out childDict))
+                    {
+                        childDict = new Dictionary<string, string>();
+                        m_fullNamePool.Add(_father.fullName, childDict);
+                    }
+
+                    if (!childDict.TryGetValue(name, out _fullName))
+                    {
+                        string value = name;
+                        var f = _father;
+                        while (f != null)
+                        {
+                            value = f.name + value;
+                            f = f.fahter;
+                        }
+                        _fullName = value;
+                        childDict[name] = string.Intern(_fullName);
+                    }
+
+                    return _fullName;
+                }
+                else
+                {
+                    return _fullName;
+                }
+            }
+        }
+
+        public Sample fahter
+        {
+            set
+            {
+                if (value != null)
+                {
+                    bool needAdd = true;
+                    var childList = value.childs;
+                    for (int i = 0,imax = childList.Count;i<imax;i++)
+                    {
+                        var item = childList[i];
+                        if (item.name == name)
+                        {
+                            needAdd = false;
+                            item.AddSample(this);
+                            break;
+                        }
+                    }
+                    if (needAdd)
+                    {
+                        childList.Add(this);
+                        _father = value;
+                    }
+                }
+                else
+                {
+                    _father = null;
+                }
+            }
+            get
+            {
+                return _father;
             }
         }
         #endregion
 
-        #region private
-        private static void DoSendMessage()
+        public void AddSample(Sample s)
         {
-            while (true)
+            calls += s.calls;
+            costLuaGC += Math.Max(s.costLuaGC, 0);
+            costMonoGC += Math.Max(s.costMonoGC, 0);
+            costTime += s.costTime;
+            for (int i = s.childs.Count - 1; i >= 0; i--)
             {
-                try
+                var item = s.childs[i];
+                item.fahter = this;
+                if (item.fahter != s)
                 {
-                    if (m_sendThread == null)
-                    {
-                        UnityEngine.Debug.LogError("<color=#ff0000>m_sendThread null</color>");
-                        return;
-                    }
-                    if (m_sampleQueue.Count > 0)
-                    {
-                        while (m_sampleQueue.Count > 0)
-                        {
-                            NetBase s = null;
-                            lock (m_sampleQueue)
-                            {
-                                s = m_sampleQueue.Dequeue();
-                            }
-                            bw.Write(PACK_HEAD);
-                            if (s is Sample)
-                            {
-                                bw.Write((int)0);
-                            }
-                            else if (s is LuaRefInfo)
-                            {
-                                bw.Write((int)1);
-                            }
-                            else if (s is LuaDiffInfo)
-                            {
-                                bw.Write((int)2);
-                            }
-                            Serialize(s, bw);
-                            s.Restore();
-                        }
-                    }
-                    else if (m_frameCount != SampleData.frameCount)
-                    {
-                        bw.Write(PACK_HEAD);
-                        //写入message 头编号
-                        bw.Write((int)0);
-                        Sample s = Sample.Create(0, (int)LuaLib.GetLuaMemory(LuaProfiler.mainL), "");
-                        Serialize(s, bw);
-                        s.Restore();
-                        m_frameCount = SampleData.frameCount;
-                    }
-                    Thread.Sleep(10);
+                    s.childs.RemoveAt(i);
                 }
-#pragma warning disable 0168
-                catch (ThreadAbortException e) { }
-                catch (Exception e)
-                {
-                    UnityEngine.Debug.Log(e);
-                    Close();
-                }
-#pragma warning restore 0168
             }
-
         }
-
-        private static void DoRecieveMessage()
+        
+        public static Sample Create(long time, int memory, string name)
         {
-            while (true)
+            Sample s = PacketFactory<Sample>.GetPacket();
+
+            s.calls = 1;
+            s.currentTime = time;
+            s.currentLuaMemory = memory;
+            s.currentMonoMemory = (int)GC.GetTotalMemory(false);
+            s.frameCount = SampleData.frameCount;
+            s.fps = SampleData.fps;
+            s.pss = SampleData.pss;
+            s.power = SampleData.power;
+            s.costLuaGC = 0;
+            s.costMonoGC = 0;
+            s.name = name;
+            s.costTime = 0;
+            s._father = null;
+            s.childs.Clear();
+            s._fullName = null;
+            s.needShow = false;
+
+            return s;
+        }
+        
+        public override void OnRelease()
+        {
+            lock (this)
             {
-                try
+                for (int i = 0, imax = childs.Count; i < imax; i++)
                 {
-                    if (m_receiveThread == null)
-                    {
-                        UnityEngine.Debug.LogError("<color=#ff0000>m_receiveThread null</color>");
-                        return;
-                    }
-                    if (ns.CanRead && ns.DataAvailable)
-                    {
-                        int head = br.ReadInt32();
-                        //处理粘包
-                        while (head == PACK_HEAD)
-                        {
-                            int messageId = br.ReadInt32();
-                            switch (messageId)
-                            {
-                                case 0:
-                                    {
-                                        LuaProfiler.SendAllRef();
-                                    }
-                                    break;
-                                case 1:
-                                    {
-                                        lock (m_client)
-                                        {
-                                            LuaHook.MarkRecordServer();
-                                        }
-                                    }
-                                    break;
-                                case 2:
-                                    {
-                                        lock (m_client)
-                                        {
-                                            LuaHook.DiffServer();
-                                        }
-                                    }
-                                    break;
-                            }
-                            head = br.ReadInt32();
-                        }
-                    }
+                    PacketFactory<Sample>.Release(childs[i]);
                 }
-                catch (Exception e)
-                {
-                    UnityEngine.Debug.Log(e);
-                }
-                Thread.Sleep(10);
+                _fullName = null;
+                childs.Clear();
             }
         }
 
-        private static int m_key = 0;
-        public static int GetUniqueKey()
+        public void Restore()
         {
-            return m_key++;
+            PacketFactory<Sample>.Release(this);
         }
-        private static Dictionary<string, KeyValuePair<int, byte[]>> m_strDict = new Dictionary<string, KeyValuePair<int, byte[]>>(8192);
-        private static bool GetBytes(string s, out byte[] result, out int index)
+
+        public Sample Clone()
         {
-            bool ret = true;
-            KeyValuePair<int, byte[]> keyValuePair;
-            if (!m_strDict.TryGetValue(s, out keyValuePair))
+            Sample s = new Sample();
+
+            s.calls = calls;
+            s.frameCount = frameCount;
+            s.fps = fps;
+            s.pss = pss;
+            s.power = power;
+            s.costMonoGC = costMonoGC;
+            s.costLuaGC = costLuaGC;
+            s.name = name;
+            s.costTime = costTime;
+
+            int childCount = childs.Count;
+            for (int i = 0; i < childCount; i++)
             {
-                result = Encoding.UTF8.GetBytes(s);
-                index = GetUniqueKey();
-                keyValuePair = new KeyValuePair<int, byte[]>(index, result);
-                m_strDict.Add(s, keyValuePair);
-                ret = false;
-            }
-            else
-            {
-                index = keyValuePair.Key;
-                result = keyValuePair.Value;
+                Sample child = childs[i].Clone();
+                child.fahter = s;
             }
 
-            return ret;
+            s.currentLuaMemory = currentLuaMemory;
+            s.currentMonoMemory = currentMonoMemory;
+            s.currentTime = currentTime;
+            return s;
         }
-        private static void Serialize(NetBase o, BinaryWriter bw)
-        {
-            if (o is Sample)
-            {
-                Sample s = (Sample)o;
 
+        #endregion
+
+        #region static
+
+        private static Action<Sample> OnReciveSample;
+
+        public static void RegAction(Action<Sample> action)
+        {
+            OnReciveSample = action;
+        }
+
+        public static void UnRegAction()
+        {
+            OnReciveSample = null;
+        }
+        #endregion
+        
+        #region virtual
+        public override void Read(BinaryReader br)
+        {
+            calls = br.ReadInt32();
+            frameCount = br.ReadInt32();
+            fps = br.ReadSingle();
+            pss = br.ReadUInt32();
+            power = br.ReadSingle();
+            costLuaGC = br.ReadInt32();
+            costMonoGC = br.ReadInt32();
+            name = br.ReadString();
+
+            costTime = br.ReadInt32();
+            currentLuaMemory = br.ReadInt32();
+            currentMonoMemory = br.ReadInt32();
+            ushort childCount = br.ReadUInt16();
+            for (int i = 0; i < childCount; i++)
+            {
+                var s = PacketFactory<Sample>.GetPacket();
+                s.Read(br);
+                childs.Add(s);
+            }
+        }
+		
+        public override void Write(BinaryWriter bw)
+        {
+                Sample s = this;
                 bw.Write(s.calls);
                 bw.Write(s.frameCount);
                 bw.Write(s.fps);
@@ -297,7 +335,7 @@ namespace MikuLuaProfiler
                 bw.Write(s.power);
                 bw.Write(s.costLuaGC);
                 bw.Write(s.costMonoGC);
-                WriteString(bw, s.name);
+                bw.Write(s.name);
 
                 bw.Write(s.costTime);
                 bw.Write(s.currentLuaMemory);
@@ -316,7 +354,7 @@ namespace MikuLuaProfiler
                     bw.Write(s0.power);
                     bw.Write(s0.costLuaGC);
                     bw.Write(s0.costMonoGC);
-                    WriteString(bw, s0.name);
+                    bw.Write(s0.name);
 
                     bw.Write(s0.costTime);
                     bw.Write(s0.currentLuaMemory);
@@ -333,7 +371,7 @@ namespace MikuLuaProfiler
                         bw.Write(s1.power);
                         bw.Write(s1.costLuaGC);
                         bw.Write(s1.costMonoGC);
-                        WriteString(bw, s1.name);
+                        bw.Write(s1.name);
 
                         bw.Write(s1.costTime);
                         bw.Write(s1.currentLuaMemory);
@@ -350,7 +388,7 @@ namespace MikuLuaProfiler
                             bw.Write(s2.power);
                             bw.Write(s2.costLuaGC);
                             bw.Write(s2.costMonoGC);
-                            WriteString(bw, s2.name);
+                            bw.Write(s2.name);
 
                             bw.Write(s2.costTime);
                             bw.Write(s2.currentLuaMemory);
@@ -367,7 +405,7 @@ namespace MikuLuaProfiler
                                 bw.Write(s3.power);
                                 bw.Write(s3.costLuaGC);
                                 bw.Write(s3.costMonoGC);
-                                WriteString(bw, s3.name);
+                                bw.Write(s3.name);
 
                                 bw.Write(s3.costTime);
                                 bw.Write(s3.currentLuaMemory);
@@ -384,7 +422,7 @@ namespace MikuLuaProfiler
                                     bw.Write(s4.power);
                                     bw.Write(s4.costLuaGC);
                                     bw.Write(s4.costMonoGC);
-                                    WriteString(bw, s4.name);
+                                    bw.Write(s4.name);
 
                                     bw.Write(s4.costTime);
                                     bw.Write(s4.currentLuaMemory);
@@ -401,7 +439,7 @@ namespace MikuLuaProfiler
                                         bw.Write(s5.power);
                                         bw.Write(s5.costLuaGC);
                                         bw.Write(s5.costMonoGC);
-                                        WriteString(bw, s5.name);
+                                        bw.Write(s5.name);
 
                                         bw.Write(s5.costTime);
                                         bw.Write(s5.currentLuaMemory);
@@ -418,7 +456,7 @@ namespace MikuLuaProfiler
                                             bw.Write(s6.power);
                                             bw.Write(s6.costLuaGC);
                                             bw.Write(s6.costMonoGC);
-                                            WriteString(bw, s6.name);
+                                            bw.Write(s6.name);
 
                                             bw.Write(s6.costTime);
                                             bw.Write(s6.currentLuaMemory);
@@ -435,7 +473,7 @@ namespace MikuLuaProfiler
                                                 bw.Write(s7.power);
                                                 bw.Write(s7.costLuaGC);
                                                 bw.Write(s7.costMonoGC);
-                                                WriteString(bw, s7.name);
+                                                bw.Write(s7.name);
 
                                                 bw.Write(s7.costTime);
                                                 bw.Write(s7.currentLuaMemory);
@@ -452,7 +490,7 @@ namespace MikuLuaProfiler
                                                     bw.Write(s8.power);
                                                     bw.Write(s8.costLuaGC);
                                                     bw.Write(s8.costMonoGC);
-                                                    WriteString(bw, s8.name);
+                                                    bw.Write(s8.name);
 
                                                     bw.Write(s8.costTime);
                                                     bw.Write(s8.currentLuaMemory);
@@ -469,7 +507,7 @@ namespace MikuLuaProfiler
                                                         bw.Write(s9.power);
                                                         bw.Write(s9.costLuaGC);
                                                         bw.Write(s9.costMonoGC);
-                                                        WriteString(bw, s9.name);
+                                                        bw.Write(s9.name);
 
                                                         bw.Write(s9.costTime);
                                                         bw.Write(s9.currentLuaMemory);
@@ -486,7 +524,7 @@ namespace MikuLuaProfiler
                                                             bw.Write(s10.power);
                                                             bw.Write(s10.costLuaGC);
                                                             bw.Write(s10.costMonoGC);
-                                                            WriteString(bw, s10.name);
+                                                            bw.Write(s10.name);
 
                                                             bw.Write(s10.costTime);
                                                             bw.Write(s10.currentLuaMemory);
@@ -503,7 +541,7 @@ namespace MikuLuaProfiler
                                                                 bw.Write(s11.power);
                                                                 bw.Write(s11.costLuaGC);
                                                                 bw.Write(s11.costMonoGC);
-                                                                WriteString(bw, s11.name);
+                                                                bw.Write(s11.name);
 
                                                                 bw.Write(s11.costTime);
                                                                 bw.Write(s11.currentLuaMemory);
@@ -520,7 +558,7 @@ namespace MikuLuaProfiler
                                                                     bw.Write(s12.power);
                                                                     bw.Write(s12.costLuaGC);
                                                                     bw.Write(s12.costMonoGC);
-                                                                    WriteString(bw, s12.name);
+                                                                    bw.Write(s12.name);
 
                                                                     bw.Write(s12.costTime);
                                                                     bw.Write(s12.currentLuaMemory);
@@ -537,7 +575,7 @@ namespace MikuLuaProfiler
                                                                         bw.Write(s13.power);
                                                                         bw.Write(s13.costLuaGC);
                                                                         bw.Write(s13.costMonoGC);
-                                                                        WriteString(bw, s13.name);
+                                                                        bw.Write(s13.name);
 
                                                                         bw.Write(s13.costTime);
                                                                         bw.Write(s13.currentLuaMemory);
@@ -554,7 +592,7 @@ namespace MikuLuaProfiler
                                                                             bw.Write(s14.power);
                                                                             bw.Write(s14.costLuaGC);
                                                                             bw.Write(s14.costMonoGC);
-                                                                            WriteString(bw, s14.name);
+                                                                            bw.Write(s14.name);
 
                                                                             bw.Write(s14.costTime);
                                                                             bw.Write(s14.currentLuaMemory);
@@ -571,7 +609,7 @@ namespace MikuLuaProfiler
                                                                                 bw.Write(s15.power);
                                                                                 bw.Write(s15.costLuaGC);
                                                                                 bw.Write(s15.costMonoGC);
-                                                                                WriteString(bw, s15.name);
+                                                                                bw.Write(s15.name);
 
                                                                                 bw.Write(s15.costTime);
                                                                                 bw.Write(s15.currentLuaMemory);
@@ -588,7 +626,7 @@ namespace MikuLuaProfiler
                                                                                     bw.Write(s16.power);
                                                                                     bw.Write(s16.costLuaGC);
                                                                                     bw.Write(s16.costMonoGC);
-                                                                                    WriteString(bw, s16.name);
+                                                                                    bw.Write(s16.name);
 
                                                                                     bw.Write(s16.costTime);
                                                                                     bw.Write(s16.currentLuaMemory);
@@ -605,7 +643,7 @@ namespace MikuLuaProfiler
                                                                                         bw.Write(s17.power);
                                                                                         bw.Write(s17.costLuaGC);
                                                                                         bw.Write(s17.costMonoGC);
-                                                                                        WriteString(bw, s17.name);
+                                                                                        bw.Write(s17.name);
 
                                                                                         bw.Write(s17.costTime);
                                                                                         bw.Write(s17.currentLuaMemory);
@@ -622,7 +660,7 @@ namespace MikuLuaProfiler
                                                                                             bw.Write(s18.power);
                                                                                             bw.Write(s18.costLuaGC);
                                                                                             bw.Write(s18.costMonoGC);
-                                                                                            WriteString(bw, s18.name);
+                                                                                            bw.Write(s18.name);
 
                                                                                             bw.Write(s18.costTime);
                                                                                             bw.Write(s18.currentLuaMemory);
@@ -639,7 +677,7 @@ namespace MikuLuaProfiler
                                                                                                 bw.Write(s19.power);
                                                                                                 bw.Write(s19.costLuaGC);
                                                                                                 bw.Write(s19.costMonoGC);
-                                                                                                WriteString(bw, s19.name);
+                                                                                                bw.Write(s19.name);
 
                                                                                                 bw.Write(s19.costTime);
                                                                                                 bw.Write(s19.currentLuaMemory);
@@ -656,7 +694,7 @@ namespace MikuLuaProfiler
                                                                                                     bw.Write(s20.power);
                                                                                                     bw.Write(s20.costLuaGC);
                                                                                                     bw.Write(s20.costMonoGC);
-                                                                                                    WriteString(bw, s20.name);
+                                                                                                    bw.Write(s20.name);
 
                                                                                                     bw.Write(s20.costTime);
                                                                                                     bw.Write(s20.currentLuaMemory);
@@ -673,7 +711,7 @@ namespace MikuLuaProfiler
                                                                                                         bw.Write(s21.power);
                                                                                                         bw.Write(s21.costLuaGC);
                                                                                                         bw.Write(s21.costMonoGC);
-                                                                                                        WriteString(bw, s21.name);
+                                                                                                        bw.Write(s21.name);
 
                                                                                                         bw.Write(s21.costTime);
                                                                                                         bw.Write(s21.currentLuaMemory);
@@ -690,7 +728,7 @@ namespace MikuLuaProfiler
                                                                                                             bw.Write(s22.power);
                                                                                                             bw.Write(s22.costLuaGC);
                                                                                                             bw.Write(s22.costMonoGC);
-                                                                                                            WriteString(bw, s22.name);
+                                                                                                            bw.Write(s22.name);
 
                                                                                                             bw.Write(s22.costTime);
                                                                                                             bw.Write(s22.currentLuaMemory);
@@ -707,7 +745,7 @@ namespace MikuLuaProfiler
                                                                                                                 bw.Write(s23.power);
                                                                                                                 bw.Write(s23.costLuaGC);
                                                                                                                 bw.Write(s23.costMonoGC);
-                                                                                                                WriteString(bw, s23.name);
+                                                                                                                bw.Write(s23.name);
 
                                                                                                                 bw.Write(s23.costTime);
                                                                                                                 bw.Write(s23.currentLuaMemory);
@@ -724,7 +762,7 @@ namespace MikuLuaProfiler
                                                                                                                     bw.Write(s24.power);
                                                                                                                     bw.Write(s24.costLuaGC);
                                                                                                                     bw.Write(s24.costMonoGC);
-                                                                                                                    WriteString(bw, s24.name);
+                                                                                                                    bw.Write(s24.name);
 
                                                                                                                     bw.Write(s24.costTime);
                                                                                                                     bw.Write(s24.currentLuaMemory);
@@ -741,7 +779,7 @@ namespace MikuLuaProfiler
                                                                                                                         bw.Write(s25.power);
                                                                                                                         bw.Write(s25.costLuaGC);
                                                                                                                         bw.Write(s25.costMonoGC);
-                                                                                                                        WriteString(bw, s25.name);
+                                                                                                                        bw.Write(s25.name);
 
                                                                                                                         bw.Write(s25.costTime);
                                                                                                                         bw.Write(s25.currentLuaMemory);
@@ -758,7 +796,7 @@ namespace MikuLuaProfiler
                                                                                                                             bw.Write(s26.power);
                                                                                                                             bw.Write(s26.costLuaGC);
                                                                                                                             bw.Write(s26.costMonoGC);
-                                                                                                                            WriteString(bw, s26.name);
+                                                                                                                            bw.Write(s26.name);
 
                                                                                                                             bw.Write(s26.costTime);
                                                                                                                             bw.Write(s26.currentLuaMemory);
@@ -775,7 +813,7 @@ namespace MikuLuaProfiler
                                                                                                                                 bw.Write(s27.power);
                                                                                                                                 bw.Write(s27.costLuaGC);
                                                                                                                                 bw.Write(s27.costMonoGC);
-                                                                                                                                WriteString(bw, s27.name);
+                                                                                                                                bw.Write(s27.name);
 
                                                                                                                                 bw.Write(s27.costTime);
                                                                                                                                 bw.Write(s27.currentLuaMemory);
@@ -785,7 +823,7 @@ namespace MikuLuaProfiler
                                                                                                                                 for (int i28 = 0, i28max = childs28.Count; i28 < i28max; i28++)
                                                                                                                                 {
                                                                                                                                     Sample s28 = childs28[i28];
-                                                                                                                                    Serialize(s28, bw);
+                                                                                                                                    s28.Write(bw);
                                                                                                                                 }
                                                                                                                             }
                                                                                                                         }
@@ -813,116 +851,59 @@ namespace MikuLuaProfiler
                                 }
                             }
                         }
-                    }
-                }
-            }
-            else if (o is LuaRefInfo)
-            {
-                LuaRefInfo r = (LuaRefInfo)o;
-
-                bw.Write(r.cmd);
-                bw.Write(SampleData.frameCount);
-                WriteString(bw, r.name);
-                WriteString(bw, r.addr);
-                bw.Write(r.type);
-            }
-            else if (o is LuaDiffInfo)
-            {
-                LuaDiffInfo ld = (LuaDiffInfo)o;
-                // add
-                var addDict = ld.addRef;
-                bw.Write(addDict.Count);
-                foreach (var item in addDict)
-                {
-                    bw.Write((int)item.Key);
-                    bw.Write(item.Value.Count);
-                    foreach (var v in item.Value)
-                    {
-                        WriteString(bw, v);
-                    }
-                }
-                var addDetail = ld.addDetail;
-                bw.Write(addDetail.Count);
-                foreach (var item in addDetail)
-                {
-                    WriteString(bw, item.Key);
-                    var list = item.Value;
-                    bw.Write(list.Count);
-                    foreach (var listItem in list)
-                    {
-                        WriteString(bw, listItem);
-                    }
-                }
-                // rm
-                var rmDict = ld.rmRef;
-                bw.Write(rmDict.Count);
-                foreach (var item in rmDict)
-                {
-                    bw.Write((int)item.Key);
-                    bw.Write(item.Value.Count);
-                    foreach (var v in item.Value)
-                    {
-                        WriteString(bw, v);
-                    }
-                }
-                var rmDetail = ld.rmDetail;
-                bw.Write(rmDetail.Count);
-                foreach (var item in rmDetail)
-                {
-                    WriteString(bw, item.Key);
-                    var list = item.Value;
-                    bw.Write(list.Count);
-                    foreach (var listItem in list)
-                    {
-                        WriteString(bw, listItem);
-                    }
-                }
-
-                // null
-                var nullDict = ld.nullRef;
-                bw.Write(nullDict.Count);
-                foreach (var item in nullDict)
-                {
-                    bw.Write((int)item.Key);
-                    bw.Write(item.Value.Count);
-                    foreach (var v in item.Value)
-                    {
-                        WriteString(bw, v);
-                    }
-                }
-                var nullDetail = ld.nullDetail;
-                bw.Write(nullDetail.Count);
-                foreach (var item in nullDetail)
-                {
-                    WriteString(bw, item.Key);
-                    var list = item.Value;
-                    bw.Write(list.Count);
-                    foreach (var listItem in list)
-                    {
-                        WriteString(bw, listItem);
-                    }
                 }
             }
         }
-
-        public static void WriteString(BinaryWriter bw, string name)
+        
+        public override void OnRun()
         {
-            byte[] datas;
-            int index = 0;
-            bool isRef = GetBytes(name, out datas, out index);
-            bw.Write(isRef);
-            bw.Write(index);
-            if (!isRef)
+            OnReciveSample?.Invoke(this);
+        }
+        
+        #endregion
+        
+        #region serialize
+        public static void SerializeList(List<Sample> samples, string path)
+        {
+            FileStream fs = new FileStream(path, FileMode.OpenOrCreate, FileAccess.Write);
+            MBinaryWriter b = new MBinaryWriter(fs);
+#if UNITY_EDITOR
+            UnityEditor.EditorUtility.ClearProgressBar();
+#endif
+            b.Write(samples.Count);
+            for (int i = 0, imax = samples.Count; i < imax; i++)
             {
-                bw.Write(datas.Length);
-                bw.Write(datas);
+                Sample s = samples[i];
+#if UNITY_EDITOR
+                UnityEditor.EditorUtility.DisplayProgressBar("serialize profiler data", "serialize " + s.name, (float)i / (float)imax);
+#endif
+                s.Write(b);
             }
+            b.Close();
+#if UNITY_EDITOR
+            UnityEditor.EditorUtility.ClearProgressBar();
+#endif
         }
 
+        public static List<Sample> DeserializeList(string path)
+        {
+            FileStream ms = new FileStream(path, FileMode.Open, FileAccess.Read);
+            MBinaryReader b = new MBinaryReader(ms);
+
+            int count = b.ReadInt32();
+            List<Sample> result = new List<Sample>(count);
+
+            for (int i = 0, imax = count; i < imax; i++)
+            {
+                Sample s = new Sample();
+                s.Read(b);
+                result.Add(s);
+            }
+            b.Close();
+
+            return result;
+        }
         #endregion
-
     }
-
+    
 }
-
-#endif

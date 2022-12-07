@@ -359,7 +359,7 @@ namespace XLua
 #endif
         }
 
-        //兼容API
+        //锟斤拷锟斤拷API
         public void GC()
         {
             Tick();
@@ -600,8 +600,8 @@ namespace XLua
 
         internal List<CustomLoader> customLoaders = new List<CustomLoader>();
 
-        //loader : CustomLoader， filepath参数：（ref类型）输入是require的参数，如果需要支持调试，需要输出真实路径。
-        //                        返回值：如果返回null，代表加载该源下无合适的文件，否则返回UTF8编码的byte[]
+        //loader : CustomLoader锟斤拷 filepath锟斤拷锟斤拷锟斤拷锟斤拷ref锟斤拷锟酵ｏ拷锟斤拷锟斤拷锟斤拷require锟侥诧拷锟斤拷锟斤拷锟斤拷锟斤拷锟揭э拷值锟斤拷裕锟斤拷锟揭拷锟斤拷锟斤拷实路锟斤拷锟斤拷
+        //                        锟斤拷锟斤拷值锟斤拷锟斤拷锟斤拷锟斤拷锟絥ull锟斤拷锟斤拷锟斤拷锟斤拷馗锟皆达拷锟斤拷藓锟斤拷实锟斤拷募锟斤拷锟斤拷锟斤拷蚍祷锟経TF8锟斤拷锟斤拷锟絙yte[]
         public void AddLoader(CustomLoader loader)
         {
             customLoaders.Add(loader);

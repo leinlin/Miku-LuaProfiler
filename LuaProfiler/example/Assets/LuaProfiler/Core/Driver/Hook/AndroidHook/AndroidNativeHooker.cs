@@ -28,7 +28,7 @@ namespace MikuLuaProfiler
 
         public IntPtr GetProcAddressByHandle(IntPtr InModule, string InProcName)
         {
-            return dlsym(RTLD_DEFAULT, InProcName);
+            return dlsym(InModule, InProcName);
         }
 
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
@@ -52,17 +52,19 @@ namespace MikuLuaProfiler
                 _callBack = callBack;
             }
         }
+
+        private static bool isLoadLuaSo = false;
         
         [MonoPInvokeCallbackAttribute(typeof(dlopenfun))]
         static IntPtr dlopen_replace(string libfile, int flag)
         {
             var ret = dlopenF(libfile, flag);
-            if (dlsym(RTLD_DEFAULT, "luaL_newstate") != IntPtr.Zero)
+            if (!isLoadLuaSo && dlsym(ret, "luaL_newstate") != IntPtr.Zero)
             {
-                _callBack?.Invoke(ret);
+                isLoadLuaSo = true;
+                UnityEngine.Debug.LogError("_callBack HookLoadLibrary");
+                _callBack.Invoke(ret);
             }
-            hooker.Uninstall();
-
             return ret;
         }
 
@@ -76,12 +78,13 @@ namespace MikuLuaProfiler
     {
         public Delegate GetProxyFun(Type t)
         {
+            UnityEngine.Debug.LogError($"_proxyFun:{(IntPtr)_proxyFun}");
             if (_proxyFun == null) return null;
-            return Marshal.GetDelegateForFunctionPointer((IntPtr)(*_proxyFun), t);
+            return Marshal.GetDelegateForFunctionPointer((IntPtr)_proxyFun, t);
         }
 
         public bool isHooked { get; set; }
-        private void** _proxyFun = null;
+        private void* _proxyFun = null;
         private IntPtr _targetPtr = IntPtr.Zero;
         private IntPtr _replacementPtr = IntPtr.Zero;
         private IntPtr stub = IntPtr.Zero;
@@ -105,7 +108,10 @@ namespace MikuLuaProfiler
 
         public void Install()
         {
-            stub = shadowhook_hook_func_addr( _targetPtr, _replacementPtr, _proxyFun);
+            fixed (void** addr = &_proxyFun)
+            {
+                stub = shadowhook_hook_func_addr( _targetPtr, _replacementPtr, addr);
+            }
         } 
 
         public void Uninstall()
@@ -114,6 +120,7 @@ namespace MikuLuaProfiler
             {
                 shadowhook_unhook(stub);
                 _proxyFun = null;
+                stub = IntPtr.Zero;
             }
         }
     }

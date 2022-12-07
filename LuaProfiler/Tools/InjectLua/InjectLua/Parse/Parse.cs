@@ -223,9 +223,8 @@ namespace MikuLuaProfiler
                             {
                                 lastPos = lastPos - 1;
 
-                                string returnStr = l.ReadString(insertPos, lastPos - 1);
-                                returnStr = " return miku_unpack_return_value(" + returnStr.Substring(6, returnStr.Length - 6) + ") ";
-                                l.Replace(insertPos, lastPos - 1, returnStr);
+                                l.Replace(insertPos, insertPos + 6, " return miku_unpack_return_value(");
+                                l.InsertString(lastPos , ") ");
 
                                 nextPos = l.pos;
                                 if (tokenType == (int)TK.END)

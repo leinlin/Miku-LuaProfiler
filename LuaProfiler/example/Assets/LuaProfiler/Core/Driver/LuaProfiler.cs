@@ -168,8 +168,7 @@ namespace MikuLuaProfiler
                     m_currentFrame = frameCount;
                     PopAllSampleWhenLateUpdate(luaState);
                 }
-                Sample sample = Sample.Create(getcurrentTime, (int)memoryCount, name);
-                sample.needShow = needShow;
+                Sample sample =  Sample.Create(getcurrentTime, (int)memoryCount, name);
                 beginSampleMemoryStack.Push(sample);
             }
             catch(Exception e)
@@ -227,7 +226,7 @@ namespace MikuLuaProfiler
                 if (setting == null) return;
                 if (!setting.isLocal)
                 {
-                    NetWorkClient.SendMessage(sample);
+                    NetWorkMgr.SendCmd(sample);
                 }
                 else if(m_onReceiveSample != null)
                 {
@@ -248,7 +247,7 @@ namespace MikuLuaProfiler
             Sample sample = Sample.Create(getcurrentTime, (int)memoryCount, "");
             if (!setting.isLocal)
             {
-                NetWorkClient.SendMessage(sample);
+                NetWorkMgr.SendCmd(sample);
             }
             else if (m_onReceiveSample != null)
             {
@@ -288,7 +287,7 @@ namespace MikuLuaProfiler
             var setting = LuaDeepProfilerSetting.Instance;
             if (!setting.isLocal)
             {
-                NetWorkClient.SendMessage(refInfo);
+                NetWorkMgr.SendCmd(refInfo);
             }
             else if (m_onReceiveRef != null)
             {
@@ -327,7 +326,7 @@ namespace MikuLuaProfiler
             var setting = LuaDeepProfilerSetting.Instance;
             if (!setting.isLocal)
             {
-                NetWorkClient.SendMessage(refInfo);
+                NetWorkMgr.SendCmd(refInfo);
             }
             else if (m_onReceiveRef != null)
             {

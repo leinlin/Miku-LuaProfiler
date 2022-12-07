@@ -79,23 +79,16 @@ namespace MikuLuaProfiler
             isInite = true;
             setting = LuaDeepProfilerSetting.Instance;
             LuaProfiler.mainThreadId = System.Threading.Thread.CurrentThread.ManagedThreadId;
-
-#if UNITY_EDITOR
-            if (setting.isDeepLuaProfiler)
+            
+            if (setting.isDeepLuaProfiler || !setting.isLocal)
             {
                 LuaDLL.Uninstall();
                 LuaDLL.HookLoadLibrary();
-                LuaDLL.BindEasyHook();
+                LuaDLL.BindEasyHook(IntPtr.Zero);
                 //LuaDLL.Install();
-
-                if (setting.isCleanMode)
-                {
-                    LuaProfilerPrecompileSetting.CompileLuaScript(false);
-                }
             }
-#endif
 
-            if (setting.isDeepLuaProfiler || setting.isCleanMode)
+            if (setting.isDeepLuaProfiler || setting.isCleanMode || !setting.isLocal)
             {
                 GameObject go = new GameObject();
                 go.name = "MikuLuaProfiler";
@@ -104,7 +97,7 @@ namespace MikuLuaProfiler
                 go.AddComponent<HookLuaSetup>();
                 if (!setting.isLocal)
                 {
-                    NetWorkClient.ConnectServer(setting.ip, setting.port);
+                    NetWorkMgr.BeginListen("0.0.0.0", setting.port);
                 }
             }
         }
@@ -156,9 +149,8 @@ namespace MikuLuaProfiler
             desotryCount = 0;
             Destroy(gameObject);
             UnityEditor.EditorApplication.update += WaitDestory;
-#else
-            NetWorkClient.Close();
 #endif
+            NetWorkMgr.Close();
         }
         
 #if UNITY_EDITOR
@@ -175,7 +167,7 @@ namespace MikuLuaProfiler
                 }
                 LuaDLL.Uninstall();
                 LuaProfiler.mainL = IntPtr.Zero;
-                NetWorkClient.Close();
+                NetWorkMgr.Close();
                 desotryCount = 0;
             }
         }
@@ -207,17 +199,6 @@ namespace MikuLuaProfiler
         {
             var setting = HookLuaSetup.setting;
 
-            if (GUI.Button(new Rect(0, 0, 200, 100), "Connect"))
-            {
-                NetWorkClient.ConnectServer(setting.ip, setting.port);
-            }
-
-            setting.ip = GUI.TextField(new Rect(210, 20, 200, 60), setting.ip);
-
-            if (GUI.Button(new Rect(0, 110, 200, 100), "Disconnect"))
-            {
-                NetWorkClient.Close();
-            }
             if (setting.discardInvalid)
             {
                 if (GUI.Button(new Rect(0, 220, 200, 100), "ShowAll"))
@@ -557,20 +538,20 @@ namespace MikuLuaProfiler
             LuaDLL.lua_settop(L, oldTop);
         }
 
-        public static void DiffServer()
-        {
-            NetWorkClient.SendMessage(Diff());
-        }
-
-        public static void MarkRecordServer()
-        {
-            NetWorkClient.SendMessage(Record());
-        }
-
-        public static void MarkStaticServer()
-        {
-            NetWorkClient.SendMessage(Record());
-        }
+        // public static void DiffServer()
+        // {
+        //     NetWorkClient.SendMessage(Diff());
+        // }
+        //
+        // public static void MarkRecordServer()
+        // {
+        //     NetWorkClient.SendMessage(Record());
+        // }
+        //
+        // public static void MarkStaticServer()
+        // {
+        //     NetWorkClient.SendMessage(Record());
+        // }
 
         public static LuaDiffInfo Diff()
         {

@@ -52,8 +52,8 @@ namespace MikuLuaProfiler
 					if (GetProcAddressByHandle(ret, "luaL_newstate") != IntPtr.Zero)
 					{
 						callBack(ret);
+						hooker.Uninstall();
 					}
-					hooker.Uninstall();
 					return ret;
 				});
 				hooker = new WindowsNativeHooker();

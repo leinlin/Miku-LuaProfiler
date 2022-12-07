@@ -368,28 +368,41 @@ namespace MikuLuaProfiler
 
             if (!LuaDeepProfilerSetting.Instance.isLocal)
             {
-                if (GUILayout.Button("OpenService", EditorStyles.toolbarButton, GUILayout.Height(30)))
-                {
-                    ClearConsole();
-                    NetWorkServer.RealClose();
-                    currentFrameIndex = 0;
-                    m_TreeView.Clear(true);
-                    LuaProfiler.UnRegistReceive();
-                    NetWorkServer.UnRegisterReceive();
-                    NetWorkServer.RegisterOnReceiveSample(m_TreeView.LoadRootSample);
-                    NetWorkServer.RegisterOnReceiveRefInfo(m_luaRefScrollView.DelRefInfo);
-                    NetWorkServer.RegisterOnReceiveDiffInfo(m_luaDiffScrollView.DelDiffInfo);
-                    NetWorkServer.BeginListen("0.0.0.0", port);
-                }
+                GUILayout.Label("ip:", GUILayout.Height(30), GUILayout.Width(35));
+                LuaDeepProfilerSetting.Instance.ip = EditorGUILayout.TextField(LuaDeepProfilerSetting.Instance.ip, GUILayout.Height(16), GUILayout.Width(150));
+
                 GUILayout.Label("port:", GUILayout.Height(30), GUILayout.Width(35));
                 port = EditorGUILayout.IntField(port, GUILayout.Height(16), GUILayout.Width(50));
 
-                if (GUILayout.Button("CloseService", EditorStyles.toolbarButton, GUILayout.Height(30)))
+                if (!NetWorkMgrClient.GetIsConnect())
                 {
-                    ClearConsole();
-                    NetWorkServer.RealClose();
-                    UnityEngine.Debug.Log("<color=#ff0000>disconnect</color>");
+                    if (GUILayout.Button("Connect", GUILayout.Height(20)))
+                    {
+                        ClearConsole();
+                        NetWorkMgrClient.Disconnect();
+                        currentFrameIndex = 0;
+                        m_TreeView.Clear(true);
+                        LuaProfiler.UnRegistReceive();
+                        Sample.UnRegAction();
+                        LuaRefInfo.UnRegAction();
+
+                        NetWorkMgrClient.Connect(LuaDeepProfilerSetting.Instance.ip, port);
+                        Sample.RegAction(m_TreeView.LoadRootSample);
+                        LuaRefInfo.RegAction(m_luaRefScrollView.DelRefInfo);
+                        //NetWorkServer.RegisterOnReceiveDiffInfo(m_luaDiffScrollView.DelDiffInfo);
+                    
+                    }
                 }
+                else
+                {
+                    if (GUILayout.Button("Disconnect",GUILayout.Height(20)))
+                    {
+                        ClearConsole();
+                        NetWorkMgrClient.Disconnect();
+                        UnityEngine.Debug.Log("<color=#ff0000>disconnect</color>");
+                    }
+                }
+
             }
             else
             {
@@ -434,12 +447,13 @@ namespace MikuLuaProfiler
                 }
             }
 
+            /*
             GUILayout.Space(25);
             if (GUILayout.Button("MarkStaticRecord", EditorStyles.toolbarButton, GUILayout.Height(30)))
             {
                 if (!LuaDeepProfilerSetting.Instance.isLocal)
                 {
-                    NetWorkServer.SendCmd(3);
+                    NetWorkMgrClient.SendCmd(3);
                 }
                 else
                 {
@@ -474,7 +488,7 @@ namespace MikuLuaProfiler
             if (GUILayout.Button("ClearDiff", EditorStyles.toolbarButton, GUILayout.Height(30)))
             {
                 m_luaDiffScrollView.Clear();
-            }
+            }*/
 
             GUILayout.Space(20);
             if (GUILayout.Button("AddLuaDir", EditorStyles.toolbarButton, GUILayout.Height(30)))
@@ -489,15 +503,21 @@ namespace MikuLuaProfiler
             {
                 LocalToLuaIDE.ClearPath();
             }
-
-            GUILayout.Space(10);
-            if (NetWorkServer.acceptThread != null)
+            if (!LuaDeepProfilerSetting.Instance.isRecord)
             {
-                Color c = GUI.color;
-                GUI.color = Color.green;
-                GUILayout.Label("listerning..");
-                GUI.color = c;
+                bool isSave = GUILayout.Button("Save", EditorStyles.toolbarButton, GUILayout.Height(30), GUILayout.Width(50));
+                if (isSave)
+                {
+                    m_TreeView.SaveResult();
+                }
+                
+                bool isLoad = GUILayout.Button("Load", EditorStyles.toolbarButton, GUILayout.Height(30), GUILayout.Width(50));
+                if (isLoad)
+                {
+                    m_TreeView.LoadHistory();
+                }
             }
+            
             #endregion
 
             #region gc value
@@ -517,7 +537,10 @@ namespace MikuLuaProfiler
         void DoRecord()
         {
             var instance = LuaDeepProfilerSetting.Instance;
-            if (!instance.isRecord) return;
+            if (!instance.isRecord)
+            {
+                return;
+            }
 
             EditorGUILayout.BeginHorizontal(EditorStyles.toolbar);
 
@@ -533,7 +556,7 @@ namespace MikuLuaProfiler
             {
                 m_TreeView.Clear(true);
                 m_luaRefScrollView.ClearRefInfo(true);
-                NetWorkServer.SendCmd(0);
+                //NetWorkServer.SendCmd(0);
             }
 
             if (state && !instance.isStartRecord)
@@ -1216,11 +1239,12 @@ namespace MikuLuaProfiler
         private void OpenLocalMode()
         {
             ClearConsole();
-            NetWorkServer.RealClose();
+            NetWorkMgrClient.Disconnect();
             currentFrameIndex = 0;
             m_TreeView.Clear(true);
             LuaProfiler.UnRegistReceive();
-            NetWorkServer.UnRegisterReceive();
+            Sample.UnRegAction();
+            LuaRefInfo.UnRegAction();
             LuaProfiler.RegisterOnReceiveSample(m_TreeView.LoadRootSample);
             LuaProfiler.RegisterOnReceiveRefInfo(m_luaRefScrollView.DelRefInfo);
             LuaProfiler.RegisterOnReceiveDiffInfo(m_luaDiffScrollView.DelDiffInfo);

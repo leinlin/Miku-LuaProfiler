@@ -315,6 +315,16 @@ namespace MikuLuaProfiler
             }
         }
 
+        public static unsafe IntPtr ConvertByteArrayToPtr(byte[] buff)
+        {
+            IntPtr intPtr;
+            fixed (byte* b = buff)
+            {
+                intPtr = (IntPtr)b;
+            }
+            return intPtr;
+        }
+
         #region script
         const string env_script = @"
 local function getfunction(level)
@@ -360,7 +370,7 @@ end
 
         public static int luaL_loadbufferUnHook(IntPtr luaState, byte[] buff, IntPtr size, string name)
         {
-            IntPtr intPtr = NativeUtility.ConvertByteArrayToPtr(buff);
+            IntPtr intPtr = ConvertByteArrayToPtr(buff);
             int result;
             if (LUA_VERSION > 510)
             {
@@ -448,44 +458,46 @@ end
         }
 
         private static bool isBinding = false;
-        public static void BindEasyHook()
+        public static void BindEasyHook(IntPtr module)
         {
             lock (m_Lock)
             {
                 if (m_hooked) return;
                 if(isBinding) return;
                 isBinding = true;
-                string moduleName = CheckHasLuaDLL();
-                isBinding = false;
-                if (m_hooked) return;
-                if (string.IsNullOrEmpty(moduleName))
+                if (module == IntPtr.Zero)
                 {
-                    HookLoadLibrary();
+                    module = CheckHasLuaDLL();
+                }
+
+                isBinding = false;
+                if (module == IntPtr.Zero)
+                {
                     return;
                 }
 
-                if (GetProcAddress(moduleName, "luaopen_jit") != IntPtr.Zero)
+                if (GetProcAddress(module, "luaopen_jit") != IntPtr.Zero)
                 {
                     IS_LUA_JIT = true;
                 }
 
-                if (GetProcAddress(moduleName, "lua_rotate") != IntPtr.Zero)
+                if (GetProcAddress(module, "lua_rotate") != IntPtr.Zero)
                 {
                     LUA_VERSION = 530;
                     // LUA_REGISTRYINDEX == LUAI_FIRSTPSEUDOIDX with LUAI_FIRSTPSEUDOIDX == (-LUAI_MAXSTACK - 1000) with LUAI_MAXSTACK == 15000 (for 32 bits build...)
                     LuaIndexes.LUA_REGISTRYINDEX = -1001000;
                     // starting with Lua 5.2, there is no longer a LUA_GLOBALSINDEX pseudo-index. Instead the global table is stored in the registry at LUA_RIDX_GLOBALS
                     LuaIndexes.LUA_GLOBALSINDEX = 2;
-                    IntPtr handle = GetProcAddress(moduleName, "lua_rotate");
+                    IntPtr handle = GetProcAddress(module, "lua_rotate");
                     lua_rotate = (lua_rotate_fun)Marshal.GetDelegateForFunctionPointer(handle, typeof(lua_rotate_fun));
                 }
-                else if (GetProcAddress(moduleName, "lua_open") != IntPtr.Zero)
+                else if (GetProcAddress(module, "lua_open") != IntPtr.Zero)
                 {
                     LUA_VERSION = 500;
                     LuaIndexes.LUA_REGISTRYINDEX = -10000;
                     LuaIndexes.LUA_GLOBALSINDEX = -10001;
                 }
-                else if (GetProcAddress(moduleName, "lua_callk") != IntPtr.Zero)
+                else if (GetProcAddress(module, "lua_callk") != IntPtr.Zero)
                 {
                     LUA_VERSION = 520;
                     // LUA_REGISTRYINDEX == LUAI_FIRSTPSEUDOIDX with LUAI_FIRSTPSEUDOIDX == (-LUAI_MAXSTACK - 1000) with LUAI_MAXSTACK == 15000 (for 32 bits build...)
@@ -493,7 +505,7 @@ end
                     // starting with Lua 5.2, there is no longer a LUA_GLOBALSINDEX pseudo-index. Instead the global table is stored in the registry at LUA_RIDX_GLOBALS
                     LuaIndexes.LUA_GLOBALSINDEX = 2;
                 }
-                else if (GetProcAddress(moduleName, "lua_gettop") != IntPtr.Zero) // should be ok for any version
+                else if (GetProcAddress(module, "lua_gettop") != IntPtr.Zero) // should be ok for any version
                 {
                     LUA_VERSION = 510;
                     LuaIndexes.LUA_REGISTRYINDEX = -10000;
@@ -509,7 +521,7 @@ end
 
                 if (luaL_newstate_hook == null)
                 {
-                    IntPtr handle = GetProcAddress(moduleName, "luaL_newstate");
+                    IntPtr handle = GetProcAddress(module, "luaL_newstate");
                     luaL_newstate_fun luaFun = new luaL_newstate_fun(luaL_newstate_replace);
                     INativeHooker hooker = nativeUtil.CreateHook();
                     hooker.Init(handle, Marshal.GetFunctionPointerForDelegate(luaFun));
@@ -520,7 +532,7 @@ end
 
                 if (lua_close_hook == null)
                 {
-                    IntPtr handle = GetProcAddress(moduleName, "lua_close");
+                    IntPtr handle = GetProcAddress(module, "lua_close");
                     lua_close_fun luaFun = new lua_close_fun(lua_close_replace);
                     INativeHooker hooker = nativeUtil.CreateHook();
                     hooker.Init(handle, Marshal.GetFunctionPointerForDelegate(luaFun));
@@ -531,7 +543,7 @@ end
 
                 if (lua_gc_hook == null)
                 {
-                    IntPtr handle = GetProcAddress(moduleName, "lua_gc");
+                    IntPtr handle = GetProcAddress(module, "lua_gc");
                     lua_gc_fun luaFun = new lua_gc_fun(lua_gc_replace);
                     INativeHooker hooker = nativeUtil.CreateHook();
                     hooker.Init(handle, Marshal.GetFunctionPointerForDelegate(luaFun));
@@ -552,7 +564,7 @@ end
 
                 if (luaL_ref_hook == null)
                 {
-                    IntPtr handle = GetProcAddress(moduleName, "luaL_ref");
+                    IntPtr handle = GetProcAddress(module, "luaL_ref");
                     luaL_ref_fun luaFun = new luaL_ref_fun(luaL_ref_replace);
                     INativeHooker hooker = nativeUtil.CreateHook();
                     hooker.Init(handle, Marshal.GetFunctionPointerForDelegate(luaFun));
@@ -563,7 +575,7 @@ end
 
                 if (luaL_unref_hook == null)
                 {
-                    IntPtr handle = GetProcAddress(moduleName, "luaL_unref");
+                    IntPtr handle = GetProcAddress(module, "luaL_unref");
                     luaL_unref_fun luaFun = new luaL_unref_fun(luaL_unref_replace);
                     INativeHooker hooker = nativeUtil.CreateHook();
                     hooker.Init(handle, Marshal.GetFunctionPointerForDelegate(luaFun));
@@ -588,7 +600,7 @@ end
                 {
                     if (LUA_VERSION > 510)
                     {
-                        IntPtr handle = GetProcAddress(moduleName, "luaL_loadbufferx");
+                        IntPtr handle = GetProcAddress(module, "luaL_loadbufferx");
                         luaL_loadbufferx_fun luaFun = new luaL_loadbufferx_fun(luaL_loadbufferx_replace);
                         INativeHooker hooker = nativeUtil.CreateHook();
                         hooker.Init(handle, Marshal.GetFunctionPointerForDelegate(luaFun));
@@ -598,7 +610,7 @@ end
                     }
                     else
                     {
-                        IntPtr handle = GetProcAddress(moduleName, "luaL_loadbuffer");
+                        IntPtr handle = GetProcAddress(module, "luaL_loadbuffer");
                         luaL_loadbuffer_fun luaFun = new luaL_loadbuffer_fun(luaL_loadbuffer_replace);
                         INativeHooker hooker = nativeUtil.CreateHook();
                         hooker.Init(handle, Marshal.GetFunctionPointerForDelegate(luaFun));
@@ -610,7 +622,7 @@ end
 
                 if (luaL_openlibs_hook == null)
                 {
-                    IntPtr handle = GetProcAddress(moduleName, "luaL_openlibs");
+                    IntPtr handle = GetProcAddress(module, "luaL_openlibs");
                     luaL_openlibs_fun luaFun = new luaL_openlibs_fun(luaL_openlibs_replace);
                     INativeHooker hooker = nativeUtil.CreateHook();
                     hooker.Init(handle, Marshal.GetFunctionPointerForDelegate(luaFun));
@@ -624,7 +636,7 @@ end
                 if (LUA_VERSION > 510)
                 {
                     {
-                        IntPtr handle = GetProcAddress(moduleName, "lua_getglobal");
+                        IntPtr handle = GetProcAddress(module, "lua_getglobal");
                         if (handle != IntPtr.Zero)
                         {
                             lua_getglobal =
@@ -633,7 +645,7 @@ end
                         }
                     }
                     {
-                        IntPtr handle = GetProcAddress(moduleName, "lua_setglobal");
+                        IntPtr handle = GetProcAddress(module, "lua_setglobal");
                         if (handle != IntPtr.Zero)
                         {
                             lua_setglobal =
@@ -642,7 +654,7 @@ end
                         }
                     }
                     {
-                        IntPtr handle = GetProcAddress(moduleName, "lua_rawlen");
+                        IntPtr handle = GetProcAddress(module, "lua_rawlen");
                         if (handle != IntPtr.Zero)
                         {
                             lua_objlen =
@@ -655,7 +667,7 @@ end
                     lua_getglobal = new lua_getglobal_fun(lua_getglobal51);
                     lua_setglobal = new lua_setglobal_fun(lua_setglobal51);
                     {
-                        IntPtr handle = GetProcAddress(moduleName, "lua_objlen");
+                        IntPtr handle = GetProcAddress(module, "lua_objlen");
                         if (handle != IntPtr.Zero)
                         {
                             lua_objlen =
@@ -665,7 +677,7 @@ end
                 }
 
                 {
-                    IntPtr handle = GetProcAddress(moduleName, "lua_gettop");
+                    IntPtr handle = GetProcAddress(module, "lua_gettop");
                     if (handle != IntPtr.Zero)
                     {
                         lua_gettop =
@@ -674,7 +686,7 @@ end
                 }
 
                 {
-                    IntPtr handle = GetProcAddress(moduleName, "lua_settop");
+                    IntPtr handle = GetProcAddress(module, "lua_settop");
                     if (handle != IntPtr.Zero)
                     {
                         lua_settop =
@@ -683,7 +695,7 @@ end
                 }
 
                 {
-                    IntPtr handle = GetProcAddress(moduleName, "lua_pushvalue");
+                    IntPtr handle = GetProcAddress(module, "lua_pushvalue");
                     if (handle != IntPtr.Zero)
                     {
                         lua_pushvalue =
@@ -692,7 +704,7 @@ end
                 }
 
                 {
-                    IntPtr handle = GetProcAddress(moduleName, "lua_remove");
+                    IntPtr handle = GetProcAddress(module, "lua_remove");
                     if (handle != IntPtr.Zero)
                     {
                         lua_remove =
@@ -705,7 +717,7 @@ end
                 }
 
                 {
-                    IntPtr handle = GetProcAddress(moduleName, "lua_insert");
+                    IntPtr handle = GetProcAddress(module, "lua_insert");
                     if (handle != IntPtr.Zero)
                     {
                         lua_insert =
@@ -718,7 +730,7 @@ end
                 }
 
                 {
-                    IntPtr handle = GetProcAddress(moduleName, "lua_type");
+                    IntPtr handle = GetProcAddress(module, "lua_type");
                     if (handle != IntPtr.Zero)
                     {
                         lua_type = (lua_type_fun)Marshal.GetDelegateForFunctionPointer(handle, typeof(lua_type_fun));
@@ -728,7 +740,7 @@ end
                 {
                     if (LUA_VERSION >= 520)
                     {
-                        IntPtr handle = GetProcAddress(moduleName, "lua_tonumberx");
+                        IntPtr handle = GetProcAddress(module, "lua_tonumberx");
                         if (handle != IntPtr.Zero)
                         {
                             var tonumx =
@@ -739,7 +751,7 @@ end
                     }
                     else
                     {
-                        IntPtr handle = GetProcAddress(moduleName, "lua_tonumber");
+                        IntPtr handle = GetProcAddress(module, "lua_tonumber");
                         if (handle != IntPtr.Zero)
                         {
                             lua_tonumber =
@@ -750,7 +762,7 @@ end
                 }
 
                 {
-                    IntPtr handle = GetProcAddress(moduleName, "lua_pushnil");
+                    IntPtr handle = GetProcAddress(module, "lua_pushnil");
                     if (handle != IntPtr.Zero)
                     {
                         lua_pushnil =
@@ -759,7 +771,7 @@ end
                 }
 
                 {
-                    IntPtr handle = GetProcAddress(moduleName, "lua_pushnumber");
+                    IntPtr handle = GetProcAddress(module, "lua_pushnumber");
                     if (handle != IntPtr.Zero)
                     {
                         lua_pushnumber =
@@ -769,7 +781,7 @@ end
                 }
 
                 {
-                    IntPtr handle = GetProcAddress(moduleName, "lua_pushstring");
+                    IntPtr handle = GetProcAddress(module, "lua_pushstring");
                     if (handle != IntPtr.Zero)
                     {
                         lua_pushstring =
@@ -779,7 +791,7 @@ end
                 }
 
                 {
-                    IntPtr handle = GetProcAddress(moduleName, "lua_pushboolean");
+                    IntPtr handle = GetProcAddress(module, "lua_pushboolean");
                     if (handle != IntPtr.Zero)
                     {
                         lua_pushboolean =
@@ -789,7 +801,7 @@ end
                 }
 
                 {
-                    IntPtr handle = GetProcAddress(moduleName, "lua_getfield");
+                    IntPtr handle = GetProcAddress(module, "lua_getfield");
                     if (handle != IntPtr.Zero)
                     {
                         lua_getfield =
@@ -798,7 +810,7 @@ end
                 }
 
                 {
-                    IntPtr handle = GetProcAddress(moduleName, "lua_rawget");
+                    IntPtr handle = GetProcAddress(module, "lua_rawget");
                     if (handle != IntPtr.Zero)
                     {
                         lua_rawget =
@@ -807,7 +819,7 @@ end
                 }
 
                 {
-                    IntPtr handle = GetProcAddress(moduleName, "lua_rawgeti");
+                    IntPtr handle = GetProcAddress(module, "lua_rawgeti");
                     if (handle != IntPtr.Zero)
                     {
                         lua_rawgeti =
@@ -816,7 +828,7 @@ end
                 }
 
                 {
-                    IntPtr handle = GetProcAddress(moduleName, "lua_createtable");
+                    IntPtr handle = GetProcAddress(module, "lua_createtable");
                     if (handle != IntPtr.Zero)
                     {
                         lua_createtable =
@@ -826,7 +838,7 @@ end
                 }
 
                 {
-                    IntPtr handle = GetProcAddress(moduleName, "lua_setfield");
+                    IntPtr handle = GetProcAddress(module, "lua_setfield");
                     if (handle != IntPtr.Zero)
                     {
                         lua_setfield =
@@ -835,7 +847,7 @@ end
                 }
 
                 {
-                    IntPtr handle = GetProcAddress(moduleName, "lua_rawset");
+                    IntPtr handle = GetProcAddress(module, "lua_rawset");
                     if (handle != IntPtr.Zero)
                     {
                         lua_rawset =
@@ -846,7 +858,7 @@ end
                 {
                     if (LUA_VERSION >= 520)
                     {
-                        IntPtr handle = GetProcAddress(moduleName, "lua_pcallk");
+                        IntPtr handle = GetProcAddress(module, "lua_pcallk");
                         if (handle != IntPtr.Zero)
                         {
                             lua_pcallk =
@@ -859,7 +871,7 @@ end
                     }
                     else
                     {
-                        IntPtr handle = GetProcAddress(moduleName, "lua_pcall");
+                        IntPtr handle = GetProcAddress(module, "lua_pcall");
                         if (handle != IntPtr.Zero)
                         {
                             lua_pcall = (lua_pcall_fun)Marshal.GetDelegateForFunctionPointer(handle,
@@ -871,7 +883,7 @@ end
                 {
                     if (LUA_VERSION >= 520)
                     {
-                        IntPtr handle = GetProcAddress(moduleName, "lua_callk");
+                        IntPtr handle = GetProcAddress(module, "lua_callk");
                         if (handle != IntPtr.Zero)
                         {
                             lua_callk =
@@ -884,7 +896,7 @@ end
                     }
                     else
                     {
-                        IntPtr handle = GetProcAddress(moduleName, "lua_call");
+                        IntPtr handle = GetProcAddress(module, "lua_call");
                         if (handle != IntPtr.Zero)
                         {
                             lua_call =
@@ -894,7 +906,7 @@ end
                 }
 
                 {
-                    IntPtr handle = GetProcAddress(moduleName, "lua_next");
+                    IntPtr handle = GetProcAddress(module, "lua_next");
                     if (handle != IntPtr.Zero)
                     {
                         lua_next = (lua_next_fun)Marshal.GetDelegateForFunctionPointer(handle, typeof(lua_next_fun));
@@ -902,7 +914,7 @@ end
                 }
 
                 {
-                    IntPtr handle = GetProcAddress(moduleName, "lua_tolstring");
+                    IntPtr handle = GetProcAddress(module, "lua_tolstring");
                     if (handle != IntPtr.Zero)
                     {
                         lua_tolstring =
@@ -911,7 +923,7 @@ end
                 }
 
                 {
-                    IntPtr handle = GetProcAddress(moduleName, "lua_pushcclosure");
+                    IntPtr handle = GetProcAddress(module, "lua_pushcclosure");
                     if (handle != IntPtr.Zero)
                     {
                         lua_pushcclosure =
@@ -927,43 +939,50 @@ end
 
         public static void HookLoadLibrary()
         {
+            IntPtr module = CheckHasLuaDLL();
+            if (module != IntPtr.Zero)
+            {
+                return;
+            }
+
             nativeUtil.HookLoadLibrary((ret) =>
             {
                 if (!m_hooked)
                 {
-                    if (nativeUtil.GetProcAddressByHandle(ret, "luaL_newstate") != IntPtr.Zero)
-                    {
-                        BindEasyHook();
-                    }
+                    UnityEngine.Debug.LogError("HookLoadLibrary");
+                    BindEasyHook(ret);
                 }
             });
         }
 
-        private static IntPtr GetProcAddress(string moduleName, string funName)
+        private static IntPtr GetProcAddress(IntPtr module, string funName)
         {
             IntPtr result = IntPtr.Zero;
             try
             {
-                result = nativeUtil.GetProcAddress(moduleName, funName);
+                result = nativeUtil.GetProcAddressByHandle(module, funName);
             }
             catch{}
             return result;
         }
         
-        private static string CheckHasLuaDLL()
+        private static IntPtr CheckHasLuaDLL()
         {
-            string result = null;
+            IntPtr result = IntPtr.Zero;
+#if UNITY_STANDALONE_WIN || UNITY_EDITOR_WIN
             var process = Process.GetCurrentProcess();
             var modules = process.Modules;
             foreach (ProcessModule item in modules)
             {
-                string moduleName = item.ModuleName;
-                if (GetProcAddress(moduleName, "luaL_newstate") != IntPtr.Zero)
+                result = GetProcAddress(item.BaseAddress, "luaL_newstate");
+                if (result != IntPtr.Zero)
                 {
-                    result = moduleName;
-                    break;
+                    return item.BaseAddress;
                 }
             }
+#else
+            result = GetProcAddress(IntPtr.Zero, "luaL_newstate");
+#endif
             return result;
         }
 
@@ -1086,7 +1105,7 @@ end
                         name = "chunk";
                     }
                     buffer = LuaHook.Hookloadbuffer(luaState, buffer, name);
-                    buff = NativeUtility.ConvertByteArrayToPtr(buffer);
+                    buff = ConvertByteArrayToPtr(buffer);
                     size = (IntPtr)buffer.Length;
                 }
                 return luaL_loadbufferx(luaState, buff, size, name, mode);
@@ -1153,7 +1172,7 @@ end
                         name = "chunk";
                     }
                     buffer = LuaHook.Hookloadbuffer(luaState, buffer, name);
-                    buff = NativeUtility.ConvertByteArrayToPtr(buffer);
+                    buff = ConvertByteArrayToPtr(buffer);
                     size = (IntPtr)buffer.Length;
                 }
                 return luaL_loadbuffer(luaState, buff, size, name);

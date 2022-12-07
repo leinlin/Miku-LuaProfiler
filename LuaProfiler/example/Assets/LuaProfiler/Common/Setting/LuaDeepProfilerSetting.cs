@@ -53,7 +53,7 @@ namespace MikuLuaProfiler
             {
                 if (instance == null)
                 {
-                    instance = new LuaDeepProfilerSetting();
+                    instance = Load();
                 }
                 return instance;
             }
@@ -315,7 +315,7 @@ namespace MikuLuaProfiler
 
                 try
                 {
-                    JsonUtility.FromJson<LuaDeepProfilerSetting>(json);
+                    result = JsonUtility.FromJson<LuaDeepProfilerSetting>(json);
                 }
                 catch
                 {
