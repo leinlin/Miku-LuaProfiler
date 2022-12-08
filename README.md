@@ -44,11 +44,11 @@ LuaProfiler.EndSampleCustom()
 
 如何对Lua函数进行各种数据排序
 >在搜索框中输入：[lua],然后点击右上角的merge按钮,最后点击各个数据标签进行排序
-![](~doc/sort.png)
+![](doc~/sort.png)
 
 如何定位Lua函数内存暴涨的点
 >使用Record模式启动游戏，在想采样的地方点击StartRecord,截取完记录后，找一段明显内存上涨的地方，采样出来分析函数即可.（鼠标点击上去，然后按键盘的左右键）
-![](~doc/record.png)
+![](doc~/record.png)
 
 ref的function代表什么
 >这里存储的一般都是C#这里持有的回调函数，你可以每一次打开UI前先clear数据，然后进入UI后记录数据，释放UI后如果 还持有不少委托，就代表说泄漏了。
@@ -75,8 +75,8 @@ Precompile Lua：有的人实在跑不起来我这套东西，你可以用Tools�
 
 <span id="contact_zh"></span>
 ## 投食
-![](~doc/zfb.png)
+![](doc~/zfb.png)
 
 ##
-![](~doc/meizi.gif)
+![](doc~/meizi.gif)
 
