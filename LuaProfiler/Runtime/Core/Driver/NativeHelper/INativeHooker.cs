@@ -5,19 +5,19 @@ namespace MikuLuaProfiler
 {
     public interface NativeUtilInterface
     {
-        public IntPtr GetProcAddress(string InPath, string InProcName);
-        public IntPtr GetProcAddressByHandle(IntPtr InModule, string InProcName);
-        public void HookLoadLibrary(Action<IntPtr> callBack);
-        public INativeHooker CreateHook();
+        IntPtr GetProcAddress(string InPath, string InProcName);
+        IntPtr GetProcAddressByHandle(IntPtr InModule, string InProcName);
+        void HookLoadLibrary(Action<IntPtr> callBack);
+        INativeHooker CreateHook();
     }
 
     public interface INativeHooker
     {
-        public void Init(IntPtr targetPtr, IntPtr replacementPtr);
-        public Delegate GetProxyFun(Type t);
-        public bool isHooked { get; set; }
-        public void Install();
-        public void Uninstall();
+        void Init(IntPtr targetPtr, IntPtr replacementPtr);
+        Delegate GetProxyFun(Type t);
+        bool isHooked { get; set; }
+        void Install();
+        void Uninstall();
         
     }
 }
