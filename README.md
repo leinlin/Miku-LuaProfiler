@@ -3,7 +3,7 @@
 ### 支持情况
 目前只支持Windows下，Unity5.6版本以上的编辑器进行使用，支持市场上所有版本的lua，包括各种魔改。
 
-![](doc/use.gif)
+![](doc~/use.gif)
 ### 部署和安装
 直接将example下的LuaProfiler文件夹拷贝到工程目录下。
 
