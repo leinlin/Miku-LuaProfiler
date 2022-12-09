@@ -36,6 +36,8 @@ namespace MikuLuaProfiler
 		public delegate IntPtr LoadLibraryExW_t(IntPtr lpFileName, IntPtr hFile, int dwFlags);
 		public static LoadLibraryExW_t LoadLibraryExW_dll;
 
+		private static WindowsNativeHooker hooker = null;
+		private static LoadLibraryExW_t fun;
 		public void HookLoadLibrary(Action<IntPtr> callBack)
 		{
 			IntPtr handle = GetProcAddress("KernelBase.dll", "LoadLibraryExW");
@@ -45,8 +47,7 @@ namespace MikuLuaProfiler
 			{
 				// LoadLibraryExW is called by the other LoadLibrary functions, so we
 				// only need to hook it.
-				WindowsNativeHooker hooker = null;
-				LoadLibraryExW_t fun = new LoadLibraryExW_t((IntPtr lpFileName, IntPtr hFile, int dwFlags) =>
+				fun = (IntPtr lpFileName, IntPtr hFile, int dwFlags) =>
 				{
 					var ret = LoadLibraryExW_dll(lpFileName, hFile, dwFlags);
 					if (GetProcAddressByHandle(ret, "luaL_newstate") != IntPtr.Zero)
@@ -55,7 +56,7 @@ namespace MikuLuaProfiler
 						hooker.Uninstall();
 					}
 					return ret;
-				});
+				};
 				hooker = new WindowsNativeHooker();
 				hooker.Init(handle, Marshal.GetFunctionPointerForDelegate(fun));
 				hooker.Install();

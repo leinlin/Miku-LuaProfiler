@@ -62,7 +62,6 @@ namespace MikuLuaProfiler
             if (!isLoadLuaSo && dlsym(ret, "luaL_newstate") != IntPtr.Zero)
             {
                 isLoadLuaSo = true;
-                UnityEngine.Debug.LogError("_callBack HookLoadLibrary");
                 _callBack.Invoke(ret);
             }
             return ret;

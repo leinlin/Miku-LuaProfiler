@@ -83,8 +83,18 @@ namespace MikuLuaProfiler
             if (setting.isDeepLuaProfiler || !setting.isLocal)
             {
                 LuaDLL.Uninstall();
-                LuaDLL.HookLoadLibrary();
-                LuaDLL.BindEasyHook(IntPtr.Zero);
+                IntPtr LuaModule = LuaDLL.CheckHasLuaDLL();
+                if (LuaModule != IntPtr.Zero)
+                {
+                    LuaDLL.BindEasyHook(LuaModule);
+                }
+                else
+                {
+                    LuaDLL.HookLoadLibrary();
+                }
+
+
+
                 //LuaDLL.Install();
             }
 

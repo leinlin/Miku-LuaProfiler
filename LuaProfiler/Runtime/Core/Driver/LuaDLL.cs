@@ -463,18 +463,8 @@ end
             lock (m_Lock)
             {
                 if (m_hooked) return;
-                if(isBinding) return;
-                isBinding = true;
-                if (module == IntPtr.Zero)
-                {
-                    module = CheckHasLuaDLL();
-                }
 
-                isBinding = false;
-                if (module == IntPtr.Zero)
-                {
-                    return;
-                }
+                if (module == IntPtr.Zero) return;
 
                 if (GetProcAddress(module, "luaopen_jit") != IntPtr.Zero)
                 {
@@ -939,12 +929,6 @@ end
 
         public static void HookLoadLibrary()
         {
-            IntPtr module = CheckHasLuaDLL();
-            if (module != IntPtr.Zero)
-            {
-                return;
-            }
-
             nativeUtil.HookLoadLibrary((ret) =>
             {
                 if (!m_hooked)
@@ -965,7 +949,7 @@ end
             return result;
         }
         
-        private static IntPtr CheckHasLuaDLL()
+        public static IntPtr CheckHasLuaDLL()
         {
             IntPtr result = IntPtr.Zero;
 #if UNITY_STANDALONE_WIN || UNITY_EDITOR_WIN
