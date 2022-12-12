@@ -100,6 +100,11 @@ namespace MikuLuaProfiler
             isClose = true;
         }
 
+        public static bool CheckIsConnected()
+        {
+            return tcpClient != null;
+        }
+
         public static void SendCmd(PacketBase cmd)
         {
             lock (m_cmdQueue)

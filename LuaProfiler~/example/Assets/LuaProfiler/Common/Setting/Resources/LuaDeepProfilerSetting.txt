@@ -1,1 +1,0 @@
-{"m_isNeedRecord":false,"m_isDeepLuaProfiler":true,"m_isCleanMode":false,"m_discardInvalid":true,"m_isFrameRecord":false,"m_captureFrameRate":30,"m_ip":"127.0.0.1","m_port":2333,"m_luaDir":[],"m_luaIDE":""}
