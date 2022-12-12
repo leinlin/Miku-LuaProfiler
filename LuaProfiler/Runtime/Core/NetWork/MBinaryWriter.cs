@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿#if UNITY_EDITOR_WIN || USE_LUA_PROFILER
+using System.Collections.Generic;
 using System.IO;
 using System.Text;
 
@@ -112,3 +113,4 @@ namespace MikuLuaProfiler
         #endregion
     }
 }
+#endif

@@ -1,4 +1,5 @@
-﻿using System;
+﻿#if UNITY_EDITOR_WIN || USE_LUA_PROFILER
+using System;
 using System.Collections.Generic;
 using System.IO;
 
@@ -85,3 +86,4 @@ namespace MikuLuaProfiler
         }
     }
 }
+#endif

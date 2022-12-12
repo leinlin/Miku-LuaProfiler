@@ -6,7 +6,7 @@ using System.Net.Sockets;
 using System.Reflection;
 using System.Threading;
 using UnityEngine;
-
+#if UNITY_5_6_OR_NEWER && UNITY_EDITOR_WIN
 namespace MikuLuaProfiler
 {
     public static class NetWorkMgrClient
@@ -146,3 +146,4 @@ namespace MikuLuaProfiler
 
     }
 }
+#endif

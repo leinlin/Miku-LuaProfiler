@@ -64,17 +64,17 @@ namespace MikuLuaProfiler
         {
             get
             {
-                #if UNITY_EDITOR
+#if UNITY_5_6_OR_NEWER && UNITY_EDITOR_WIN
                 return LuaDeepProfilerAssetSetting.Instance.isDeepLuaProfiler;
-                #else
+#else
                 return m_isDeepLuaProfiler;
-                #endif
+#endif
             }
             set
             {
                 m_isDeepLuaProfiler = value;
                 Save();
-#if UNITY_EDITOR
+#if UNITY_5_6_OR_NEWER && UNITY_EDITOR_WIN
                 LuaDeepProfilerAssetSetting.Instance.isDeepLuaProfiler = value;
 #endif
             }
@@ -84,7 +84,7 @@ namespace MikuLuaProfiler
         {
             get
             {
-#if UNITY_EDITOR
+#if UNITY_5_6_OR_NEWER && UNITY_EDITOR_WIN
                 return LuaDeepProfilerAssetSetting.Instance.isLocal;
 #else
                 return false;
@@ -92,7 +92,7 @@ namespace MikuLuaProfiler
             }
             set
             {
-#if UNITY_EDITOR
+#if UNITY_5_6_OR_NEWER && UNITY_EDITOR_WIN
                 LuaDeepProfilerAssetSetting.Instance.isLocal = value;
 #endif
             }

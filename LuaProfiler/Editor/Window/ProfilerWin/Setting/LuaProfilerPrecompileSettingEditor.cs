@@ -33,7 +33,7 @@ __________#_______####_______####______________
 * ==============================================================================
 */
 
-#if UNITY_EDITOR_WIN || USE_LUA_PROFILER
+#if UNITY_5_6_OR_NEWER && UNITY_EDITOR_WIN
 namespace MikuLuaProfiler
 {
     using System;

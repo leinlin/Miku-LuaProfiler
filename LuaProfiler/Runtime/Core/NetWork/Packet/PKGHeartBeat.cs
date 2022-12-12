@@ -1,4 +1,4 @@
-﻿
+﻿#if UNITY_EDITOR_WIN || USE_LUA_PROFILER
 namespace MikuLuaProfiler
 {
     [PacketMsg(MsgHead.HeartBeat)]
@@ -7,3 +7,4 @@ namespace MikuLuaProfiler
         public override MsgHead MsgHead => MsgHead.HeartBeat;
     }
 }
+#endif
