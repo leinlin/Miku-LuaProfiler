@@ -750,68 +750,6 @@ namespace MikuLuaProfiler
             EditorGUILayout.EndVertical();
 
         }
-        void DoCapture()
-        {
-            // 游戏进行中别这么搞，闪屏
-            if (Application.isPlaying && !EditorApplication.isPaused) return;
-
-            EditorGUILayout.BeginHorizontal();
-            if (oldStartUrl != m_TreeView.startUrl)
-            {
-                if (string.IsNullOrEmpty(m_TreeView.startUrl))
-                {
-                    Destory(oldStartT);
-                    oldStartT = null;
-                }
-                else if (File.Exists(m_TreeView.startUrl))
-                {
-                    byte[] datas = File.ReadAllBytes(m_TreeView.startUrl);
-                    Texture2D t = new Texture2D(480, 270, TextureFormat.RGB24, false);
-                    if (t.LoadImage(datas))
-                    {
-                        t.wrapMode = TextureWrapMode.Clamp;
-                        Destory(oldStartT);
-                        oldStartT = t;
-                    }
-                }
-                oldStartUrl = m_TreeView.startUrl;
-            }
-
-            if (oldStartT != null)
-            {
-                GUILayout.Box(oldStartT, GUILayout.Width(480), GUILayout.Height(270));
-            }
-
-            GUILayout.Space(15);
-            GUILayout.FlexibleSpace();
-            if (oldEndUrl != m_TreeView.endUrl)
-            {
-                if (string.IsNullOrEmpty(m_TreeView.endUrl))
-                {
-                    Destory(oldEndT);
-                    oldEndT = null;
-                }
-                else if (File.Exists(m_TreeView.endUrl))
-                {
-                    byte[] datas = File.ReadAllBytes(m_TreeView.endUrl);
-                    Texture2D t = new Texture2D(Screen.width, Screen.height);
-                    if (t.LoadImage(datas))
-                    {
-                        t.wrapMode = TextureWrapMode.Clamp;
-                        Destory(oldEndT);
-                        oldEndT = t;
-                    }
-                }
-                oldEndUrl = m_TreeView.endUrl;
-            }
-
-            if (oldEndT != null)
-            {
-                GUILayout.Box(oldEndT, GUILayout.Width(480), GUILayout.Height(270));
-            }
-
-            EditorGUILayout.EndHorizontal();
-        }
         void DoTreeView()
         {
             if (m_TreeView == null) return;
@@ -1253,7 +1191,7 @@ namespace MikuLuaProfiler
         #endregion
 
         // Add menu named "My Window" to the Window menu
-        [MenuItem("Window/Lua Profiler Window &#l")]
+        [MenuItem("Window/Lua Profiler/Editor Window &#l", priority = 200)]
         static public void ShowWindow()
         {
             // Get existing open window or if none, make a new one:

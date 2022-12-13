@@ -58,25 +58,24 @@ namespace MikuLuaProfiler
                 return instance;
             }
         }
+
+        private const string CONFIG_NAME = "MIKU_LUAPROFILER";
+        
         #endregion
 
         public bool isDeepLuaProfiler
         {
             get
             {
-#if UNITY_5_6_OR_NEWER && UNITY_EDITOR_WIN
-                return LuaDeepProfilerAssetSetting.Instance.isDeepLuaProfiler;
-#else
                 return m_isDeepLuaProfiler;
-#endif
             }
             set
             {
-                m_isDeepLuaProfiler = value;
-                Save();
-#if UNITY_5_6_OR_NEWER && UNITY_EDITOR_WIN
-                LuaDeepProfilerAssetSetting.Instance.isDeepLuaProfiler = value;
-#endif
+                if (m_isDeepLuaProfiler != value)
+                {
+                    m_isDeepLuaProfiler = value;
+                    Save();
+                }
             }
         }
 
@@ -85,16 +84,18 @@ namespace MikuLuaProfiler
             get
             {
 #if UNITY_5_6_OR_NEWER && UNITY_EDITOR_WIN
-                return LuaDeepProfilerAssetSetting.Instance.isLocal;
+                return m_isLocal;
 #else
                 return false;
 #endif
             }
             set
             {
-#if UNITY_5_6_OR_NEWER && UNITY_EDITOR_WIN
-                LuaDeepProfilerAssetSetting.Instance.isLocal = value;
-#endif
+                if (m_isLocal != value)
+                {
+                    m_isLocal = value;
+                    Save();
+                }
             }
         }
 
@@ -259,6 +260,7 @@ namespace MikuLuaProfiler
         public bool m_discardInvalid = true;
         public bool m_isFrameRecord = false;
         public int m_captureFrameRate = 30;
+        public bool m_isLocal = true;
         public string m_ip = "127.0.0.1";
         public int m_port = 2333;
 
@@ -271,15 +273,8 @@ namespace MikuLuaProfiler
 #if UNITY_EDITOR
         public void Save()
         {
-            string path = Application.dataPath+ "/Resources/LuaDeepProfilerSetting.txt";
-            string dir = Application.dataPath + "/Resources";
-            if (!Directory.Exists(dir))
-            {
-                Directory.CreateDirectory(dir);
-            }
-
             string v = JsonUtility.ToJson(this);
-            File.WriteAllText(path, v);
+            PlayerPrefs.SetString(CONFIG_NAME, v);
         }
 #else
         public void Save()
@@ -288,8 +283,8 @@ namespace MikuLuaProfiler
         public static LuaDeepProfilerSetting Load()
         {
             LuaDeepProfilerSetting result = null;
-            var ta = Resources.Load<TextAsset>("LuaDeepProfilerSetting");
-            if (ta == null)
+            var ta = PlayerPrefs.GetString(CONFIG_NAME);
+            if (string.IsNullOrEmpty(ta))
             {
                 result = new LuaDeepProfilerSetting();
 #if UNITY_EDITOR
@@ -298,8 +293,7 @@ namespace MikuLuaProfiler
             }
             else
             {
-                string json = ta.text;
-                Resources.UnloadAsset(ta);
+                string json = ta;
 
                 try
                 {

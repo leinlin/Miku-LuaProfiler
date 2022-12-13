@@ -44,7 +44,6 @@ namespace MikuLuaProfiler
         {
             if (tcpClient != null)
             {
-                SendMessage(new PKGDisconnect());
                 tcpClient.Close();
                 tcpClient.Dispose();
                 tcpClient = null;
