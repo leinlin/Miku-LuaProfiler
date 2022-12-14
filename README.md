@@ -1,11 +1,35 @@
 ## Lua Profiler For Unity
 
 ### 支持情况
-目前只支持Windows下，Unity5.6版本以上的编辑器进行使用，支持市场上所有版本的lua，包括各种魔改。
+| 系统                  | 支持情况|
+| ----------------------- | ------------ |
+| `windows`| ✔  |
+| `android`| ✔  |
+| `MAC`| 支持中  |
+| `IOS`| 支持中  |
 
 ![](doc~/use.gif)
+
 ### 部署和安装
-直接将example下的LuaProfiler文件夹拷贝到工程目录下。
+1. 推荐安装Unity2019可以直接用PackageManager 用add by git路径添加,国内网络不好可以使用gitee代理
+![](doc~/package_clone.png)
+>https://github.com/leinlin/Miku-LuaProfiler.git
+
+2. Unity5.6以上版本建议把代码clone下来，然后把LuaProfiler目录copy到Assets中
+
+3. 看到这个菜单说明安装成功了
+![](doc~/install_success.png)
+
+### 如何使用
+- 编辑器使用推荐使用local模式，打开DeepLua开关即可
+![](doc~/2022-12-14-21-50-20.png)
+
+- 真机目前只支持android系统，打包的时候加上宏 `USE_LUA_PROFILER`
+- 打包后，使用四根手指同时连续敲击屏幕5下以上后，就会出现以下菜单
+![](doc~/2022-12-14-21-58-59.png)
+
+- 点击 `Open Lua Profiler`就会打上标记，下一次启动就会自动打开性能数据
+
 
 ### 使用说明
 在Windows菜单下也有个LuaProfiler选项，点击后即可打开窗口。开启DeepLua,运行游戏就能看到对应的数据。
