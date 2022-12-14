@@ -257,7 +257,7 @@ namespace MikuLuaProfiler
         public bool m_isNeedRecord = false;
         public bool m_isDeepLuaProfiler = false;
         public bool m_isCleanMode = false;
-        public bool m_discardInvalid = true;
+        public bool m_discardInvalid = false;
         public bool m_isFrameRecord = false;
         public int m_captureFrameRate = 30;
         public bool m_isLocal = true;

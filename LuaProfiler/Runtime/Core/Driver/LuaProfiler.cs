@@ -58,6 +58,18 @@ namespace MikuLuaProfiler
         const long MaxK = MaxB * 1024;
         const long MaxM = MaxK * 1024;
         const long MaxG = MaxM * 1024;
+        
+        private const string SERVER_CONFIG_NAME = "LUAPROFILER_SERVER";
+
+        public static void OpenServer()
+        {
+            PlayerPrefs.SetInt(LuaProfiler.SERVER_CONFIG_NAME, 1);
+        }
+
+        public static void CloseServer()
+        {
+            PlayerPrefs.SetInt(LuaProfiler.SERVER_CONFIG_NAME, 0);
+        }
 
         private static Action<Sample> m_onReceiveSample;
         private static Action<LuaRefInfo> m_onReceiveRef;
