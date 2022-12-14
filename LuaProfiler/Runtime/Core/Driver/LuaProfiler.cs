@@ -61,6 +61,11 @@ namespace MikuLuaProfiler
         
         private const string SERVER_CONFIG_NAME = "LUAPROFILER_SERVER";
 
+        public static bool CheckServerIsOpen()
+        {
+            return PlayerPrefs.GetInt(LuaProfiler.SERVER_CONFIG_NAME, 0) > 0;
+        }
+
         public static void OpenServer()
         {
             PlayerPrefs.SetInt(LuaProfiler.SERVER_CONFIG_NAME, 1);

@@ -76,8 +76,7 @@ namespace MikuLuaProfiler
 #endif
 
 #if !UNITY_EDITOR
-            bool isOpen = PlayerPrefs.GetInt(LuaProfiler.SERVER_CONFIG_NAME, 0) > 0;
-            if (!isOpen)
+            if (!LuaProfiler.CheckServerIsOpen())
             {
                 GameObject go = new GameObject();
                 go.name = "MikuLuaProfiler";
