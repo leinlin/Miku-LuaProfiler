@@ -74,19 +74,22 @@ namespace MikuLuaProfiler
 #if UNITY_EDITOR
             if (!Application.isPlaying) return;
 #endif
+            
+            if (isInite) return;
 
-#if !UNITY_EDITOR
-            if (!LuaProfiler.CheckServerIsOpen())
             {
                 GameObject go = new GameObject();
-                go.name = "MikuLuaProfiler";
+                go.name = "MikuLuaProfiler OpenMenu";
                 go.hideFlags = HideFlags.HideAndDontSave;
                 DontDestroyOnLoad(go);
                 go.AddComponent<OpenMenu>();
+            }
+#if !UNITY_EDITOR
+            if (!LuaProfiler.CheckServerIsOpen())
+            {
                 return;       
             }
 #endif
-            if (isInite) return;
             isInite = true;
             setting = LuaDeepProfilerSetting.Instance;
             LuaProfiler.mainThreadId = System.Threading.Thread.CurrentThread.ManagedThreadId;

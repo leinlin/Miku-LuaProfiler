@@ -69,11 +69,13 @@ namespace MikuLuaProfiler
         public static void OpenServer()
         {
             PlayerPrefs.SetInt(LuaProfiler.SERVER_CONFIG_NAME, 1);
+            PlayerPrefs.Save();
         }
 
         public static void CloseServer()
         {
             PlayerPrefs.SetInt(LuaProfiler.SERVER_CONFIG_NAME, 0);
+            PlayerPrefs.Save();
         }
 
         private static Action<Sample> m_onReceiveSample;
