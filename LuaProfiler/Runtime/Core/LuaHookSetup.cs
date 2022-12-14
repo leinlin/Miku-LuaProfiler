@@ -76,7 +76,7 @@ namespace MikuLuaProfiler
 #endif
             
             if (isInite) return;
-
+#if !UNITY_EDITOR
             {
                 GameObject go = new GameObject();
                 go.name = "MikuLuaProfiler OpenMenu";
@@ -84,7 +84,6 @@ namespace MikuLuaProfiler
                 DontDestroyOnLoad(go);
                 go.AddComponent<OpenMenu>();
             }
-#if !UNITY_EDITOR
             if (!LuaProfiler.CheckServerIsOpen())
             {
                 return;       
@@ -196,20 +195,33 @@ namespace MikuLuaProfiler
     public class OpenMenu : MonoBehaviour
     {
         private bool needShowMenu = false;
+        private int count = 0;
 
+        private float recordTime = 0;
+        private float DELTA_TIME = 2;
         private void LateUpdate()
         {
             if (Input.touchCount == 4 || Input.GetKeyDown(KeyCode.Delete))
             {
-                needShowMenu = !needShowMenu;
-                if (needShowMenu)
+                count++;
+                if (count >= 5)
                 {
-                    Menu.EnableMenu(gameObject);
+                    count = 0;
+                    needShowMenu = !needShowMenu;
+                    if (needShowMenu)
+                    {
+                        Menu.EnableMenu(gameObject);
+                    }
+                    else
+                    {
+                        Menu.DisableMenu();
+                    }
                 }
-                else
-                {
-                    Menu.DisableMenu();
-                }
+            }
+            if (Time.time - recordTime > DELTA_TIME)
+            {
+                count = 0;
+                recordTime = Time.time;
             }
         }
     }
@@ -239,17 +251,22 @@ namespace MikuLuaProfiler
         {
             var setting = HookLuaSetup.setting;
 
-            if (GUI.Button(new Rect(0, 220, 200, 100), "Open Lua Profiler"))
+            if (GUI.Button(new Rect(0, 0, 200, 100), "Open Lua Profiler"))
             {
                 LuaProfiler.OpenServer();
             }
             
-            if (GUI.Button(new Rect(220, 220, 200, 100), "Close Lua Profiler"))
+            if (GUI.Button(new Rect(220, 0, 200, 100), "Close Lua Profiler"))
             {
                 LuaProfiler.CloseServer();
             }
             
-            if (GUI.Button(new Rect(440, 220, 200, 100), "Quit Game"))
+            if (GUI.Button(new Rect(440, 0, 200, 100), "Hide Menu"))
+            {
+                enabled = false;
+            }
+            
+            if (GUI.Button(new Rect(0, 150, 200, 100), "Quit Game"))
             {
                 Application.Quit();
             }
