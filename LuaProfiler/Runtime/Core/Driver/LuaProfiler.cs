@@ -36,6 +36,7 @@ __________#_______####_______####______________
 #if UNITY_EDITOR_WIN || USE_LUA_PROFILER
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Reflection;
 using RefDict = System.Collections.Generic.Dictionary<string, System.Collections.Generic.HashSet<string>>;
 using UnityEngine;
@@ -59,23 +60,32 @@ namespace MikuLuaProfiler
         const long MaxM = MaxK * 1024;
         const long MaxG = MaxM * 1024;
         
-        private const string SERVER_CONFIG_NAME = "LUAPROFILER_SERVER";
+        private const string SERVER_CONFIG_NAME = "/LUAPROFILER_SERVER";
 
         public static bool CheckServerIsOpen()
         {
-            return PlayerPrefs.GetInt(LuaProfiler.SERVER_CONFIG_NAME, 0) > 0;
+            return File.Exists(Application.persistentDataPath + SERVER_CONFIG_NAME);
         }
 
         public static void OpenServer()
         {
-            PlayerPrefs.SetInt(LuaProfiler.SERVER_CONFIG_NAME, 1);
-            PlayerPrefs.Save();
+            string path = Application.persistentDataPath + SERVER_CONFIG_NAME;
+            if (!File.Exists(path))
+            {
+                File.WriteAllText(path, "1");
+            }
+            
+            Debug.Log("open lua profiler server success");
         }
 
         public static void CloseServer()
         {
-            PlayerPrefs.SetInt(LuaProfiler.SERVER_CONFIG_NAME, 0);
-            PlayerPrefs.Save();
+            string path = Application.persistentDataPath + SERVER_CONFIG_NAME;
+            if (File.Exists(path))
+            {
+                File.Delete(path);
+            }
+            Debug.Log("close lua profiler server success");
         }
 
         private static Action<Sample> m_onReceiveSample;
