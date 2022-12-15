@@ -15,10 +15,10 @@ namespace MikuLuaProfiler
 
         private static readonly IntPtr RTLD_DEFAULT = IntPtr.Zero;
 
-        [DllImport("libc.so", CallingConvention = CallingConvention.Cdecl)]
+        [DllImport("libc", CallingConvention = CallingConvention.Cdecl)]
         public static extern IntPtr dlsym(IntPtr handle, string symbol);
         
-        [DllImport("libc.so", CallingConvention = CallingConvention.Cdecl)]
+        [DllImport("libc", CallingConvention = CallingConvention.Cdecl)]
         public static extern IntPtr dlopen(string libfile, int flag);
 
         public IntPtr GetProcAddress(string InPath, string InProcName)
