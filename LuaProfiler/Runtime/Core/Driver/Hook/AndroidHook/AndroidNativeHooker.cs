@@ -15,26 +15,20 @@ namespace MikuLuaProfiler
 
         private static readonly IntPtr RTLD_DEFAULT = IntPtr.Zero;
 
-        [DllImport("libshadowhook", CallingConvention = CallingConvention.Cdecl)]
-        public static extern IntPtr shadowhook_dlsym(IntPtr handle, string symbol);
+        [DllImport("libc", CallingConvention = CallingConvention.Cdecl)]
+        public static extern IntPtr dlsym(IntPtr handle, string symbol);
         
-        [DllImport("libshadowhook", CallingConvention = CallingConvention.Cdecl)]
-        public static extern IntPtr shadowhook_dlopen(string libfile);
+        [DllImport("libc", CallingConvention = CallingConvention.Cdecl)]
+        public static extern IntPtr dlopen(string libfile);
 
         public IntPtr GetProcAddress(string InPath, string InProcName)
         {
-            IntPtr handle = shadowhook_dlopen(InPath);
-            return shadowhook_dlsym(handle, InProcName);
+            return dlsym(RTLD_DEFAULT, InProcName);
         }
 
         public IntPtr GetProcAddressByHandle(IntPtr InModule, string InProcName)
         {
-            var ret = shadowhook_dlsym(InModule, InProcName);
-            if (ret == IntPtr.Zero)
-            {
-                Debug.LogError($"get {InProcName} fail");
-            }
-            return ret;
+            return dlsym(InModule, InProcName);
         }
 
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
@@ -44,12 +38,23 @@ namespace MikuLuaProfiler
         private static Action<IntPtr> _callBack;
         public void HookLoadLibrary(Action<IntPtr> callBack)
         {
-            hooker = CreateHook();
-            AndroidNativeHooker ah = hooker as AndroidNativeHooker;
+            IntPtr handle = GetProcAddress("libc.so", "dlopen");
+            if (handle != IntPtr.Zero)
+            {
+                // LoadLibraryExW is called by the other LoadLibrary functions, so we
+                // only need to hook it.
+                hooker = CreateHook();
+                dlopenfun f = dlopen_replace;
+                hooker.Init(handle, Marshal.GetFunctionPointerForDelegate(f));
+                hooker.Install();
 
-            dlopenfun f = dlopen_replace;
-            ah.InitLibSym("libc.so", "dlopen", Marshal.GetFunctionPointerForDelegate(f));
-            ah.Install();
+                dlopenF = (dlopenfun)hooker.GetProxyFun(typeof(dlopenfun));
+                _callBack = callBack;
+            }
+            else
+            {
+                Debug.LogError("get dlopen addr fail");
+            }
         }
 
         private static bool isLoadLuaSo = false;
@@ -58,7 +63,7 @@ namespace MikuLuaProfiler
         static IntPtr dlopen_replace(string libfile, int flag)
         {
             var ret = dlopenF(libfile, flag);
-            if (!isLoadLuaSo && shadowhook_dlsym(ret, "luaL_newstate") != IntPtr.Zero)
+            if (!isLoadLuaSo && dlsym(ret, "luaL_newstate") != IntPtr.Zero)
             {
                 isLoadLuaSo = true;
                 _callBack.Invoke(ret);
@@ -84,10 +89,6 @@ namespace MikuLuaProfiler
         private void* _proxyFun = null;
         private IntPtr _targetPtr = IntPtr.Zero;
         private IntPtr _replacementPtr = IntPtr.Zero;
-
-        private string _libName = "";
-        private string _symName = "";
-        
         private IntPtr stub = IntPtr.Zero;
 
         #region native
@@ -107,29 +108,11 @@ namespace MikuLuaProfiler
             _replacementPtr = replacementPtr;
         }
 
-        public void InitLibSym(string lib_name, string sym_name, IntPtr replacementPtr)
-        {
-            _targetPtr = IntPtr.Zero;
-            _libName = lib_name;
-            _symName = sym_name;
-            _replacementPtr = replacementPtr;
-        }
-
         public void Install()
         {
-            if (_targetPtr != IntPtr.Zero)
+            fixed (void** addr = &_proxyFun)
             {
-                fixed (void** addr = &_proxyFun)
-                {
-                    stub = shadowhook_hook_func_addr( _targetPtr, _replacementPtr, addr);
-                }
-            }
-            else
-            {
-                fixed (void** addr = &_proxyFun)
-                {
-                    stub = shadowhook_hook_sym_name( _libName, _symName, _replacementPtr, addr);
-                }
+                stub = shadowhook_hook_func_addr( _targetPtr, _replacementPtr, addr);
             }
         } 
 
