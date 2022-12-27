@@ -19,11 +19,12 @@ namespace MikuLuaProfiler
         public static extern IntPtr shadowhook_dlsym(IntPtr handle, string symbol);
         
         [DllImport("libshadowhook", CallingConvention = CallingConvention.Cdecl)]
-        public static extern IntPtr shadowhook_dlopen(string libfile, int flag);
+        public static extern IntPtr shadowhook_dlopen(string libfile);
 
         public IntPtr GetProcAddress(string InPath, string InProcName)
         {
-            return shadowhook_dlsym(RTLD_DEFAULT, InProcName);
+            IntPtr handle = shadowhook_dlopen(InPath);
+            return shadowhook_dlsym(handle, InProcName);
         }
 
         public IntPtr GetProcAddressByHandle(IntPtr InModule, string InProcName)
@@ -38,7 +39,7 @@ namespace MikuLuaProfiler
         private static Action<IntPtr> _callBack;
         public void HookLoadLibrary(Action<IntPtr> callBack)
         {
-            IntPtr handle = GetProcAddress("", "dlopen");
+            IntPtr handle = GetProcAddress("libc.so", "dlopen");
             if (handle != IntPtr.Zero)
             {
                 // LoadLibraryExW is called by the other LoadLibrary functions, so we
