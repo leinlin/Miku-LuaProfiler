@@ -15,20 +15,26 @@ namespace MikuLuaProfiler
 
         private static readonly IntPtr RTLD_DEFAULT = IntPtr.Zero;
 
-        [DllImport("libc", CallingConvention = CallingConvention.Cdecl)]
-        public static extern IntPtr dlsym(IntPtr handle, string symbol);
+        [DllImport("libshadowhook", CallingConvention = CallingConvention.Cdecl)]
+        public static extern IntPtr shadowhook_dlsym(IntPtr handle, string symbol);
         
-        [DllImport("libc", CallingConvention = CallingConvention.Cdecl)]
-        public static extern IntPtr dlopen(string libfile);
+        [DllImport("libshadowhook", CallingConvention = CallingConvention.Cdecl)]
+        public static extern IntPtr shadowhook_dlopen(string libfile);
 
         public IntPtr GetProcAddress(string InPath, string InProcName)
         {
-            return dlsym(RTLD_DEFAULT, InProcName);
+            IntPtr handle = shadowhook_dlopen(InPath);
+            return shadowhook_dlsym(handle, InProcName);
         }
 
         public IntPtr GetProcAddressByHandle(IntPtr InModule, string InProcName)
         {
-            return dlsym(InModule, InProcName);
+            var ret = shadowhook_dlsym(InModule, InProcName);
+            if (ret == IntPtr.Zero)
+            {
+                Debug.LogError($"get {InProcName} fail");
+            }
+            return ret;
         }
 
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
@@ -38,30 +44,12 @@ namespace MikuLuaProfiler
         private static Action<IntPtr> _callBack;
         public void HookLoadLibrary(Action<IntPtr> callBack)
         {
-            IntPtr handle = GetProcAddress("libc.so", "dlopen");
-            if (handle != IntPtr.Zero)
-            {
-                // LoadLibraryExW is called by the other LoadLibrary functions, so we
-                // only need to hook it.
-                hooker = CreateHook();
-                dlopenfun f = dlopen_replace;
-                hooker.Init(handle, Marshal.GetFunctionPointerForDelegate(f));
-                hooker.Install();
+            hooker = CreateHook();
+            AndroidNativeHooker ah = hooker as AndroidNativeHooker;
 
-                dlopenF = (dlopenfun)hooker.GetProxyFun(typeof(dlopenfun));
-                _callBack = callBack;
-            }
-            else
-            {
-                hooker = CreateHook();
-                AndroidNativeHooker ah = hooker as AndroidNativeHooker;
-
-                dlopenfun f = dlopen_replace;
-                ah.InitLibSym("libc.so", "dlopen", Marshal.GetFunctionPointerForDelegate(f));
-                ah.Install();
-
-                Debug.LogError("install hook with lib symbol");
-            }
+            dlopenfun f = dlopen_replace;
+            ah.InitLibSym("libc.so", "dlopen", Marshal.GetFunctionPointerForDelegate(f));
+            ah.Install();
         }
 
         private static bool isLoadLuaSo = false;
@@ -70,7 +58,7 @@ namespace MikuLuaProfiler
         static IntPtr dlopen_replace(string libfile, int flag)
         {
             var ret = dlopenF(libfile, flag);
-            if (!isLoadLuaSo && dlsym(ret, "luaL_newstate") != IntPtr.Zero)
+            if (!isLoadLuaSo && shadowhook_dlsym(ret, "luaL_newstate") != IntPtr.Zero)
             {
                 isLoadLuaSo = true;
                 _callBack.Invoke(ret);
