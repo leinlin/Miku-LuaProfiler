@@ -466,7 +466,14 @@ namespace MikuLuaProfiler
                 Sample s = null;
                 lock (this)
                 {
-                    s = m_runningSamplesQueue.Dequeue();
+                    if (m_runningSamplesQueue.Count > 0)
+                    {
+                        s = m_runningSamplesQueue.Dequeue();
+                    }
+                    else
+                    {
+                        break;
+                    }
                 }
                 LuaProfilerTreeViewItem.s_frameCount = s.frameCount;
                 var instance = LuaDeepProfilerSetting.Instance;
@@ -679,6 +686,7 @@ namespace MikuLuaProfiler
 
         public void Clear(bool includeHistory)
         {
+            m_nodeDict.Clear();
             roots.Clear();
             m_nodeDict.Clear();
             m_treeViewItems.Clear();
