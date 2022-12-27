@@ -15,20 +15,20 @@ namespace MikuLuaProfiler
 
         private static readonly IntPtr RTLD_DEFAULT = IntPtr.Zero;
 
-        [DllImport("libc", CallingConvention = CallingConvention.Cdecl)]
-        public static extern IntPtr dlsym(IntPtr handle, string symbol);
+        [DllImport("libshadowhook", CallingConvention = CallingConvention.Cdecl)]
+        public static extern IntPtr shadowhook_dlsym(IntPtr handle, string symbol);
         
-        [DllImport("libc", CallingConvention = CallingConvention.Cdecl)]
-        public static extern IntPtr dlopen(string libfile, int flag);
+        [DllImport("libshadowhook", CallingConvention = CallingConvention.Cdecl)]
+        public static extern IntPtr shadowhook_dlopen(string libfile, int flag);
 
         public IntPtr GetProcAddress(string InPath, string InProcName)
         {
-            return dlsym(RTLD_DEFAULT, InProcName);
+            return shadowhook_dlsym(RTLD_DEFAULT, InProcName);
         }
 
         public IntPtr GetProcAddressByHandle(IntPtr InModule, string InProcName)
         {
-            return dlsym(InModule, InProcName);
+            return shadowhook_dlsym(InModule, InProcName);
         }
 
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
@@ -59,7 +59,7 @@ namespace MikuLuaProfiler
         static IntPtr dlopen_replace(string libfile, int flag)
         {
             var ret = dlopenF(libfile, flag);
-            if (!isLoadLuaSo && dlsym(ret, "luaL_newstate") != IntPtr.Zero)
+            if (!isLoadLuaSo && shadowhook_dlsym(ret, "luaL_newstate") != IntPtr.Zero)
             {
                 isLoadLuaSo = true;
                 _callBack.Invoke(ret);
