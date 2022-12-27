@@ -119,7 +119,7 @@ namespace MikuLuaProfiler
         {
             UnityEngine.Debug.Log("<color=#00ff00>begin to receive</color>");
 
-            BinaryReader br = new BinaryReader(ns);
+            MBinaryReader br = new MBinaryReader(ns);
             ;
             //sign为true 循环接受数据
             while (true)

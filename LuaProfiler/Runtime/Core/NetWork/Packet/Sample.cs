@@ -303,7 +303,7 @@ namespace MikuLuaProfiler
         #endregion
         
         #region virtual
-        public override void Read(BinaryReader br)
+        public override void Read(MBinaryReader br)
         {
             calls = br.ReadInt32();
             frameCount = br.ReadInt32();
@@ -326,7 +326,7 @@ namespace MikuLuaProfiler
             }
         }
 		
-        public override void Write(BinaryWriter bw)
+        public override void Write(MBinaryWriter bw)
         {
                 Sample s = this;
                 bw.Write(s.calls);

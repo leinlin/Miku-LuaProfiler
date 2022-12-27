@@ -68,7 +68,7 @@ namespace MikuLuaProfiler
         }
         #endregion
 
-        public override void Read(BinaryReader br)
+        public override void Read(MBinaryReader br)
         {
            cmd = br.ReadByte();
            frameCount = br.ReadInt32();
@@ -77,7 +77,7 @@ namespace MikuLuaProfiler
            type = br.ReadByte();
         }
 
-        public override void Write(BinaryWriter bw)
+        public override void Write(MBinaryWriter bw)
         {
             bw.Write(cmd);
             bw.Write(SampleData.frameCount);

@@ -29,14 +29,15 @@ namespace MikuLuaProfiler
         private static Stack<T> pool = new Stack<T>(1024);
         public static T GetPacket()
         {
-            if (pool.Count > 0)
+            lock (pool)
             {
-                lock (pool)
+                if (pool.Count > 0)
                 {
                     return pool.Pop();
                 }
+
+                return new T();
             }
-            return new T();
         }
 
         public static void Release(T p)
@@ -57,11 +58,11 @@ namespace MikuLuaProfiler
         {
         }
 
-        public virtual void Read(BinaryReader br)
+        public virtual void Read(MBinaryReader br)
         {
         }
 
-        public virtual void Write(BinaryWriter bw)
+        public virtual void Write(MBinaryWriter bw)
         {
         }
 
