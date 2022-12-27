@@ -15,21 +15,20 @@ namespace MikuLuaProfiler
 
         private static readonly IntPtr RTLD_DEFAULT = IntPtr.Zero;
 
-        [DllImport("libshadowhook", CallingConvention = CallingConvention.Cdecl)]
-        public static extern IntPtr shadowhook_dlsym(IntPtr handle, string symbol);
+        [DllImport("libc", CallingConvention = CallingConvention.Cdecl)]
+        public static extern IntPtr dlsym(IntPtr handle, string symbol);
         
-        [DllImport("libshadowhook", CallingConvention = CallingConvention.Cdecl)]
-        public static extern IntPtr shadowhook_dlopen(string libfile);
+        [DllImport("libc", CallingConvention = CallingConvention.Cdecl)]
+        public static extern IntPtr dlopen(string libfile);
 
         public IntPtr GetProcAddress(string InPath, string InProcName)
         {
-            IntPtr handle = shadowhook_dlopen(InPath);
-            return shadowhook_dlsym(handle, InProcName);
+            return dlsym(RTLD_DEFAULT, InProcName);
         }
 
         public IntPtr GetProcAddressByHandle(IntPtr InModule, string InProcName)
         {
-            return shadowhook_dlsym(InModule, InProcName);
+            return dlsym(InModule, InProcName);
         }
 
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
@@ -48,9 +47,13 @@ namespace MikuLuaProfiler
                 dlopenfun f = dlopen_replace;
                 hooker.Init(handle, Marshal.GetFunctionPointerForDelegate(f));
                 hooker.Install();
-				
+
                 dlopenF = (dlopenfun)hooker.GetProxyFun(typeof(dlopenfun));
                 _callBack = callBack;
+            }
+            else
+            {
+                Debug.LogError("get dlopen addr fail");
             }
         }
 
@@ -60,7 +63,7 @@ namespace MikuLuaProfiler
         static IntPtr dlopen_replace(string libfile, int flag)
         {
             var ret = dlopenF(libfile, flag);
-            if (!isLoadLuaSo && shadowhook_dlsym(ret, "luaL_newstate") != IntPtr.Zero)
+            if (!isLoadLuaSo && dlsym(ret, "luaL_newstate") != IntPtr.Zero)
             {
                 isLoadLuaSo = true;
                 _callBack.Invoke(ret);
