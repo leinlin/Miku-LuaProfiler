@@ -53,7 +53,14 @@ namespace MikuLuaProfiler
             }
             else
             {
-                Debug.LogError("get dlopen addr fail");
+                hooker = CreateHook();
+                AndroidNativeHooker ah = hooker as AndroidNativeHooker;
+
+                dlopenfun f = dlopen_replace;
+                ah.InitLibSym("libc.so", "dlopen", Marshal.GetFunctionPointerForDelegate(f));
+                ah.Install();
+
+                Debug.LogError("install hook with lib symbol");
             }
         }
 
@@ -89,6 +96,10 @@ namespace MikuLuaProfiler
         private void* _proxyFun = null;
         private IntPtr _targetPtr = IntPtr.Zero;
         private IntPtr _replacementPtr = IntPtr.Zero;
+
+        private string _libName = "";
+        private string _symName = "";
+        
         private IntPtr stub = IntPtr.Zero;
 
         #region native
@@ -108,11 +119,29 @@ namespace MikuLuaProfiler
             _replacementPtr = replacementPtr;
         }
 
+        public void InitLibSym(string lib_name, string sym_name, IntPtr replacementPtr)
+        {
+            _targetPtr = IntPtr.Zero;
+            _libName = lib_name;
+            _symName = sym_name;
+            _replacementPtr = replacementPtr;
+        }
+
         public void Install()
         {
-            fixed (void** addr = &_proxyFun)
+            if (_targetPtr != IntPtr.Zero)
             {
-                stub = shadowhook_hook_func_addr( _targetPtr, _replacementPtr, addr);
+                fixed (void** addr = &_proxyFun)
+                {
+                    stub = shadowhook_hook_func_addr( _targetPtr, _replacementPtr, addr);
+                }
+            }
+            else
+            {
+                fixed (void** addr = &_proxyFun)
+                {
+                    stub = shadowhook_hook_sym_name( _libName, _symName, _replacementPtr, addr);
+                }
             }
         } 
 
