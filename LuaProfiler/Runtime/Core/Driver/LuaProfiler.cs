@@ -242,11 +242,11 @@ namespace MikuLuaProfiler
             sample.costLuaGC = (int)luaGC;
             sample.costMonoGC = (int)monoGC;
 
-            if (!sample.CheckSampleValid())
-            {
-                sample.Restore();
-                return;
-            }
+            // if (!sample.CheckSampleValid())
+            // {
+            //     sample.Restore();
+            //     return;
+            // }
             sample.fahter = beginSampleMemoryStack.Count > 0 ? beginSampleMemoryStack.Peek() : null;
             //UnityEngine.Debug.Log(sample.name);
             if (beginSampleMemoryStack.Count == 0)
