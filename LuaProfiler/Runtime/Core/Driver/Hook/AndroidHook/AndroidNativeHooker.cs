@@ -14,16 +14,18 @@ namespace MikuLuaProfiler
         }
 
         private static readonly IntPtr RTLD_DEFAULT = IntPtr.Zero;
+        private static readonly int RTLD_NOW = 2;
 
         [DllImport("libc", CallingConvention = CallingConvention.Cdecl)]
         public static extern IntPtr dlsym(IntPtr handle, string symbol);
         
         [DllImport("libc", CallingConvention = CallingConvention.Cdecl)]
-        public static extern IntPtr dlopen(string libfile);
+        public static extern IntPtr dlopen(string libfile, int flag);
 
         public IntPtr GetProcAddress(string InPath, string InProcName)
         {
-            return dlsym(RTLD_DEFAULT, InProcName);
+            var handle = dlopen(InPath, RTLD_NOW);
+            return dlsym(handle, InProcName);
         }
 
         public IntPtr GetProcAddressByHandle(IntPtr InModule, string InProcName)
