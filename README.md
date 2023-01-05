@@ -62,6 +62,10 @@ adb forward tcp:2333 tcp:2333
 MikuLuaProfiler.HookLuaSetup.OnStartGame();
 ```
 
+真机数据只有resume或者协程数据
+> 不要用luac加密代码，请直接使用明码字符串
+
+
 运行了性能调试之后，用代码调用luaGC无效
 > 为了防止lua的GC导致内存统计出现负数，本项目直接用hook技术接管了lua的GC函数，让用户的自动促发无效，GC会根据内存是否增长到上次GC的1.2倍左右就触发，如果项目的Update GC优化的较好，内存曲线是基本一致的。
 
