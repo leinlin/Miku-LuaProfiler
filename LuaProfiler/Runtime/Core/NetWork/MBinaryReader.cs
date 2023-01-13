@@ -2,7 +2,7 @@
 using System.IO;
 using System.Text;
 
-#if UNITY_EDITOR_WIN || USE_LUA_PROFILER
+#if UNITY_EDITOR || USE_LUA_PROFILER
 namespace MikuLuaProfiler
 {
     public class MBinaryReader : BinaryReader

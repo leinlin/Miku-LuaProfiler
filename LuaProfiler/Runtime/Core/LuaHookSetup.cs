@@ -33,7 +33,7 @@ __________#_______####_______####______________
 * ==============================================================================
 */
 
-#if UNITY_EDITOR_WIN || USE_LUA_PROFILER
+#if UNITY_EDITOR || USE_LUA_PROFILER
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -71,6 +71,9 @@ namespace MikuLuaProfiler
 #endif
         public static void OnStartGame()
         {
+#if UNITY_EDITOR_OSX
+            return;
+#endif
 #if UNITY_EDITOR
             if (!Application.isPlaying) return;
 #endif

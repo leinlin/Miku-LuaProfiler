@@ -1,4 +1,4 @@
-#if UNITY_EDITOR_WIN || (USE_LUA_PROFILER && UNITY_STANDALONE_WIN)
+#if UNITY_EDITOR || (USE_LUA_PROFILER && UNITY_STANDALONE_WIN)
 using System;
 using System.Runtime.InteropServices;
 

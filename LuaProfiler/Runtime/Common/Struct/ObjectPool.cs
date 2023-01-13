@@ -36,7 +36,7 @@ __________#_______####_______####______________
 /*
  * 对象池
  */
-#if UNITY_EDITOR_WIN || USE_LUA_PROFILER
+#if UNITY_EDITOR || USE_LUA_PROFILER
 using System;
 using System.Collections.Generic;
 

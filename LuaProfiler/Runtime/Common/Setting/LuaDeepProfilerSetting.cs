@@ -36,7 +36,7 @@ __________#_______####_______####______________
 using System;
 using System.IO;
 
-#if UNITY_EDITOR_WIN || USE_LUA_PROFILER
+#if UNITY_EDITOR || USE_LUA_PROFILER
 namespace MikuLuaProfiler
 {
     using System.Collections.Generic;

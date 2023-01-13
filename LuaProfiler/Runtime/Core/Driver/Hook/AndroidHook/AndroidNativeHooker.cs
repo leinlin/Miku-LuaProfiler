@@ -1,4 +1,4 @@
-﻿#if UNITY_EDITOR_WIN || (USE_LUA_PROFILER && UNITY_ANDROID)
+﻿#if UNITY_EDITOR || (USE_LUA_PROFILER && UNITY_ANDROID)
 using System;
 using System.Runtime.InteropServices;
 using UnityEngine;
