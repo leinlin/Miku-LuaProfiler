@@ -95,6 +95,12 @@ namespace MikuLuaProfiler
             
             if (setting.isDeepLuaProfiler || !setting.isLocal)
             {
+#if UNITY_EDITOR
+                if (!setting.ProfilerWinOpen)
+                {
+                    return;
+                }
+#endif
                 Debug.Log("<color=#00ff00>OnStartGame</color>");
                 LuaDLL.Uninstall();
                 IntPtr LuaModule = LuaDLL.CheckHasLuaDLL();
@@ -110,6 +116,12 @@ namespace MikuLuaProfiler
 
             if (setting.isDeepLuaProfiler || setting.isCleanMode || !setting.isLocal)
             {
+#if UNITY_EDITOR
+                if (!setting.ProfilerWinOpen)
+                {
+                    return;
+                }
+#endif
                 GameObject go = new GameObject();
                 go.name = "MikuLuaProfiler";
                 go.hideFlags = HideFlags.HideAndDontSave;

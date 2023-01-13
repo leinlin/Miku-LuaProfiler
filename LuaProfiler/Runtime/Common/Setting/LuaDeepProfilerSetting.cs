@@ -63,6 +63,22 @@ namespace MikuLuaProfiler
         
         #endregion
 
+        public bool ProfilerWinOpen {            
+            get
+            {
+                return m_profilerWinOpen;
+            }
+            set
+            {
+                if (m_profilerWinOpen != value)
+                {
+                    m_profilerWinOpen = value;
+                    Save();
+                }
+            } }
+            
+        public bool m_profilerWinOpen= false;
+
         public bool isDeepLuaProfiler
         {
             get

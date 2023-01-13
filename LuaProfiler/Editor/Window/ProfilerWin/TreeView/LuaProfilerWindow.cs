@@ -79,7 +79,7 @@ namespace MikuLuaProfiler
             100000
             }
         );
-
+        
         private static LuaProfilerTreeView m_TreeView;
         SearchField m_SearchField;
         int startFrame = 0;
@@ -166,7 +166,7 @@ namespace MikuLuaProfiler
             }
 
             m_SearchField = new SearchField();
-            
+            LuaDeepProfilerSetting.Instance.ProfilerWinOpen = true;
             LuaProfilerTreeView.m_nodeDict.Clear();
             startFrame = 0;
             endFrame = 0;
@@ -220,6 +220,7 @@ namespace MikuLuaProfiler
             powrChart = null;
             Destory(boxTex);
             boxTex = null;
+            LuaDeepProfilerSetting.Instance.ProfilerWinOpen = false;
             EditorApplication.update -= m_TreeView.DequeueSample;
             EditorApplication.update -= m_luaRefScrollView.DequeueLuaInfo;
         }
