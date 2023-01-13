@@ -119,7 +119,7 @@ namespace MikuLuaProfiler
         private static INativeHooker luaL_loadbuffer_hook;
         private static INativeHooker luaL_loadfile_hook;
 
-        #if UNITY_EDITOR_WIN || UNITY_STANDALONE_WIN
+        #if UNITY_EDITOR || UNITY_STANDALONE
         private static NativeUtilInterface nativeUtil = new WindowsNativeUtil();
         #elif UNITY_ANDROID
         private static NativeUtilInterface nativeUtil = new AndroidNativeUtil();
