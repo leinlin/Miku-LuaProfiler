@@ -33,7 +33,7 @@ __________#_______####_______####______________
 * ==============================================================================
 */
 
-#if UNITY_EDITOR_WIN
+#if UNITY_EDITOR
 using Miku.Cecil;
 using Miku.Cecil.Cil;
 using System;

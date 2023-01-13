@@ -33,7 +33,7 @@ __________#_______####_______####______________
 * ==============================================================================
 */
 
-#if UNITY_5_6_OR_NEWER && UNITY_EDITOR_WIN
+#if UNITY_5_6_OR_NEWER && UNITY_EDITOR
 using UnityEditor;
 using UnityEditor.IMGUI.Controls;
 using UnityEngine;
