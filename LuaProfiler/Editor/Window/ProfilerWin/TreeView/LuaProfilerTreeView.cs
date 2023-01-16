@@ -423,6 +423,33 @@ namespace MikuLuaProfiler
                 return m_toggleMerge;
             }
         }
+        
+        private bool m_rankMode = false;
+
+        public bool rankMode
+        {
+            set
+            {
+                if (m_rankMode == value) return;
+                if (value)
+                {
+                    m_searchString = "[lua]:";
+                    m_toggleMerge = true;
+                }
+                else
+                {
+                    m_searchString = "";
+                    m_toggleMerge = false;
+                }
+
+                m_rankMode = value;
+                needRebuild = true;
+            }
+            get
+            {
+                return m_rankMode;
+            }
+        }
 
         private string m_searchString = "";
         public new string searchString

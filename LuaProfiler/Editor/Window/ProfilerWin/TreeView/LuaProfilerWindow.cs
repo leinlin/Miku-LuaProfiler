@@ -530,6 +530,7 @@ namespace MikuLuaProfiler
             {
                 m_TreeView.searchString = m_SearchField.OnToolbarGUI(m_TreeView.searchString);
                 m_TreeView.toggleMerge = GUILayout.Toggle(m_TreeView.toggleMerge, "merge", EditorStyles.toolbarButton, GUILayout.Height(30));
+                m_TreeView.rankMode = GUILayout.Toggle(m_TreeView.rankMode, "rankMode", EditorStyles.toolbarButton, GUILayout.Height(30));
             }
 			isShowRef = GUILayout.Toggle(isShowRef, "show refInfo", EditorStyles.toolbarButton, GUILayout.Height(30));
 
