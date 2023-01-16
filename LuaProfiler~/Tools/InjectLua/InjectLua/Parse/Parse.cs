@@ -40,14 +40,15 @@ namespace MikuLuaProfiler
 {
     public static class Parse
     {
+        // MikuSample = {BeginMikuSample, EndMikuSample, miku_unpack_return_value}
         public static readonly string LOCAL_PROFILER =
-            "local BeginMikuSample = MikuLuaProfiler.LuaProfiler.BeginSample "
-            + "local EndMikuSample = MikuLuaProfiler.LuaProfiler.EndSample " + "local miku_unpack_return_value = miku_unpack_return_value local MikuMainChunkFun = function(...) ";
+            "local MikuSample = {rawget(_G, 'MikuLuaProfiler').LuaProfiler.BeginSample, rawget(_G, 'MikuLuaProfiler').LuaProfiler.EndSample, rawget(_G, 'miku_unpack_return_value')}"
+            + " return (function(...) ";
         #region parse
         public static string InsertSample(string value, string name)
         {
             LLex l = new LLex(new StringLoadInfo(value), name);
-            string sampleStr = string.Format("{0}BeginMikuSample(\"[lua]:require {1},{1}&line:1\")", LOCAL_PROFILER, name);
+            string sampleStr = string.Format("{0}MikuSample[1](\"[lua]:require {1},{1}&line:1\")", LOCAL_PROFILER, name);
             l.InsertString(0, sampleStr);
 
             int lastPos = 0;
@@ -59,7 +60,7 @@ namespace MikuLuaProfiler
             nextPos = l.pos;
 
             InsertSample(l, ref lastPos, ref nextPos, tokenType, false);
-            l.InsertString(l.Length, "\n end return MikuMainChunkFun(...)");
+            l.InsertString(l.Length, "\n end)(...)");
 
             return l.code;
         }
@@ -171,7 +172,7 @@ namespace MikuLuaProfiler
                                 {
                                     funName = "";
                                 }
-                                string profilerStr = string.Format(" BeginMikuSample(\"[lua]:{0},{1}&line:{2}\") ", funName, l.Source, l.LineNumber);
+                                string profilerStr = string.Format(" MikuSample[1](\"[lua]:{0},{1}&line:{2}\") ", funName, l.Source, l.LineNumber);
                                 l.InsertString(nextPos - 1, profilerStr);
                                 nextPos = l.pos;
                                 break;
@@ -223,8 +224,9 @@ namespace MikuLuaProfiler
                             {
                                 lastPos = lastPos - 1;
 
-                                l.Replace(insertPos, insertPos + 6, " return miku_unpack_return_value(");
-                                l.InsertString(lastPos , ") ");
+                                
+                                l.Replace(insertPos, insertPos + 6, " return MikuSample[3](");
+                                l.InsertString(lastPos, ") ");
 
                                 nextPos = l.pos;
                                 if (tokenType == (int)TK.END)
@@ -254,7 +256,7 @@ namespace MikuLuaProfiler
                             {
                                 if (!hasReturn)
                                 {
-                                    l.InsertString(lastPos - 1, " EndMikuSample() ");
+                                    l.InsertString(lastPos - 1, " MikuSample[2]() ");
                                     lastPos = nextPos;
                                     nextPos = l.pos;
                                 }
@@ -292,7 +294,7 @@ namespace MikuLuaProfiler
 
             if (needLastSample)
             {
-                l.InsertString(nextPos, "\n EndMikuSample()");
+                l.InsertString(nextPos, "\n MikuSample[2]()");
             }
         }
         #endregion
