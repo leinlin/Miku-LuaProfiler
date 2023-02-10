@@ -32,7 +32,7 @@ __________#_______####_______####______________
 * Purpose:  
 * ==============================================================================
 */
-#if UNITY_EDITOR_WIN || USE_LUA_PROFILER
+#if UNITY_EDITOR || USE_LUA_PROFILER
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -402,11 +402,23 @@ namespace MikuLuaProfiler
 
         public int pos
         {
+            private set
+            {
+                LoadInfo.Pos = value;
+            }
             get
             {
                 return LoadInfo.Pos;
             }
         }
+
+        public void ReturnPos(int v, int l)
+        {
+            pos = v;
+            LineNumber = l;
+            _Next();
+        }
+
         public Token Token;
         private Token LookAhead;
 

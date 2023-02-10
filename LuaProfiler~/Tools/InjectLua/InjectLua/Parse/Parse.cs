@@ -32,7 +32,7 @@ __________#_______####_______####______________
 * Purpose:  
 * ==============================================================================
 */
-#if UNITY_EDITOR_WIN || USE_LUA_PROFILER
+#if UNITY_EDITOR || USE_LUA_PROFILER
 using System;
 using System.Collections.Generic;
 
@@ -70,6 +70,7 @@ namespace MikuLuaProfiler
             Stack<int> tokens = new Stack<int>();
             List<Token> history = new List<Token>(16);
 
+            bool isTailCall = false;
             bool needLastSample = true;
             bool hasReturn = false;
             int lastStackToken = -1;
@@ -78,6 +79,7 @@ namespace MikuLuaProfiler
                 switch (tokenType)
                 {
                     case (int)TK.FUNCTION:
+                        isTailCall = false;
                         hasReturn = false;
                         tokens.Push(tokenType);
                         lastStackToken = tokenType;
@@ -172,9 +174,37 @@ namespace MikuLuaProfiler
                                 {
                                     funName = "";
                                 }
-                                string profilerStr = string.Format(" MikuSample[1](\"[lua]:{0},{1}&line:{2}\") ", funName, l.Source, l.LineNumber);
-                                l.InsertString(nextPos - 1, profilerStr);
-                                nextPos = l.pos;
+                                
+                                int cachePos = l.pos;
+                                int cacheLine = l.LineNumber;
+                                do
+                                {
+                                    l.Next();
+                                }
+                                while (l.Token is JumpToken);
+
+                                if (l.Token.TokenType == (int)TK.RETURN)
+                                {
+                                    do
+                                    {
+                                        l.Next();
+                                    }
+                                    while (l.Token is JumpToken);
+                                    if (l.Token is NameToken)
+                                    {
+                                        isTailCall = true;
+                                    }
+                                }
+
+
+                                if(!isTailCall)
+                                {
+                                    string profilerStr = string.Format(" MikuSample[1](\"[lua]:{0},{1}&line:{2}\") ", funName, l.Source, l.LineNumber);
+                                    l.InsertString(nextPos - 1, profilerStr);
+                                }
+                                l.ReturnPos(lastPos, cacheLine);
+
+                                nextPos = cachePos;
                                 break;
                             }
                         }
@@ -224,9 +254,15 @@ namespace MikuLuaProfiler
                             {
                                 lastPos = lastPos - 1;
 
-                                
-                                l.Replace(insertPos, insertPos + 6, " return MikuSample[3](");
-                                l.InsertString(lastPos, ") ");
+                                if (isTailCall)
+                                {
+                                    isTailCall = false;
+                                }
+                                else
+                                {
+                                    l.Replace(insertPos, insertPos + 6, " return MikuSample[3](");
+                                    l.InsertString(lastPos, ") ");
+                                }
 
                                 nextPos = l.pos;
                                 if (tokenType == (int)TK.END)

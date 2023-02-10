@@ -402,11 +402,22 @@ namespace MikuLuaProfiler
 
         public int pos
         {
+            private set
+            {
+                LoadInfo.Pos = value;
+            }
             get
             {
                 return LoadInfo.Pos;
             }
         }
+
+        public void ReturnPos(int v, int l)
+        {
+            pos = v;
+            LineNumber = l;
+        }
+
         public Token Token;
         private Token LookAhead;
 
