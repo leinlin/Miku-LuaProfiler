@@ -190,10 +190,15 @@ namespace MikuLuaProfiler
                                         l.Next();
                                     }
                                     while (l.Token is JumpToken || l.Token.TokenType == (int)'(');
-                                    if (l.Token is NameToken)
+                                    if (l.Token is NameToken || l.Token.TokenType == (int)TK.END)
                                     {
                                         isTailCall = true;
                                     }
+                                }
+
+                                if (l.Token.TokenType == (int)TK.END)
+                                {
+                                    isTailCall = true;
                                 }
 
                                 l.ReturnPos(lastPos, cacheLine);
@@ -291,7 +296,10 @@ namespace MikuLuaProfiler
                             {
                                 if (!hasReturn)
                                 {
-                                    l.InsertString(lastPos - 1, " MikuSample[2]() ");
+                                    if (!isTailCall)
+                                    {
+                                        l.InsertString(lastPos - 1, " MikuSample[2]() ");
+                                    }
                                     lastPos = nextPos;
                                     nextPos = l.pos;
                                 }
