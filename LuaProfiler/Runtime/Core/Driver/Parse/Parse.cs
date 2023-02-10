@@ -174,7 +174,7 @@ namespace MikuLuaProfiler
                                 {
                                     funName = "";
                                 }
-                                
+
                                 int cachePos = l.pos;
                                 int cacheLine = l.LineNumber;
                                 do
@@ -189,20 +189,19 @@ namespace MikuLuaProfiler
                                     {
                                         l.Next();
                                     }
-                                    while (l.Token is JumpToken);
+                                    while (l.Token is JumpToken || l.Token.TokenType == (int)'(');
                                     if (l.Token is NameToken)
                                     {
                                         isTailCall = true;
                                     }
                                 }
 
-
-                                if(!isTailCall)
+                                l.ReturnPos(lastPos, cacheLine);
+                                if (!isTailCall)
                                 {
                                     string profilerStr = string.Format(" MikuSample[1](\"[lua]:{0},{1}&line:{2}\") ", funName, l.Source, l.LineNumber);
                                     l.InsertString(nextPos - 1, profilerStr);
                                 }
-                                l.ReturnPos(lastPos, cacheLine);
 
                                 nextPos = cachePos;
                                 break;
