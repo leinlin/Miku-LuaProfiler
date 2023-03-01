@@ -869,12 +869,12 @@ local function get_table_info(tb)
             rawset(metaTb, '__tostring', nil)
         end
         local addStr = tostring(tb)
-        if tostringFun then
-            rawset(getmetatable(tb), '__tostring', tostringFun)
-        end
         result = rawget(tb, '__name') or rawget(tb, 'name') or rawget(tb, '__cname') or rawget(tb, '.name')
         if not result then
             result = serialize(tb)
+        end
+        if tostringFun then
+            rawset(getmetatable(tb), '__tostring', tostringFun)
         end
 
         addr = string.sub(addStr, 7)
