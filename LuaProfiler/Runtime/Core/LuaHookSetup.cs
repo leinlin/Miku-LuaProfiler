@@ -176,18 +176,6 @@ namespace MikuLuaProfiler
             LuaProfiler.SendFrameSample();
         }
 
-        private void OnDestroy()
-        {
-            if (LuaProfiler.mainL != IntPtr.Zero)
-            {
-                LuaDLL.lua_close(LuaProfiler.mainL);
-            }
-            LuaDLL.Uninstall();
-            LuaProfiler.mainL = IntPtr.Zero;
-            NetWorkMgr.Close();
-            desotryCount = 0;
-        }
-
         private void OnApplicationQuit()
         {
 #if UNITY_EDITOR
