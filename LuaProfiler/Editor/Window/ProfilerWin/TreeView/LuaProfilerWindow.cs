@@ -447,14 +447,14 @@ namespace MikuLuaProfiler
                     LuaDLL.lua_gc_unhook(LuaProfiler.mainL, LuaGCOptions.LUA_GCCOLLECT, 0);
                 }
             }
-
-            /*
+            
             GUILayout.Space(25);
             if (GUILayout.Button("MarkStaticRecord", EditorStyles.toolbarButton, GUILayout.Height(30)))
             {
                 if (!LuaDeepProfilerSetting.Instance.isLocal)
                 {
-                    NetWorkMgrClient.SendCmd(3);
+                    //NetWorkMgrClient.SendCmd(3);
+                    Debug.Log("暂时只支持本地模式");
                 }
                 else
                 {
@@ -467,7 +467,8 @@ namespace MikuLuaProfiler
             {
                 if (!LuaDeepProfilerSetting.Instance.isLocal)
                 {
-                    NetWorkServer.SendCmd(1);
+                    //NetWorkServer.SendCmd(1);
+                    Debug.Log("暂时只支持本地模式");
                 }
                 else
                 {
@@ -479,7 +480,8 @@ namespace MikuLuaProfiler
             {
                 if (!LuaDeepProfilerSetting.Instance.isLocal)
                 {
-                    NetWorkServer.SendCmd(2);
+                    //NetWorkServer.SendCmd(2);
+                    Debug.Log("暂时只支持本地模式");
                 }
                 else
                 {
@@ -489,7 +491,7 @@ namespace MikuLuaProfiler
             if (GUILayout.Button("ClearDiff", EditorStyles.toolbarButton, GUILayout.Height(30)))
             {
                 m_luaDiffScrollView.Clear();
-            }*/
+            }
 
             GUILayout.Space(20);
             if (GUILayout.Button("AddLuaDir", EditorStyles.toolbarButton, GUILayout.Height(30)))

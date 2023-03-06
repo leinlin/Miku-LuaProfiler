@@ -249,6 +249,7 @@ namespace MikuLuaProfiler
             m_detailList = null;
             LuaHook.ClearStaticRecord();
             LuaHook.ClearRecord();
+            LuaHook.ClearDiffCache();
         }
 
         public void MarkIsStaticRecord()

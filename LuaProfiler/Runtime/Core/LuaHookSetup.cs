@@ -552,6 +552,27 @@ namespace MikuLuaProfiler
                 historyRef = -100;
             }
         }
+
+        public static void ClearDiffCache()
+        {
+            IntPtr L = LuaProfiler.mainL;
+            if (L == IntPtr.Zero)
+            {
+                return;
+            }
+
+            int oldTop = LuaDLL.lua_gettop(L);
+            LuaDLL.lua_getglobal(L, "miku_handle_error");
+
+            LuaDLL.lua_getglobal(L, "miku_clear_diff_cache");
+            if (LuaDLL.lua_pcall(L, 0, 0, oldTop + 1) == 0)
+            {
+                LuaDLL.lua_remove(L, oldTop + 1);
+            }
+            LuaDLL.lua_settop(L, oldTop);
+            LuaDLL.lua_gc_unhook(L, LuaGCOptions.LUA_GCCOLLECT, 0);
+        }
+
         private static void SetTable(int refIndex, Dictionary<LuaTypes, HashSet<string>> dict, Dictionary<string, List<string>> detailDict)
         {
             IntPtr L = LuaProfiler.mainL;
@@ -931,6 +952,11 @@ end
 local weak_meta_key_table = {__mode = 'k'}
 local weak_meta_value_table = {__mode = 'v'}
 local infoTb = {}
+
+function miku_clear_diff_cache(fun)
+    infoTb = {}
+end
+
 local cache_key = 'miku_record_prefix_cache'
 
 local BeginMikuSample = MikuLuaProfiler.LuaProfiler.BeginSample
@@ -985,6 +1011,9 @@ function miku_do_record(val, prefix, key, record, history, null_list, staticReco
     if val == record then
         return
     end
+    if val == miku_clear_diff_cache then
+        return
+    end
     if val == miku_get_fun_info then
         return
     end
@@ -1019,7 +1048,7 @@ function miku_do_record(val, prefix, key, record, history, null_list, staticReco
     end
     tmp_prefix = prefixTb[strKey]
     if not tmp_prefix then
-        tmp_prefix = prefix.. (prefix == '' and '' or '.') .. strKey
+        tmp_prefix = prefix.. (prefix == '' and '' or '.') .. string.format('[%s]', strKey)
         prefixTb[strKey] = tmp_prefix
     end
 
@@ -1039,38 +1068,14 @@ function miku_do_record(val, prefix, key, record, history, null_list, staticReco
         table.insert(record[val], tmp_prefix)
         return
     end
-
-    local prefix_cache
-    if history == nil then
-        if record[cache_key] == nil then
-            record[cache_key] = {}
+    
+    if not record[val] then
+        record[val] = {}
+        if typeStr == 'function' then
+            local funUrl = miku_get_fun_info(val)
+            table.insert(record[val], funUrl)
         end
-        prefix_cache = record[cache_key]
-        prefix_cache[tmp_prefix] = tmp_prefix
-        local record_val = record[val]
-        if record_val == nil then
-            record_val = {}
-            if typeStr == 'function' then
-                local funInfo = miku_get_fun_info(val)
-                table.insert(record_val, funInfo)
-            end
-            record[val] = record_val
-        end
-        table.insert(record_val, tmp_prefix)
-    else
-        prefix_cache = history[cache_key]
-        if prefix_cache[tmp_prefix] == nil or history[val] then
-            local record_val = record[val]
-            if record_val == nil then
-                record_val = {}
-                if typeStr == 'function' then
-                    local funInfo = miku_get_fun_info(val)
-                    table.insert(record_val, funInfo)
-                end
-                record[val] = record_val
-            end
-            table.insert(record_val, tmp_prefix)
-        end
+        table.insert(record[val], tmp_prefix)
     end
 
     if typeStr == 'table' then
@@ -1093,7 +1098,7 @@ function miku_do_record(val, prefix, key, record, history, null_list, staticReco
                 if not k then
                     break
                 end
-                if v then
+                if v and k ~= 'MikuSample' then
                     local funPrefix = miku_get_fun_info(val)
                     miku_do_record(v, funPrefix, k, record, history, null_list, staticRecord)
                 end
@@ -1131,7 +1136,9 @@ function miku_diff(record, staticRecord)
     end
 
     return add,remain,null_list
-end";
+end
+
+";
 #endregion
 
         [MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]
