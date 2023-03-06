@@ -384,7 +384,31 @@ namespace MikuLuaProfiler
                 lua_close_hook.Uninstall();
                 lua_close_hook = null;
             }
+            
+            if (lua_gc_hook != null)
+            {
+                lua_gc_hook.Uninstall();
+                lua_gc_hook = null;
+            }
 
+            if (lua_call_hook != null)
+            {
+                lua_call_hook.Uninstall();
+                lua_call_hook = null;
+            }
+            
+            if (lua_error_hook != null)
+            {
+                lua_error_hook.Uninstall();
+                lua_error_hook = null;
+            }
+            
+            if (luaL_openlibs_hook != null)
+            {
+                luaL_openlibs_hook.Uninstall();
+                luaL_openlibs_hook = null;
+            }
+            
             if (luaL_ref_hook != null)
             {
                 luaL_ref_hook.Uninstall();
@@ -402,12 +426,13 @@ namespace MikuLuaProfiler
                 luaL_loadbuffer_hook.Uninstall();
                 luaL_loadbuffer_hook = null;
             }
-
-            if (lua_error_hook != null)
+            
+            if (luaL_loadfile_hook != null)
             {
-                lua_error_hook.Uninstall();
-                lua_error_hook = null;
+                luaL_loadfile_hook.Uninstall();
+                luaL_loadfile_hook = null;
             }
+            
         }
 
         private static bool isBinding = false;
