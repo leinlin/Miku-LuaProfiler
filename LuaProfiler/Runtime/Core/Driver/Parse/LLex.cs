@@ -416,6 +416,7 @@ namespace MikuLuaProfiler
         {
             pos = v;
             LineNumber = l;
+            _Next();
         }
 
         public Token Token;
