@@ -81,6 +81,17 @@ LuaProfiler.BeginSampleCustom("profiler name")
 LuaProfiler.EndSampleCustom()
 ```
 
+
+MarkStaticRecord、MarkLuaRecord、DiffRecord、ClearDiff有什么用
+>这一组功能是查泄漏使用的。举一个例子，你可以在打开UI前MarkStaticRecord，进行一次内存快照，然后打开UI后MarkLuaRecord，记录第二次快照，最后你在调用UI释放的函数这里DiffRecord。如果打开UI前不持有，而打开UI后
+与释放UI后都持有的对象为泄漏。
+函数API为：
+```
+function miku_do_record(val, prefix, key, record, history, null_list, staticRecord)
+
+function miku_diff(record, staticRecord)
+```
+
 运行起来后totalLuaMemory为负数
 >底层统计lua内存申请采用记录lua虚拟机总量来记录对应的GC，如果函数运行的中间发生了GC就会导致内存差值为负数，你可以把自动GC关闭掉后进行统计。
 
