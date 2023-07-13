@@ -964,6 +964,7 @@ local EndMikuSample = miku_unpack_return_value
 
 local oldResume = coroutine.resume
 local oldWrap = coroutine.wrap
+local rawequal = rawequal
 
 coroutine.resume = function(co, ...)
     local sampleName = '[lua]:coroutine.resume'
@@ -987,43 +988,43 @@ coroutine.wrap = function(f)
 end
 
 function miku_do_record(val, prefix, key, record, history, null_list, staticRecord)
-    if val == staticRecord then
+    if rawequal(val, staticRecord) then
         return
     end
-    if val == infoTb then
+    if rawequal(val, infoTb) then
         return
     end
-    if val == miku_do_record then
+    if rawequal(val,miku_do_record) then
         return
     end
-    if val == miku_diff then
+    if rawequal(val,miku_diff) then
         return
     end
-    if val == lua_miku_remove_ref_fun_info then
+    if rawequal(val, lua_miku_remove_ref_fun_info) then
         return
     end
-    if val == lua_miku_add_ref_fun_info then
+    if rawequal(val, lua_miku_add_ref_fun_info) then
         return
     end
-    if val == history then
+    if rawequal(val, history) then
         return
     end
-    if val == record then
+    if rawequal(val, record) then
         return
     end
-    if val == miku_clear_diff_cache then
+    if rawequal(val, miku_clear_diff_cache) then
         return
     end
-    if val == miku_get_fun_info then
+    if rawequal(val, miku_get_fun_info) then
         return
     end
-    if val == MikuLuaProfilerStrTb then
+    if rawequal(val, MikuLuaProfilerStrTb) then
         return
     end
-    if val == null_list then
+    if rawequal(val, null_list) then
         return
     end
-    if val == coroutine then
+    if rawequal(val, coroutine) then
         return
     end
 
