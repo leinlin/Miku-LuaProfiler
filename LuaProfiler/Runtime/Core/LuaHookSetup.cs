@@ -1125,11 +1125,13 @@ function miku_diff(record, staticRecord)
     local remain = { }
 
     for key, val in pairs(record) do
-        if not add[key] and key ~= cache_key then
+        if not add[key] and  not rawequal(key, cache_key) then
         else
             -- 如果打开UI前的快照没有这个数据
             -- 但是打开UI后及关闭并释放UI后的快照都拥有这个数据，视为泄漏
-            if not staticRecord[key] and key ~= staticRecord and key ~= cache_key  then
+            if not staticRecord[key] 
+			    and not rawequal(key, staticRecord) 
+			    and not rawequal(key, cache_key) then
                 remain[key] = val
             end
             add[key] = nil
