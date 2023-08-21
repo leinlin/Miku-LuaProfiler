@@ -4,7 +4,11 @@ namespace MikuLuaProfiler
     [PacketMsg(MsgHead.HeartBeat)]
     public class HeartBeatMsg : PacketBase<HeartBeatMsg>
     {
-        public override MsgHead MsgHead => MsgHead.HeartBeat;
+        public override MsgHead MsgHead
+        {
+
+            get { return MsgHead.HeartBeat;}
+        }
     }
 }
 #endif

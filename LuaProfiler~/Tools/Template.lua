@@ -130,4 +130,7 @@ do
     print("fkk")
 end
 
+function foo()
+end
+
 return Mathf;

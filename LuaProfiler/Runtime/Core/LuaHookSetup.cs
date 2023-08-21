@@ -780,6 +780,8 @@ namespace MikuLuaProfiler
         public static LuaCSFunction beginSample = new LuaCSFunction(BeginSample);
         public static LuaCSFunction beginSampleCustom = new LuaCSFunction(BeginSampleCustom);
         public static LuaCSFunction endSample = new LuaCSFunction(EndSample);
+        public static LuaCSFunction setSkipTrue = new LuaCSFunction(SetSkipTrue);
+        public static LuaCSFunction setSkipFalse = new LuaCSFunction(SetSkipFalse);
         public static LuaCSFunction unpackReturnValue = new LuaCSFunction(UnpackReturnValue);
         public static LuaCSFunction addRefFunInfo = new LuaCSFunction(AddRefFunInfo);
         public static LuaCSFunction removeRefFunInfo = new LuaCSFunction(RemoveRefFunInfo);
@@ -809,6 +811,12 @@ namespace MikuLuaProfiler
 
             LuaDLL.lua_rawset(L, -3);
             LuaDLL.lua_setglobal(L, "MikuLuaProfiler");
+
+            LuaDLL.lua_pushstdcallcfunction(L, setSkipTrue);
+            LuaDLL.lua_setglobal(L, "miku_set_skip_true");
+
+            LuaDLL.lua_pushstdcallcfunction(L, setSkipFalse);
+            LuaDLL.lua_setglobal(L, "miku_set_skip_false");
 
             LuaDLL.lua_pushstdcallcfunction(L, unpackReturnValue);
             LuaDLL.lua_setglobal(L, "miku_unpack_return_value");
@@ -961,20 +969,40 @@ local cache_key = 'miku_record_prefix_cache'
 
 local BeginMikuSample = MikuLuaProfiler.LuaProfiler.BeginSample
 local EndMikuSample = miku_unpack_return_value
+local skipTrue = miku_set_skip_true
+local skipFalse = miku_set_skip_false
 
 local oldResume = coroutine.resume
 local oldWrap = coroutine.wrap
 local rawequal = rawequal
+local oldPcall = pcall 
+local oldXpcall = xpcall
+
+pcall = function(...)
+    skipTrue()
+    return skipFalse(oldPcall(...))
+end
+
+xpcall = function(...)
+    skipTrue()
+    return skipFalse(oldXpcall(...))
+end
+
+local coroutineInfoTb = {}
 
 coroutine.resume = function(co, ...)
     local sampleName = '[lua]:coroutine.resume'
-    local info = debug.getinfo(co, 1, 'nSl')
-    -- 这里有GC不过可以考虑在C#那边直接拿到协同的调用信息，把lua的GC转移到C#那边
-    if info then
-        BeginMikuSample(string.format('[lua]:%s,%s&line:%d', info.name, info.short_src, info.currentline))
-    else
-        BeginMikuSample('[lua]:coroutine.resume')
+    local coInfo = coroutineInfoTb[co]
+    if not coInfo then
+        local info = debug.getinfo(co, 1, 'nSl')
+        local coInfo = '[lua]:coroutine.resume'
+        if info then
+            coInfo = string.format('[lua]:%s,%s&line:%d', info.name, info.short_src, info.currentline)
+        end
     end
+
+    -- 这里有GC不过可以考虑在C#那边直接拿到协同的调用信息，把lua的GC转移到C#那边
+    BeginMikuSample(coInfo)
 
     return EndMikuSample(oldResume(co, ...))
 end
@@ -995,6 +1023,9 @@ function miku_do_record(val, prefix, key, record, history, null_list, staticReco
         return
     end
     if rawequal(val,miku_do_record) then
+        return
+    end
+    if rawequal(val,coroutineInfoTb) then
         return
     end
     if rawequal(val,miku_diff) then
@@ -1228,6 +1259,22 @@ end
             LuaProfiler.EndSample(L);
             return 0;
         }
+
+        [MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]
+        static int SetSkipTrue(IntPtr L)
+        {
+            LuaProfiler.SetKip(true);
+            return 0;
+        }
+
+        [MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]
+        static int SetSkipFalse(IntPtr L)
+        {
+            LuaProfiler.SetKip(false);
+            return LuaDLL.lua_gettop(L);
+        }
+
+
     }
     #endregion
 

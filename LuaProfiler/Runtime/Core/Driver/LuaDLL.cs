@@ -219,6 +219,10 @@ namespace MikuLuaProfiler
         public static lua_pushboolean_fun lua_pushboolean { get; private set; }
 
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        public delegate int lua_pushthread_fun(IntPtr luaState);
+        public static lua_pushthread_fun lua_pushthread { get; private set; }
+
+        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
         public delegate void lua_getfield_fun(IntPtr L, int idx, string key);
         public static lua_getfield_fun lua_getfield { get; private set; }
 
@@ -769,6 +773,16 @@ namespace MikuLuaProfiler
                 }
 
                 {
+                    IntPtr handle = GetProcAddress(module, "lua_pushthread");
+                    if (handle != IntPtr.Zero)
+                    {
+                        lua_pushthread =
+                            (lua_pushthread_fun)Marshal.GetDelegateForFunctionPointer(handle,
+                                typeof(lua_pushthread_fun));
+                    }
+                }
+
+                {
                     IntPtr handle = GetProcAddress(module, "lua_getfield");
                     if (handle != IntPtr.Zero)
                     {
@@ -1051,25 +1065,32 @@ namespace MikuLuaProfiler
         {
             lock (m_Lock)
             {
+                LuaProfiler.BeginSample(luaState, string.Format("[lua]:load {0}", name));
                 if (isHook)
                 {
                     if (name == null)
                     {
                         name = "chunk";
                     }
-                    byte[] buffer = new byte[(int)size];
-                    Marshal.Copy(buff, buffer, 0, buffer.Length);
-
                     // dostring
                     if (name.Length == (int)size)
                     {
-                        name = "chunk";
+                        name = "chunk"; 
                     }
+
+ 
+                    byte[] buffer = new byte[(int)size];
+                    Marshal.Copy(buff, buffer, 0, buffer.Length);
+
                     buffer = LuaHook.Hookloadbuffer(luaState, buffer, name);
                     buff = ConvertByteArrayToPtr(buffer);
                     size = (IntPtr)buffer.Length;
                 }
-                return luaL_loadbufferx(luaState, buff, size, name, mode);
+
+                int ret = luaL_loadbufferx(luaState, buff, size, name, mode);
+                LuaProfiler.EndSample(luaState);
+
+                return ret;
             }
         }
 
@@ -1118,25 +1139,30 @@ namespace MikuLuaProfiler
         {
             lock (m_Lock)
             {
+                LuaProfiler.BeginSample(luaState, string.Format("[lua]:load {0}", name));
                 if (isHook)
                 {
                     if (name == null)
                     {
                         name = "chunk";
                     }
-                    byte[] buffer = new byte[(int)size];
-                    Marshal.Copy(buff, buffer, 0, buffer.Length);
-
                     // dostring
                     if (name.Length == (int)size)
                     {
                         name = "chunk";
                     }
+                    
+                    byte[] buffer = new byte[(int)size];
+                    Marshal.Copy(buff, buffer, 0, buffer.Length);
+
                     buffer = LuaHook.Hookloadbuffer(luaState, buffer, name);
                     buff = ConvertByteArrayToPtr(buffer);
                     size = (IntPtr)buffer.Length;
                 }
-                return luaL_loadbuffer(luaState, buff, size, name);
+                int ret = luaL_loadbuffer(luaState, buff, size, name);
+
+                LuaProfiler.EndSample(luaState);
+                return ret;
             }
         }
 

@@ -280,6 +280,7 @@ namespace MikuLuaProfiler
         public string m_ip = "127.0.0.1";
         public int m_port = 2333;
 
+        [SerializeField]
         private bool m_isRecord = false;
         [SerializeField]
         private List<string> m_luaDir = new List<string>();

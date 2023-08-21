@@ -45,17 +45,16 @@ namespace MikuLuaProfiler
             if (tcpClient != null)
             {
                 tcpClient.Close();
-                tcpClient.Dispose();
                 tcpClient = null;
                 if (bw != null)
                 {
-                    bw.Dispose();
+                    bw.Close();
                     bw = null;
                 }
 
                 if (br != null)
                 {
-                    br.Dispose();
+                    br.Close();
                     br = null;
                 }
 

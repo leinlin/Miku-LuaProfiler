@@ -300,6 +300,10 @@ namespace MikuLuaProfiler
                                     {
                                         l.InsertString(lastPos - 1, " MikuSample[2]() ");
                                     }
+                                    else
+                                    {
+                                        isTailCall = false;
+                                    }
                                     lastPos = nextPos;
                                     nextPos = l.pos;
                                 }

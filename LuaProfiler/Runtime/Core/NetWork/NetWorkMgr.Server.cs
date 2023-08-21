@@ -79,9 +79,20 @@ namespace MikuLuaProfiler
             
             // 有新的连接，强制踢掉旧连接（不然偶尔会出现莫名挂掉无法连接） TODO: 支持多客户端并发连接
             _Close();
-            tcpClient?.Close();
-            receiveThread?.Join();
-            sendThread?.Join();
+            if (tcpClient != null)
+            {
+                tcpClient.Close();
+            }
+
+            if (receiveThread != null)
+            {
+                receiveThread.Join();
+            }
+            
+            if (sendThread != null)
+            {
+                sendThread.Join();
+            }
 
             tcpClient = newTcpClient;
             lastBeatTime = curTime;

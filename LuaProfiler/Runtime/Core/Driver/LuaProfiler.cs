@@ -50,6 +50,7 @@ namespace MikuLuaProfiler
     {
         #region member
         private static IntPtr _mainL = IntPtr.Zero;
+        private static bool _skip = false;
         private static readonly Stack<Sample> beginSampleMemoryStack = new Stack<Sample>();
         private static int m_currentFrame = 0;
         private static int m_gcFrame = 0;
@@ -160,41 +161,51 @@ namespace MikuLuaProfiler
                 return System.Diagnostics.Stopwatch.GetTimestamp();
             }
         }
+
+        public static void SetKip(bool isSkip)
+        {
+            _skip = isSkip;
+        }
+
         public static void BeginSample(IntPtr luaState, string name, bool needShow = false)
         {
             if (!IsMainThread)
             {
                 return;
             }
-
-            // 放弃协程
-            if (luaState != _mainL)
+            if (_skip)
             {
                 return;
             }
+
+            int top = LuaDLL.lua_gettop(luaState);
+
+            // 放弃协程
+            if (LuaDLL.lua_pushthread(luaState) != 1)
+            {
+                LuaDLL.lua_settop(luaState, top);
+                return;
+            }
+            LuaDLL.lua_settop(luaState, top);
 
             try
             {
                 int frameCount = SampleData.frameCount;
                 long memoryCount = LuaLib.GetLuaMemory(luaState);
-                if (frameCount - m_gcFrame >= 300 && memoryCount >= m_gcMemory)
-                {
-                    if (luaState != IntPtr.Zero)
-                    {
-                        LuaDLL.lua_gc_unhook(luaState, LuaGCOptions.LUA_GCCOLLECT, 0);
-                    }
-                    memoryCount = LuaLib.GetLuaMemory(luaState);
-                    m_gcFrame = frameCount;
-                    m_gcMemory = (long)(memoryCount * 1.2f);
-                }
 
                 if (m_currentFrame != frameCount)
                 {
-                    if (luaState != IntPtr.Zero)
-                    {
-                        LuaDLL.lua_gc_unhook(luaState, LuaGCOptions.LUA_GCSTOP, 0);
-                    }
                     m_currentFrame = frameCount;
+                    if (frameCount - m_gcFrame >= 300 && memoryCount >= m_gcMemory)
+                    {
+                        if (luaState != IntPtr.Zero)
+                        {
+                            LuaDLL.lua_gc_unhook(luaState, LuaGCOptions.LUA_GCCOLLECT, 0);
+                        }
+                        memoryCount = LuaLib.GetLuaMemory(luaState);
+                        m_gcFrame = frameCount;
+                        m_gcMemory = (long)(memoryCount * 1.2f);
+                    }
                     PopAllSampleWhenLateUpdate(luaState);
                 }
                 Sample sample =  Sample.Create(getcurrentTime, (int)memoryCount, name);
@@ -219,12 +230,19 @@ namespace MikuLuaProfiler
             {
                 return;
             }
-
-            // 放弃协程
-            if (luaState != _mainL)
+            if (_skip)
             {
                 return;
             }
+
+            int top = LuaDLL.lua_gettop(luaState);
+            // 放弃协程
+            if (LuaDLL.lua_pushthread(luaState) != 1)
+            {
+                LuaDLL.lua_settop(luaState, top);
+                return;
+            }
+            LuaDLL.lua_settop(luaState, top);
 
             if (beginSampleMemoryStack.Count <= 0)
             {
@@ -242,11 +260,11 @@ namespace MikuLuaProfiler
             sample.costLuaGC = (int)luaGC;
             sample.costMonoGC = (int)monoGC;
 
-            // if (!sample.CheckSampleValid())
-            // {
-            //     sample.Restore();
-            //     return;
-            // }
+            if (!sample.CheckSampleValid())
+            {
+                sample.Restore();
+                return;
+            }
             sample.fahter = beginSampleMemoryStack.Count > 0 ? beginSampleMemoryStack.Peek() : null;
             //UnityEngine.Debug.Log(sample.name);
             if (beginSampleMemoryStack.Count == 0)

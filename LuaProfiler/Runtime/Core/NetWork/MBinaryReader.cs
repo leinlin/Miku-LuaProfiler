@@ -15,10 +15,6 @@ namespace MikuLuaProfiler
         {
         }
 
-        public MBinaryReader(Stream input, Encoding encoding, bool leaveOpen) : base(input, encoding, leaveOpen)
-        {
-        }
-        
         private Dictionary<int, string> m_strCacheDict = new Dictionary<int, string>(4096);
         public override string ReadString()
         {

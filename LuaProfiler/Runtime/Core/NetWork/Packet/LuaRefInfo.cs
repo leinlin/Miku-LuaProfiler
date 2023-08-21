@@ -7,7 +7,14 @@ namespace MikuLuaProfiler
     [PacketMsg(MsgHead.LuaRefInfo)]
     public class LuaRefInfo: PacketBase<LuaRefInfo>
     {
-        public override MsgHead MsgHead => MsgHead.LuaRefInfo;
+        public override MsgHead MsgHead
+        {
+            get
+            {
+                return MsgHead.LuaRefInfo;
+            }
+        }
+        
 
         #region field
         public byte cmd; //1添加、0移除
@@ -88,7 +95,10 @@ namespace MikuLuaProfiler
 
         public override void OnRun()
         {
-            OnReciveSample?.Invoke(this);
+            if (OnReciveSample != null)
+            {
+                OnReciveSample.Invoke(this); 
+            }
         }
 
     }

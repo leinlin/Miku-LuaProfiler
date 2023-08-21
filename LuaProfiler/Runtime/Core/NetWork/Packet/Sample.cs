@@ -9,7 +9,15 @@ namespace MikuLuaProfiler
     public class Sample: PacketBase<Sample>
     {
         #region head
-        public override MsgHead MsgHead => MsgHead.ProfileSampleData;
+
+        public override MsgHead MsgHead
+        {
+            get
+            {
+                return MsgHead.ProfileSampleData;
+            }
+        }
+        
 
         public int currentLuaMemory;
         public int currentMonoMemory;
@@ -864,7 +872,10 @@ namespace MikuLuaProfiler
         
         public override void OnRun()
         {
-            OnReciveSample?.Invoke(this);
+            if (OnReciveSample != null)
+            {
+                OnReciveSample.Invoke(this); 
+            }
         }
         
         #endregion
