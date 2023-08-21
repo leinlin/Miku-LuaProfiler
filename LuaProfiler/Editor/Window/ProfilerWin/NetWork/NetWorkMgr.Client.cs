@@ -30,9 +30,10 @@ namespace MikuLuaProfiler
                 if (t.Namespace == "MikuLuaProfiler"
                     && t.IsSubclassOf(typeof(PacketBase)))
                 {
-                    var attr = t.GetCustomAttribute<PacketMsgAttribute>();
-                    if (attr != null)
+                    var attrs = t.GetCustomAttributes(typeof(PacketMsgAttribute), false);
+                    if (attrs != null && attrs.Length > 0)
                     {
+                        var attr = (PacketMsgAttribute)attrs[0];
                         receiveMsgDict[(int)attr.msgHead] = t;
                         receiveMsgTypeDict[t] = (int)attr.msgHead;
                     }
