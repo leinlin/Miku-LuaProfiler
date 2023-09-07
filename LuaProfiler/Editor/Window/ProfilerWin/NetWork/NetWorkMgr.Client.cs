@@ -98,11 +98,11 @@ namespace MikuLuaProfiler
                         break;
                     }
 
-                    if (ns.CanRead && ns.DataAvailable)
+                    while (ns.CanRead && ns.DataAvailable)
                     {
                         int head = br.ReadInt32();
                         //处理粘包
-                        while (head == PACK_HEAD)
+                        if (head == PACK_HEAD)
                         {
                             int messageId = br.ReadInt32();
                             Type t;
