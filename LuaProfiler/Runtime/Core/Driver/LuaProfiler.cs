@@ -50,7 +50,6 @@ namespace MikuLuaProfiler
     {
         #region member
         private static IntPtr _mainL = IntPtr.Zero;
-        private static bool _skip = false;
         private static readonly Stack<Sample> beginSampleMemoryStack = new Stack<Sample>();
         private static int m_currentFrame = 0;
         private static int m_gcFrame = 0;
@@ -162,18 +161,9 @@ namespace MikuLuaProfiler
             }
         }
 
-        public static void SetKip(bool isSkip)
-        {
-            _skip = isSkip;
-        }
-
         public static void BeginSample(IntPtr luaState, string name, bool needShow = false)
         {
             if (!IsMainThread)
-            {
-                return;
-            }
-            if (_skip)
             {
                 return;
             }
@@ -227,10 +217,6 @@ namespace MikuLuaProfiler
         public static void EndSample(IntPtr luaState)
         {
             if (!IsMainThread)
-            {
-                return;
-            }
-            if (_skip)
             {
                 return;
             }

@@ -780,8 +780,6 @@ namespace MikuLuaProfiler
         public static LuaCSFunction beginSample = new LuaCSFunction(BeginSample);
         public static LuaCSFunction beginSampleCustom = new LuaCSFunction(BeginSampleCustom);
         public static LuaCSFunction endSample = new LuaCSFunction(EndSample);
-        public static LuaCSFunction setSkipTrue = new LuaCSFunction(SetSkipTrue);
-        public static LuaCSFunction setSkipFalse = new LuaCSFunction(SetSkipFalse);
         public static LuaCSFunction unpackReturnValue = new LuaCSFunction(UnpackReturnValue);
         public static LuaCSFunction addRefFunInfo = new LuaCSFunction(AddRefFunInfo);
         public static LuaCSFunction removeRefFunInfo = new LuaCSFunction(RemoveRefFunInfo);
@@ -811,12 +809,6 @@ namespace MikuLuaProfiler
 
             LuaDLL.lua_rawset(L, -3);
             LuaDLL.lua_setglobal(L, "MikuLuaProfiler");
-
-            LuaDLL.lua_pushstdcallcfunction(L, setSkipTrue);
-            LuaDLL.lua_setglobal(L, "miku_set_skip_true");
-
-            LuaDLL.lua_pushstdcallcfunction(L, setSkipFalse);
-            LuaDLL.lua_setglobal(L, "miku_set_skip_false");
 
             LuaDLL.lua_pushstdcallcfunction(L, unpackReturnValue);
             LuaDLL.lua_setglobal(L, "miku_unpack_return_value");
@@ -969,24 +961,12 @@ local cache_key = 'miku_record_prefix_cache'
 
 local BeginMikuSample = MikuLuaProfiler.LuaProfiler.BeginSample
 local EndMikuSample = miku_unpack_return_value
-local skipTrue = miku_set_skip_true
-local skipFalse = miku_set_skip_false
 
 local oldResume = coroutine.resume
 local oldWrap = coroutine.wrap
 local rawequal = rawequal
 local oldPcall = pcall 
 local oldXpcall = xpcall
-
-pcall = function(...)
-    skipTrue()
-    return skipFalse(oldPcall(...))
-end
-
-xpcall = function(...)
-    skipTrue()
-    return skipFalse(oldXpcall(...))
-end
 
 local coroutineInfoTb = {}
 
@@ -1258,20 +1238,6 @@ end
         {
             LuaProfiler.EndSample(L);
             return 0;
-        }
-
-        [MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]
-        static int SetSkipTrue(IntPtr L)
-        {
-            LuaProfiler.SetKip(true);
-            return 0;
-        }
-
-        [MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]
-        static int SetSkipFalse(IntPtr L)
-        {
-            LuaProfiler.SetKip(false);
-            return LuaDLL.lua_gettop(L);
         }
 
 

@@ -114,6 +114,8 @@ namespace MikuLuaProfiler
         private static INativeHooker lua_call_hook;
         private static INativeHooker lua_error_hook;
         private static INativeHooker luaL_openlibs_hook;
+        private static INativeHooker lua_pcall_hook;
+        private static INativeHooker lua_pcallk_hook;
         private static INativeHooker luaL_ref_hook;
         private static INativeHooker luaL_unref_hook;
         private static INativeHooker luaL_loadbuffer_hook;
@@ -201,6 +203,10 @@ namespace MikuLuaProfiler
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
         public delegate double lua_tonumber_fun(IntPtr luaState, int idx);
         public static lua_tonumber_fun lua_tonumber { get; private set; }
+
+        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        public delegate bool lua_toboolean_fun(IntPtr luaState, int idx);
+        public static lua_toboolean_fun lua_toboolean { get; private set; }
 
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
         public delegate void lua_pushnil_fun(IntPtr luaState);
@@ -436,7 +442,19 @@ namespace MikuLuaProfiler
                 luaL_loadfile_hook.Uninstall();
                 luaL_loadfile_hook = null;
             }
-            
+
+            if (lua_pcall_hook != null)
+            {
+                lua_pcall_hook.Uninstall();
+                lua_pcall_hook = null;
+            }
+
+            if (lua_pcallk_hook != null)
+            {
+                lua_pcallk_hook.Uninstall();
+                lua_pcallk_hook = null;
+            }
+
         }
 
         private static bool isBinding = false;
@@ -605,6 +623,38 @@ namespace MikuLuaProfiler
                     luaL_openlibs_hook = hooker;
                 }
 
+                if(LUA_VERSION < 520 && lua_pcall_hook == null)
+                {
+                    IntPtr handle = GetProcAddress(module, "lua_pcall");
+                    lua_pcall_fun luaFun = new lua_pcall_fun(lua_pcall_replace);
+                    INativeHooker hooker = nativeUtil.CreateHook();
+                    hooker.Init(handle, Marshal.GetFunctionPointerForDelegate(luaFun));
+                    hooker.Install();
+
+                    lua_pcall =
+                        (lua_pcall_fun)hooker.GetProxyFun(typeof(lua_pcall_fun));
+                    lua_pcall_hook = hooker;
+                }
+
+                if (LUA_VERSION >= 520 && lua_pcallk_hook == null)
+                {
+                    IntPtr handle = GetProcAddress(module, "lua_pcallk");
+                    lua_pcallk_fun luaFun = new lua_pcallk_fun(lua_pcallk_replace);
+                    INativeHooker hooker = nativeUtil.CreateHook();
+                    hooker.Init(handle, Marshal.GetFunctionPointerForDelegate(luaFun));
+                    hooker.Install();
+
+                    lua_pcallk =
+                        (lua_pcallk_fun)hooker.GetProxyFun(typeof(lua_pcallk_fun));
+
+                    lua_pcall = (IntPtr luaState, int nArgs, int nResults, int errfunc) =>
+                    {
+                        return lua_pcallk(luaState, nArgs, nResults, errfunc, 0, IntPtr.Zero);
+                    };
+
+                    lua_pcallk_hook = hooker;
+                }
+
                 if (LUA_VERSION > 510)
                 {
                     {
@@ -734,6 +784,16 @@ namespace MikuLuaProfiler
                 }
 
                 {
+                    IntPtr handle = GetProcAddress(module, "lua_toboolean");
+                    if (handle != IntPtr.Zero)
+                    {
+                        lua_toboolean =
+                            (lua_toboolean_fun)Marshal.GetDelegateForFunctionPointer(handle,
+                                typeof(lua_toboolean_fun));
+                    }
+                }
+
+                {
                     IntPtr handle = GetProcAddress(module, "lua_pushnil");
                     if (handle != IntPtr.Zero)
                     {
@@ -834,31 +894,6 @@ namespace MikuLuaProfiler
                     {
                         lua_rawset =
                             (lua_rawset_fun)Marshal.GetDelegateForFunctionPointer(handle, typeof(lua_rawset_fun));
-                    }
-                }
-
-                {
-                    if (LUA_VERSION >= 520)
-                    {
-                        IntPtr handle = GetProcAddress(module, "lua_pcallk");
-                        if (handle != IntPtr.Zero)
-                        {
-                            lua_pcallk =
-                                (lua_pcallk_fun)Marshal.GetDelegateForFunctionPointer(handle, typeof(lua_pcallk_fun));
-                            lua_pcall = (IntPtr luaState, int nArgs, int nResults, int errfunc) =>
-                            {
-                                return lua_pcallk(luaState, nArgs, nResults, errfunc, 0, IntPtr.Zero);
-                            };
-                        }
-                    }
-                    else
-                    {
-                        IntPtr handle = GetProcAddress(module, "lua_pcall");
-                        if (handle != IntPtr.Zero)
-                        {
-                            lua_pcall = (lua_pcall_fun)Marshal.GetDelegateForFunctionPointer(handle,
-                                typeof(lua_pcall_fun));
-                        }
                     }
                 }
 
@@ -1058,6 +1093,29 @@ namespace MikuLuaProfiler
                 luaL_openlibs(luaState);
                 isOpenLibs = true;
             }
+        }
+
+        [MonoPInvokeCallbackAttribute(typeof(luaL_openlibs_fun))]
+        public static int lua_pcallk_replace(IntPtr luaState, int nArgs, int nResults, int errfunc, int ctx, IntPtr k)
+        {
+
+            int ret = lua_pcallk(luaState, nArgs, nResults, errfunc, ctx, k);
+            if (ret != 0)
+            {
+                LuaProfiler.EndSample(luaState);
+            }
+            return ret;
+        }
+
+        [MonoPInvokeCallbackAttribute(typeof(luaL_openlibs_fun))]
+        public static int lua_pcall_replace(IntPtr luaState, int nArgs, int nResults, int errfunc)
+        {
+            int ret = lua_pcall(luaState, nArgs, nResults, errfunc);
+            if (ret != 0)
+            {
+                LuaProfiler.EndSample(luaState);
+            }
+            return ret;
         }
 
         [MonoPInvokeCallbackAttribute(typeof(luaL_loadbufferx_fun))]
