@@ -168,15 +168,18 @@ namespace MikuLuaProfiler
                 return;
             }
 
-            int top = LuaDLL.lua_gettop(luaState);
-
-            // 放弃协程
-            if (LuaDLL.lua_pushthread(luaState) != 1)
+            if(!needShow)
             {
+                int top = LuaDLL.lua_gettop(luaState);
+
+                // 放弃协程
+                if (LuaDLL.lua_pushthread(luaState) != 1)
+                {
+                    LuaDLL.lua_settop(luaState, top);
+                    return;
+                }
                 LuaDLL.lua_settop(luaState, top);
-                return;
             }
-            LuaDLL.lua_settop(luaState, top);
 
             try
             {
