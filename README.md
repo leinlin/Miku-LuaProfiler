@@ -77,7 +77,7 @@ MikuLuaProfiler.HookLuaSetup.OnStartGame();
 
 关于自定义profiler点
 ```
-local LuaProfiler = require('MikuLuaProfiler').LuaProfiler
+local LuaProfiler = MikuLuaProfiler.LuaProfiler
 LuaProfiler.BeginSampleCustom("profiler name")
 -- your code
 LuaProfiler.EndSampleCustom()
