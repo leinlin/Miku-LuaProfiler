@@ -1098,9 +1098,13 @@ namespace MikuLuaProfiler
         [MonoPInvokeCallbackAttribute(typeof(luaL_openlibs_fun))]
         public static int lua_pcallk_replace(IntPtr luaState, int nArgs, int nResults, int errfunc, int ctx, IntPtr k)
         {
-
+            int oldDepth = LuaProfiler.GetStackDepth();
             int ret = lua_pcallk(luaState, nArgs, nResults, errfunc, ctx, k);
-            if (ret != 0)
+            int newDepth = LuaProfiler.GetStackDepth();
+
+            if (ret != 0 
+                /* pcall的过程中是否有sample，有就pop处理一下*/
+                && oldDepth != newDepth)
             {
                 LuaProfiler.EndSample(luaState);
             }
@@ -1110,8 +1114,13 @@ namespace MikuLuaProfiler
         [MonoPInvokeCallbackAttribute(typeof(luaL_openlibs_fun))]
         public static int lua_pcall_replace(IntPtr luaState, int nArgs, int nResults, int errfunc)
         {
+            int oldDepth = LuaProfiler.GetStackDepth();
             int ret = lua_pcall(luaState, nArgs, nResults, errfunc);
-            if (ret != 0)
+            int newDepth = LuaProfiler.GetStackDepth();
+
+            if (ret != 0 
+                /* pcall的过程中是否有sample，有就pop处理一下*/
+                && oldDepth != newDepth)
             {
                 LuaProfiler.EndSample(luaState);
             }

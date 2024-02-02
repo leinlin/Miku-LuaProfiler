@@ -210,6 +210,11 @@ namespace MikuLuaProfiler
             }
         }
 
+        public static int GetStackDepth()
+        {
+            return beginSampleMemoryStack.Count;
+        }
+
         public static void PopAllSampleWhenLateUpdate(IntPtr luaState)
         {
             while(beginSampleMemoryStack.Count > 0)
