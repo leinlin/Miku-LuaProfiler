@@ -64,6 +64,33 @@ adb forward tcp:2333 tcp:2333
 MikuLuaProfiler.HookLuaSetup.OnStartGame();
 ```
 
+打开DeepLua之后会有很多空异常报错
+> 有的项目组会使用debug.getupvalue去获取变量并进行修改，但是MikuLuaProfiler会在所有代码执行之前添加一个Upvalue函数进行BeginSample和EndSample。这个会导致原先的upvalue表混乱，解决办法就是遍历Upvalue表，然后根据upvalue的命名获取到相应的变量，如下代码：
+```
+function debug.getupvalue_byname(func, name)
+    local i = 1
+    while true do
+        local n, v = debug.getupvalue(func, i)
+        if not n then break end
+        if n == name then return v end
+        i = i + 1
+    end
+end
+
+function debug.setupvalue_byname(func, name, value)
+    local i = 1
+    while true do
+        local n, v = debug.getupvalue(func, i)
+        if not n then break end
+        if n == name then
+            debug.setupvalue(func, i, value)
+            break
+        end
+        i = i + 1
+    end
+end
+```
+
 真机数据只有resume或者协程数据
 > 不要用luac加密代码，请直接使用明码字符串
 
