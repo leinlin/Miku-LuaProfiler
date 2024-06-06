@@ -65,7 +65,7 @@ namespace MikuLuaProfiler
         static IntPtr dlopen_replace(string libfile, int flag)
         {
             var ret = dlopenF(libfile, flag);
-            if (!isLoadLuaSo && dlsym(ret, "luaL_newstate") != IntPtr.Zero)
+            if (!isLoadLuaSo && dlsym(ret, "lua_newstate") != IntPtr.Zero)
             {
                 isLoadLuaSo = true;
                 _callBack.Invoke(ret);

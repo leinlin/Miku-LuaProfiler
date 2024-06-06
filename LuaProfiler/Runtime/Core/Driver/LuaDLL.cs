@@ -108,7 +108,7 @@ namespace MikuLuaProfiler
         #endregion
 
         #region hooks
-        private static INativeHooker luaL_newstate_hook;
+        private static INativeHooker lua_newstate_hook;
         private static INativeHooker lua_close_hook;
         private static INativeHooker lua_gc_hook;
         private static INativeHooker lua_call_hook;
@@ -131,8 +131,8 @@ namespace MikuLuaProfiler
 
         #region 通用操作
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-        public delegate IntPtr luaL_newstate_fun();
-        public static luaL_newstate_fun luaL_newstate;
+        public delegate IntPtr lua_newstate_fun(IntPtr f, IntPtr ud);
+        public static lua_newstate_fun lua_newstate;
 
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
         public delegate void lua_close_fun(IntPtr L);
@@ -383,10 +383,10 @@ namespace MikuLuaProfiler
 
         public static void Uninstall()
         {
-            if (luaL_newstate_hook != null)
+            if (lua_newstate_hook != null)
             {
-                luaL_newstate_hook.Uninstall();
-                luaL_newstate_hook = null;
+                lua_newstate_hook.Uninstall();
+                lua_newstate_hook = null;
             }
 
             if (lua_close_hook != null)
@@ -509,15 +509,15 @@ namespace MikuLuaProfiler
 
                 UnityEngine.Debug.Log("lua versin:" + LUA_VERSION);
 
-                if (luaL_newstate_hook == null)
+                if (lua_newstate_hook == null)
                 {
-                    IntPtr handle = GetProcAddress(module, "luaL_newstate");
-                    luaL_newstate_fun luaFun = new luaL_newstate_fun(luaL_newstate_replace);
+                    IntPtr handle = GetProcAddress(module, "lua_newstate");
+                    lua_newstate_fun luaFun = new lua_newstate_fun(lua_newstate_replace);
                     INativeHooker hooker = nativeUtil.CreateHook();
                     hooker.Init(handle, Marshal.GetFunctionPointerForDelegate(luaFun));
                     hooker.Install();
-                    luaL_newstate = (luaL_newstate_fun)hooker.GetProxyFun(typeof(luaL_newstate_fun));
-                    luaL_newstate_hook = hooker;
+                    lua_newstate = (lua_newstate_fun)hooker.GetProxyFun(typeof(lua_newstate_fun));
+                    lua_newstate_hook = hooker;
                 }
 
                 if (lua_close_hook == null)
@@ -984,25 +984,25 @@ namespace MikuLuaProfiler
             var modules = process.Modules;
             foreach (ProcessModule item in modules)
             {
-                result = GetProcAddress(item.BaseAddress, "luaL_newstate");
+                result = GetProcAddress(item.BaseAddress, "lua_newstate");
                 if (result != IntPtr.Zero)
                 {
                     return item.BaseAddress;
                 }
             }
 #else
-            result = GetProcAddress(IntPtr.Zero, "luaL_newstate");
+            result = GetProcAddress(IntPtr.Zero, "lua_newstate");
 #endif
             return result;
         }
 
-        [MonoPInvokeCallbackAttribute(typeof(luaL_newstate_fun))]
-        public static IntPtr luaL_newstate_replace()
+        [MonoPInvokeCallbackAttribute(typeof(lua_newstate_fun))]
+        public static IntPtr lua_newstate_replace(IntPtr f, IntPtr ud)
         {
 			UnityEngine.Debug.Log("test newstate success");
             lock (m_Lock)
             {
-                IntPtr intPtr = luaL_newstate();
+                IntPtr intPtr = lua_newstate(f, ud);
                 if (isHook)
                 {
                     MikuLuaProfilerLuaProfilerWrap.RegisterError(intPtr);
