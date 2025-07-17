@@ -7,12 +7,6 @@ namespace MikuLuaProfiler
 {
     public class AndroidNativeUtil : NativeUtilInterface
     {
-        static AndroidNativeUtil()
-        {
-            AndroidJavaClass act = new AndroidJavaClass("com.bytedance.shadowhook.ShadowHook");
-            act.CallStatic<int>("init");
-        }
-
         private static readonly IntPtr RTLD_DEFAULT = IntPtr.Zero;
         private static readonly int RTLD_NOW = 2;
 
@@ -91,17 +85,14 @@ namespace MikuLuaProfiler
         private void* _proxyFun = null;
         private IntPtr _targetPtr = IntPtr.Zero;
         private IntPtr _replacementPtr = IntPtr.Zero;
-        private IntPtr stub = IntPtr.Zero;
+        private int stub = 0;
 
         #region native
-        [DllImport("libshadowhook.so", CallingConvention = CallingConvention.Cdecl)]
-        private static extern IntPtr shadowhook_hook_sym_name(string lib_name, string sym_name, IntPtr new_addr, void**  orig_addr);
-
-        [DllImport("libshadowhook.so", CallingConvention = CallingConvention.Cdecl)]
-        private static extern IntPtr shadowhook_hook_func_addr(IntPtr func_addr, IntPtr new_addr, void**  orig_addr);
+        [DllImport("libatri_hook.so", CallingConvention = CallingConvention.Cdecl)]
+        private static extern int atri_Hook(IntPtr func_addr, IntPtr new_addr, void**  orig_addr);
         
-        [DllImport("libshadowhook.so", CallingConvention = CallingConvention.Cdecl)]
-        private static extern int shadowhook_unhook(IntPtr stub);
+        [DllImport("libatri_hook.so", CallingConvention = CallingConvention.Cdecl)]
+        private static extern int atri_UnHook(IntPtr stub);
         #endregion
         
         public void Init(IntPtr targetPtr, IntPtr replacementPtr)
@@ -114,17 +105,17 @@ namespace MikuLuaProfiler
         {
             fixed (void** addr = &_proxyFun)
             {
-                stub = shadowhook_hook_func_addr( _targetPtr, _replacementPtr, addr);
+                stub = atri_Hook( _targetPtr, _replacementPtr, addr);
             }
         } 
 
         public void Uninstall()
         {
-            if (stub != IntPtr.Zero)
+            if (stub != 0)
             {
-                shadowhook_unhook(stub);
+                atri_UnHook(_targetPtr);
                 _proxyFun = null;
-                stub = IntPtr.Zero;
+                stub = 0;
             }
         }
     }
