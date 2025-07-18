@@ -183,13 +183,13 @@ namespace MikuLuaProfiler
 
             try
             {
-                int frameCount = SampleData.frameCount;
+                int frameCount = Time.frameCount;
                 long memoryCount = LuaLib.GetLuaMemory(luaState);
 
                 if (m_currentFrame != frameCount)
                 {
                     m_currentFrame = frameCount;
-                    if (frameCount - m_gcFrame >= 300 && memoryCount >= m_gcMemory)
+                    if (frameCount - m_gcFrame >= 3000 && memoryCount >= m_gcMemory)
                     {
                         if (luaState != IntPtr.Zero)
                         {
@@ -197,7 +197,7 @@ namespace MikuLuaProfiler
                         }
                         memoryCount = LuaLib.GetLuaMemory(luaState);
                         m_gcFrame = frameCount;
-                        m_gcMemory = (long)(memoryCount * 1.2f);
+                        m_gcMemory = (long)(memoryCount * 1.5f);
                     }
                     PopAllSampleWhenLateUpdate(luaState);
                 }
