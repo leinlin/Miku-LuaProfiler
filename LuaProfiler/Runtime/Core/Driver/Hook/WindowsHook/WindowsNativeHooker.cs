@@ -50,7 +50,7 @@ namespace MikuLuaProfiler
 				fun = (IntPtr lpFileName, IntPtr hFile, int dwFlags) =>
 				{
 					var ret = LoadLibraryExW_dll(lpFileName, hFile, dwFlags);
-					if (GetProcAddressByHandle(ret, "luaL_newstate") != IntPtr.Zero)
+					if (GetProcAddressByHandle(ret, "lua_newstate") != IntPtr.Zero)
 					{
 						callBack(ret);
 						hooker.Uninstall();
