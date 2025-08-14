@@ -84,7 +84,6 @@ namespace MikuLuaProfiler
         public static bool IS_LUA_JIT = false;
 
         public static bool isHook = false;
-        public static bool isOpenLibs = false;
         #region index
         public static void lua_getglobal51(IntPtr luaState, string name)
         {
@@ -108,9 +107,11 @@ namespace MikuLuaProfiler
         #endregion
 
         #region hooks
-        private static INativeHooker luaL_newstate_hook;
+        private static INativeHooker lua_newstate_hook;
+        private static IntPtr lua_alloc_ptr = IntPtr.Zero;
+        private static INativeHooker lua_alloc_hook;
         private static INativeHooker lua_close_hook;
-        private static INativeHooker lua_gc_hook;
+        
         private static INativeHooker lua_call_hook;
         private static INativeHooker lua_error_hook;
         private static INativeHooker luaL_openlibs_hook;
@@ -119,7 +120,6 @@ namespace MikuLuaProfiler
         private static INativeHooker luaL_ref_hook;
         private static INativeHooker luaL_unref_hook;
         private static INativeHooker luaL_loadbuffer_hook;
-        private static INativeHooker luaL_loadfile_hook;
 
         #if UNITY_EDITOR || UNITY_STANDALONE
         private static NativeUtilInterface nativeUtil = new WindowsNativeUtil();
@@ -132,7 +132,15 @@ namespace MikuLuaProfiler
         #region 通用操作
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
         public delegate IntPtr luaL_newstate_fun();
-        public static luaL_newstate_fun luaL_newstate;
+        public static luaL_newstate_fun luaL_newstate { get; private set; }
+        
+        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        public delegate IntPtr lua_newstate_fun(IntPtr f, IntPtr ud);
+        public static lua_newstate_fun lua_newstate { get; private set; }
+        
+        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        public delegate IntPtr lua_alloc_fun(IntPtr ud, IntPtr ptr, IntPtr osize, IntPtr nsize);
+        public static lua_alloc_fun lua_alloc { get; private set; }
 
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
         public delegate void lua_close_fun(IntPtr L);
@@ -281,6 +289,16 @@ namespace MikuLuaProfiler
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
         public delegate IntPtr lua_tolstring_fun(IntPtr luaState, int index, out IntPtr strLen);
         public static lua_tolstring_fun lua_tolstring;
+        
+        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        public delegate void lua_replace_fun(IntPtr luaState, int index);
+
+        public static lua_replace_fun lua_replace;
+
+        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        public delegate void lua_copy_fun(IntPtr luaState, int source, int dest);
+
+        public static lua_copy_fun lua_copy;
 
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
         public delegate void lua_pushcclosure_fun(IntPtr L, IntPtr fn, int nup);
@@ -313,12 +331,6 @@ namespace MikuLuaProfiler
         public static bool lua_isuserdata(IntPtr luaState, int n)
         {
             return lua_type(luaState, n) == LuaTypes.LUA_TUSERDATA;
-        }
-
-        public static void luaL_initlibs(IntPtr luaState)
-        {
-            LuaDLL.isOpenLibs = false;
-            luaL_openlibs(luaState);
         }
 
         public static unsafe IntPtr ConvertByteArrayToPtr(byte[] buff)
@@ -383,22 +395,16 @@ namespace MikuLuaProfiler
 
         public static void Uninstall()
         {
-            if (luaL_newstate_hook != null)
+            if (lua_newstate_hook != null)
             {
-                luaL_newstate_hook.Uninstall();
-                luaL_newstate_hook = null;
+                lua_newstate_hook.Uninstall();
+                lua_newstate_hook = null;
             }
 
             if (lua_close_hook != null)
             {
                 lua_close_hook.Uninstall();
                 lua_close_hook = null;
-            }
-            
-            if (lua_gc_hook != null)
-            {
-                lua_gc_hook.Uninstall();
-                lua_gc_hook = null;
             }
 
             if (lua_call_hook != null)
@@ -435,12 +441,6 @@ namespace MikuLuaProfiler
             {
                 luaL_loadbuffer_hook.Uninstall();
                 luaL_loadbuffer_hook = null;
-            }
-            
-            if (luaL_loadfile_hook != null)
-            {
-                luaL_loadfile_hook.Uninstall();
-                luaL_loadfile_hook = null;
             }
 
             if (lua_pcall_hook != null)
@@ -509,15 +509,22 @@ namespace MikuLuaProfiler
 
                 UnityEngine.Debug.Log("lua versin:" + LUA_VERSION);
 
-                if (luaL_newstate_hook == null)
                 {
                     IntPtr handle = GetProcAddress(module, "luaL_newstate");
-                    luaL_newstate_fun luaFun = new luaL_newstate_fun(luaL_newstate_replace);
+                    luaL_newstate = (luaL_newstate_fun)Marshal.GetDelegateForFunctionPointer(handle, typeof(luaL_newstate_fun));
+                }
+                
+                if (lua_newstate_hook == null)
+                {
+                    IntPtr handle = GetProcAddress(module, "lua_newstate");
+                    lua_newstate_fun luaFun = new lua_newstate_fun(lua_newstate_replace);
                     INativeHooker hooker = nativeUtil.CreateHook();
                     hooker.Init(handle, Marshal.GetFunctionPointerForDelegate(luaFun));
                     hooker.Install();
-                    luaL_newstate = (luaL_newstate_fun)hooker.GetProxyFun(typeof(luaL_newstate_fun));
-                    luaL_newstate_hook = hooker;
+
+                    lua_newstate =
+                        (lua_newstate_fun)hooker.GetProxyFun(typeof(lua_newstate_fun));
+                    lua_newstate_hook = hooker;
                 }
 
                 if (lua_close_hook == null)
@@ -529,17 +536,6 @@ namespace MikuLuaProfiler
                     hooker.Install();
                     lua_close = (lua_close_fun)hooker.GetProxyFun(typeof(lua_close_fun));
                     lua_close_hook = hooker;
-                }
-
-                if (lua_gc_hook == null)
-                {
-                    IntPtr handle = GetProcAddress(module, "lua_gc");
-                    lua_gc_fun luaFun = new lua_gc_fun(lua_gc_replace);
-                    INativeHooker hooker = nativeUtil.CreateHook();
-                    hooker.Init(handle, Marshal.GetFunctionPointerForDelegate(luaFun));
-                    hooker.Install();
-                    lua_gc = (lua_gc_fun)hooker.GetProxyFun(typeof(lua_gc_fun));
-                    lua_gc_hook = hooker;
                 }
 
                 // if (lua_error_hook == null)
@@ -699,6 +695,12 @@ namespace MikuLuaProfiler
                 }
 
                 {
+                    IntPtr handle = GetProcAddress(module, "lua_gc");
+                    lua_gc =
+                        (lua_gc_fun)Marshal.GetDelegateForFunctionPointer(handle, typeof(lua_gc_fun));
+                }
+                
+                {
                     IntPtr handle = GetProcAddress(module, "lua_gettop");
                     if (handle != IntPtr.Zero)
                     {
@@ -779,6 +781,34 @@ namespace MikuLuaProfiler
                             lua_tonumber =
                                 (lua_tonumber_fun)Marshal.GetDelegateForFunctionPointer(handle,
                                     typeof(lua_tonumber_fun));
+                        }
+                    }
+                }
+                
+                {
+                    if (LUA_VERSION >= 520)
+                    {
+                        IntPtr handle = GetProcAddress(module, "lua_copy");
+                        if (handle != IntPtr.Zero)
+                        {
+                            lua_copy =
+                                (lua_copy_fun)Marshal.GetDelegateForFunctionPointer(handle,
+                                    typeof(lua_copy_fun));
+                            lua_replace = (IntPtr luaState, int idx) =>
+                            {
+                                lua_copy(luaState, -1, 1);
+                                lua_pop(luaState, 1);
+                            };
+                        }
+                    }
+                    else
+                    {
+                        IntPtr handle = GetProcAddress(module, "lua_replace");
+                        if (handle != IntPtr.Zero)
+                        {
+                            lua_replace =
+                                (lua_replace_fun)Marshal.GetDelegateForFunctionPointer(handle,
+                                    typeof(lua_replace_fun));
                         }
                     }
                 }
@@ -995,32 +1025,61 @@ namespace MikuLuaProfiler
 #endif
             return result;
         }
-
-        [MonoPInvokeCallbackAttribute(typeof(luaL_newstate_fun))]
-        public static IntPtr luaL_newstate_replace()
+        
+        private static int allocSize = 0;
+        
+        public static void ClearFreeSize()
         {
-			UnityEngine.Debug.Log("test newstate success");
-            lock (m_Lock)
-            {
-                IntPtr intPtr = luaL_newstate();
-                if (isHook)
-                {
-                    MikuLuaProfilerLuaProfilerWrap.RegisterError(intPtr);
-                    LuaProfiler.mainL = intPtr;
-                    MikuLuaProfilerLuaProfilerWrap.__Register(intPtr);
-                }
-                return intPtr;
-            }
+            allocSize = 0;
         }
 
-        public static int lua_gc_unhook(IntPtr luaState, LuaGCOptions what, int data)
+        public static int GetAllocSize()
         {
-            var tmp = isHook;
-            isHook = false;
-            int ret = lua_gc(luaState, what, data);
-            isHook = tmp;
+            return allocSize;
+        }
 
-            return ret;
+        [MonoPInvokeCallbackAttribute(typeof(lua_newstate_fun))]
+        public static IntPtr lua_newstate_replace(IntPtr f, IntPtr ud)
+        {
+            if (f != IntPtr.Zero)
+            {
+                if (lua_alloc_ptr != f)
+                {
+                    if (lua_alloc_hook != null)
+                    {
+                        lua_alloc_hook.Uninstall();
+                        lua_alloc_hook = null;
+                    }
+                    
+                    IntPtr handle = f;
+                    lua_alloc_fun luaFun = new lua_alloc_fun(lua_alloc_replace);
+                    INativeHooker hooker = nativeUtil.CreateHook();
+                    hooker.Init(handle, Marshal.GetFunctionPointerForDelegate(luaFun));
+                    hooker.Install();
+
+                    lua_alloc =
+                        (lua_alloc_fun)hooker.GetProxyFun(typeof(lua_alloc_fun));
+                    lua_alloc_hook = hooker;
+
+                    lua_alloc_ptr = f;
+                }
+            }
+            IntPtr luaState = lua_newstate(f, ud);
+
+            return luaState;
+        }
+        
+        [MonoPInvokeCallbackAttribute(typeof(lua_alloc_fun))]
+        private static IntPtr lua_alloc_replace(IntPtr ud, IntPtr ptr, IntPtr osize, IntPtr nsize)
+        {
+            int oldSize = (int)osize;
+            int newSize = (int)nsize;
+            if (newSize > oldSize )
+            {
+                allocSize += newSize - oldSize;
+            }
+
+            return lua_alloc(ud, ptr, osize, nsize);
         }
 
         public static void lua_remove53(IntPtr luaState, int idx)
@@ -1037,30 +1096,9 @@ namespace MikuLuaProfiler
         [MonoPInvokeCallbackAttribute(typeof(lua_error_fun))]
         public static int lua_error_replace(IntPtr luaState)
         {
-            LuaProfiler.BeginSample(luaState, "exception happen clear stack", true);
+            LuaProfiler.BeginSample(luaState, "exception happen clear stack");
             LuaProfiler.PopAllSampleWhenLateUpdate(luaState);
             return lua_error(luaState);
-        }
-
-        [MonoPInvokeCallbackAttribute(typeof(lua_gc_fun))]
-        public static int lua_gc_replace(IntPtr luaState, LuaGCOptions what, int data)
-        {
-            lock (m_Lock)
-            {
-                if (!isHook)
-                {
-                    return lua_gc(luaState, what, data);
-                }
-                else if (what == LuaGCOptions.LUA_GCCOUNT)
-                {
-                    return lua_gc(luaState, what, data);
-                }
-                else if (what == LuaGCOptions.LUA_GCCOUNTB)
-                {
-                    return lua_gc(luaState, what, data);
-                }
-                return 0;
-            }
         }
 
         [MonoPInvokeCallbackAttribute(typeof(lua_close_fun))]
@@ -1088,11 +1126,9 @@ namespace MikuLuaProfiler
         [MonoPInvokeCallbackAttribute(typeof(luaL_openlibs_fun))]
         public static void luaL_openlibs_replace(IntPtr luaState)
         {
-            if (!isOpenLibs)
-            {
-                luaL_openlibs(luaState);
-                isOpenLibs = true;
-            }
+            luaL_openlibs(luaState);
+            MikuLuaProfilerLuaProfilerWrap.__Register(luaState);
+            LuaProfiler.mainL = luaState;
         }
 
         [MonoPInvokeCallbackAttribute(typeof(luaL_openlibs_fun))]

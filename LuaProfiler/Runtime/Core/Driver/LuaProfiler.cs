@@ -52,8 +52,6 @@ namespace MikuLuaProfiler
         private static IntPtr _mainL = IntPtr.Zero;
         private static readonly Stack<Sample> beginSampleMemoryStack = new Stack<Sample>();
         private static int m_currentFrame = 0;
-        private static int m_gcFrame = 0;
-        private static long m_gcMemory = 0;
         public static int mainThreadId = -100;
         const long MaxB = 1024;
         const long MaxK = MaxB * 1024;
@@ -125,7 +123,6 @@ namespace MikuLuaProfiler
                 if (value != IntPtr.Zero)
                 {
                     m_hasL = true;
-                    LuaDLL.luaL_initlibs(value);
                 }
                 else
                 {
@@ -161,24 +158,11 @@ namespace MikuLuaProfiler
             }
         }
 
-        public static void BeginSample(IntPtr luaState, string name, bool needShow = false)
+        public static void BeginSample(IntPtr luaState, string name)
         {
             if (!IsMainThread)
             {
                 return;
-            }
-
-            if(!needShow)
-            {
-                int top = LuaDLL.lua_gettop(luaState);
-
-                // 放弃协程
-                if (LuaDLL.lua_pushthread(luaState) != 1)
-                {
-                    LuaDLL.lua_settop(luaState, top);
-                    return;
-                }
-                LuaDLL.lua_settop(luaState, top);
             }
 
             try
@@ -189,16 +173,6 @@ namespace MikuLuaProfiler
                 if (m_currentFrame != frameCount)
                 {
                     m_currentFrame = frameCount;
-                    if (frameCount - m_gcFrame >= 3000 && memoryCount >= m_gcMemory)
-                    {
-                        if (luaState != IntPtr.Zero)
-                        {
-                            LuaDLL.lua_gc_unhook(luaState, LuaGCOptions.LUA_GCCOLLECT, 0);
-                        }
-                        memoryCount = LuaLib.GetLuaMemory(luaState);
-                        m_gcFrame = frameCount;
-                        m_gcMemory = (long)(memoryCount * 1.5f);
-                    }
                     PopAllSampleWhenLateUpdate(luaState);
                 }
                 Sample sample =  Sample.Create(getcurrentTime, (int)memoryCount, name);
@@ -217,11 +191,37 @@ namespace MikuLuaProfiler
 
         public static void PopAllSampleWhenLateUpdate(IntPtr luaState)
         {
+            if (beginSampleMemoryStack.Count <= 0) return;
+            
+            Debug.LogError("stack not match, pop all sample");
+            
             while(beginSampleMemoryStack.Count > 0)
             {
                 EndSample(luaState);
             }
         }
+        
+        public static void EndSampleCortoutine(IntPtr luaState)
+        {
+            int oldDepth = (int)LuaDLL.lua_tonumber(luaState, 1);
+            int newDepth = GetStackDepth();
+            if (newDepth > oldDepth)
+            {
+                for (int i = 0, imax = newDepth - oldDepth; i < imax; i++)
+                {
+                    EndSample(luaState);
+                }
+
+                LuaDLL.lua_pushnumber(luaState, newDepth - oldDepth);
+                LuaDLL.lua_replace(luaState, 1);
+            }
+            else
+            {
+                LuaDLL.lua_pushnumber(luaState, 0);
+                LuaDLL.lua_replace(luaState, 1);
+            }
+        }
+        
         public static void EndSample(IntPtr luaState)
         {
             if (!IsMainThread)
@@ -229,17 +229,9 @@ namespace MikuLuaProfiler
                 return;
             }
 
-            int top = LuaDLL.lua_gettop(luaState);
-            // 放弃协程
-            if (LuaDLL.lua_pushthread(luaState) != 1)
-            {
-                LuaDLL.lua_settop(luaState, top);
-                return;
-            }
-            LuaDLL.lua_settop(luaState, top);
-
             if (beginSampleMemoryStack.Count <= 0)
             {
+                Debug.LogError("stack not match, pop all sample");
                 return;
             }
             long nowMemoryCount = LuaLib.GetLuaMemory(luaState);
@@ -263,6 +255,7 @@ namespace MikuLuaProfiler
             //UnityEngine.Debug.Log(sample.name);
             if (beginSampleMemoryStack.Count == 0)
             {
+                LuaDLL.ClearFreeSize();
                 var setting = LuaDeepProfilerSetting.Instance;
                 if (setting == null) return;
                 if (!setting.isLocal)

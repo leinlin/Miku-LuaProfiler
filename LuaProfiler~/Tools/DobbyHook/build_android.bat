@@ -13,7 +13,7 @@ cd ..
 cmake --build build_android --config Release -j8
 
 mkdir Plugins\Android\libs\arm64-v8a
-copy build_android\libatri_hook.so Plugins\Android\libs\arm64-v8a\libatri_hook.so
+copy build_android\libmiku_hook.so Plugins\Android\libs\arm64-v8a\libmiku_hook.so
 
 rem Android/ARM, armeabi-v7a
 set NDKVER=%NDK%/toolchains/arm-linux-androideabi-4.9
@@ -28,7 +28,7 @@ cd ..
 cmake --build build_android --config Release -j8
 
 mkdir Plugins\Android\libs\armeabi-v7a
-copy build_android\libatri_hook.so Plugins\Android\libs\armeabi-v7a\libatri_hook.so
+copy build_android\libmiku_hook.so Plugins\Android\libs\armeabi-v7a\libmiku_hook.so
 
 
 rem Android/Intel, x86
@@ -44,4 +44,4 @@ cd ..
 cmake --build build_android --config Release -j8
 
 mkdir Plugins\Android\libs\x86
-copy build_android\libatri_hook.so Plugins\Android\libs\x86\libatri_hook.so
+copy build_android\libmiku_hook.so Plugins\Android\libs\x86\libmiku_hook.so

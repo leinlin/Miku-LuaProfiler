@@ -444,7 +444,7 @@ namespace MikuLuaProfiler
 
                 if (GUILayout.Button("GC"))
                 {
-                    LuaDLL.lua_gc_unhook(LuaProfiler.mainL, LuaGCOptions.LUA_GCCOLLECT, 0);
+                    LuaDLL.lua_gc(LuaProfiler.mainL, LuaGCOptions.LUA_GCCOLLECT, 0);
                 }
             }
             

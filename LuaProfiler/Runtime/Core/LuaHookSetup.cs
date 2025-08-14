@@ -405,7 +405,7 @@ namespace MikuLuaProfiler
             // 调用C# LuaTable LuaFunction WeakTable的析构 来清理掉lua的 ref
             GC.Collect();
             // 清理掉C#强ref后，顺便清理掉很多弱引用
-            LuaDLL.lua_gc_unhook(L, LuaGCOptions.LUA_GCCOLLECT, 0);
+            LuaDLL.lua_gc(L, LuaGCOptions.LUA_GCCOLLECT, 0);
 
             int oldTop = LuaDLL.lua_gettop(L);
             LuaDLL.lua_getglobal(L, "miku_handle_error");
@@ -472,7 +472,7 @@ namespace MikuLuaProfiler
             // 调用C# LuaTable LuaFunction WeakTable的析构 来清理掉lua的 ref
             GC.Collect();
             // 清理掉C#强ref后，顺便清理掉很多弱引用
-            LuaDLL.lua_gc_unhook(L, LuaGCOptions.LUA_GCCOLLECT, 0);
+            LuaDLL.lua_gc(L, LuaGCOptions.LUA_GCCOLLECT, 0);
 
             int oldTop = LuaDLL.lua_gettop(L);
             LuaDLL.lua_getglobal(L, "miku_handle_error");
@@ -570,7 +570,7 @@ namespace MikuLuaProfiler
                 LuaDLL.lua_remove(L, oldTop + 1);
             }
             LuaDLL.lua_settop(L, oldTop);
-            LuaDLL.lua_gc_unhook(L, LuaGCOptions.LUA_GCCOLLECT, 0);
+            LuaDLL.lua_gc(L, LuaGCOptions.LUA_GCCOLLECT, 0);
         }
 
         private static void SetTable(int refIndex, Dictionary<LuaTypes, HashSet<string>> dict, Dictionary<string, List<string>> detailDict)
@@ -658,7 +658,7 @@ namespace MikuLuaProfiler
             // 调用C# LuaTable LuaFunction WeakTable的析构 来清理掉lua的 ref
             GC.Collect();
             // 清理掉C#强ref后，顺便清理掉很多弱引用
-            LuaDLL.lua_gc_unhook(L, LuaGCOptions.LUA_GCCOLLECT, 0);
+            LuaDLL.lua_gc(L, LuaGCOptions.LUA_GCCOLLECT, 0);
 
 
             if (staticHistoryRef == -100)
@@ -717,13 +717,7 @@ namespace MikuLuaProfiler
     {
         public static long GetLuaMemory(IntPtr luaState)
         {
-            long result = 0;
-            if (LuaProfiler.m_hasL)
-            {
-                result = LuaDLL.lua_gc_unhook(luaState, LuaGCOptions.LUA_GCCOUNT, 0);
-                result = result * 1024 + LuaDLL.lua_gc_unhook(luaState, LuaGCOptions.LUA_GCCOUNTB, 0);
-            }
-            return result;
+            return LuaDLL.GetAllocSize();
         }
         public static void DoString(IntPtr L, string script)
         {
@@ -776,10 +770,12 @@ namespace MikuLuaProfiler
 
     public class MikuLuaProfilerLuaProfilerWrap
     {
-        public static LuaDeepProfilerSetting setting = LuaDeepProfilerSetting.Instance;
         public static LuaCSFunction beginSample = new LuaCSFunction(BeginSample);
         public static LuaCSFunction beginSampleCustom = new LuaCSFunction(BeginSampleCustom);
         public static LuaCSFunction endSample = new LuaCSFunction(EndSample);
+        public static LuaCSFunction endSampleCustom = new LuaCSFunction(EndSampleCustom);
+        public static LuaCSFunction getStackDepth = new LuaCSFunction(GetStackDepth);
+        public static LuaCSFunction endSampleCortoutine = new LuaCSFunction(EndSampleCortoutine);
         public static LuaCSFunction unpackReturnValue = new LuaCSFunction(UnpackReturnValue);
         public static LuaCSFunction addRefFunInfo = new LuaCSFunction(AddRefFunInfo);
         public static LuaCSFunction removeRefFunInfo = new LuaCSFunction(RemoveRefFunInfo);
@@ -787,6 +783,19 @@ namespace MikuLuaProfiler
         public static LuaCSFunction handleError = new LuaCSFunction(HandleError);
         public static void __Register(IntPtr L)
         {
+            LuaDLL.lua_getglobal(L, "MikuLuaProfiler");
+            if(!LuaDLL.lua_isnil(L, -1))
+            {
+                LuaDLL.lua_pop(L, 1);
+                return;
+            }
+            LuaDLL.lua_pop(L, 1);
+
+            IntPtr tempL = LuaDLL.luaL_newstate();
+            LuaDLL.lua_close(tempL);
+            
+            RegisterError(L);
+
             LuaDLL.lua_newtable(L);
             LuaDLL.lua_pushstring(L, "LuaProfiler");
             LuaDLL.lua_newtable(L);
@@ -804,7 +813,15 @@ namespace MikuLuaProfiler
             LuaDLL.lua_rawset(L, -3);
 
             LuaDLL.lua_pushstring(L, "EndSampleCustom");
-            LuaDLL.lua_pushstdcallcfunction(L, endSample);
+            LuaDLL.lua_pushstdcallcfunction(L, endSampleCustom);
+            LuaDLL.lua_rawset(L, -3);
+
+            LuaDLL.lua_pushstring(L, "GetStackDepth");
+            LuaDLL.lua_pushstdcallcfunction(L, getStackDepth);
+            LuaDLL.lua_rawset(L, -3);
+            
+            LuaDLL.lua_pushstring(L, "EndSampleCortoutine");
+            LuaDLL.lua_pushstdcallcfunction(L, endSampleCortoutine);
             LuaDLL.lua_rawset(L, -3);
 
             LuaDLL.lua_rawset(L, -3);
@@ -830,7 +847,7 @@ namespace MikuLuaProfiler
             LuaLib.DoString(L, diff_script);
         }
 
-        public static void RegisterError(IntPtr L)
+        private static void RegisterError(IntPtr L)
         {
             LuaDLL.lua_pushstdcallcfunction(L, handleError);
             LuaDLL.lua_setglobal(L, "miku_handle_error");
@@ -965,33 +982,60 @@ local EndMikuSample = miku_unpack_return_value
 local oldResume = coroutine.resume
 local oldWrap = coroutine.wrap
 local rawequal = rawequal
-local oldPcall = pcall 
-local oldXpcall = xpcall
 
-local coroutineInfoTb = {}
+local weakKeyMeta = { __mode = 'k' }
+local coroutineInfoTb = setmetatable({}, weakKeyMeta)
+local coroutineTickTb = setmetatable({}, weakKeyMeta)
+
+local function recordCoroutineTick(co, tick, ...)
+    coroutineTickTb[co] = tick
+    return ...
+end
 
 coroutine.resume = function(co, ...)
-    local sampleName = '[lua]:coroutine.resume'
     local coInfo = coroutineInfoTb[co]
     if not coInfo then
         local info = debug.getinfo(co, 1, 'nSl')
-        local coInfo = '[lua]:coroutine.resume'
         if info then
-            coInfo = string.format('[lua]:%s,%s&line:%d', info.name, info.short_src, info.currentline)
+            coInfo = string.format('[lua]:coroutine.resume %s,%s&line:%d', info.name, info.short_src, info.currentline)
+            coroutineInfoTb[co] = coInfo
+        else
+            coInfo = '[lua]:coroutine.resume'
         end
     end
 
-    -- 这里有GC不过可以考虑在C#那边直接拿到协同的调用信息，把lua的GC转移到C#那边
-    BeginMikuSample(coInfo)
-
-    return EndMikuSample(oldResume(co, ...))
+    local stackDepth = GetStackDepth()
+    local tick = coroutineTickTb[co]
+    if tick then
+      for i = 1, tick do
+        BeginMikuSample(coInfo)
+      end
+    end
+    return recordCoroutineTick(co, EndSampleCortoutine(stackDepth, oldResume(co, ...)))
 end
 
-coroutine.wrap = function(f)
-    local result = oldWrap(f)
+coroutine.wrap = function(co)
+    local coInfo = coroutineInfoTb[co]
+    if not coInfo then
+        local info = debug.getinfo(co, 1, 'nSl')
+        if info then
+            coInfo = string.format('[lua]:coroutine.resume %s,%s&line:%d', info.name, info.short_src, info.currentline)
+            coroutineInfoTb[co] = coInfo
+        else
+            coInfo = '[lua]:coroutine.resume'
+        end
+    end
+
+    local result = oldWrap(co)
     return function()
-        BeginMikuSample('[lua]:coroutine.resume')
-        return EndMikuSample(result())
+        local stackDepth = GetStackDepth()
+        local tick = coroutineTickTb[co]
+        if tick then
+          for i = 1, tick do
+            BeginMikuSample(coInfo)
+          end
+        end
+        return recordCoroutineTick(co, EndSampleCortoutine(stackDepth, result()))
     end
 end
 
@@ -1165,7 +1209,7 @@ end
         [MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]
         static int BeginSampleCustom(IntPtr L)
         {
-            LuaProfiler.BeginSample(L, LuaHook.GetRefString(L, 1), true);
+            LuaProfiler.BeginSample(L, LuaHook.GetRefString(L, 1));
             return 0;
         }
 
@@ -1234,12 +1278,32 @@ end
         }
 
         [MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]
+        static int EndSampleCustom(IntPtr L)
+        {
+            LuaProfiler.EndSample(L);
+            return 0; 
+        }
+
+        [MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]
         static int EndSample(IntPtr L)
         {
             LuaProfiler.EndSample(L);
             return 0;
         }
+        
+        [MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]
+        static int EndSampleCortoutine(IntPtr L)
+        {
+            LuaProfiler.EndSampleCortoutine(L);
+            return LuaDLL.lua_gettop(L);
+        }
 
+        [MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]
+        static int GetStackDepth(IntPtr L)
+        {
+            LuaDLL.lua_pushnumber(L, LuaProfiler.GetStackDepth());
+            return 1;
+        }
 
     }
     #endregion

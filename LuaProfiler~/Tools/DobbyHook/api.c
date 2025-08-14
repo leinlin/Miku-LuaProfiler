@@ -2,7 +2,7 @@
 #include <sys/mman.h>
 #include <unistd.h>     // for sysconf
 
-extern int atri_Hook(void *address, void *replace_call, void **origin_call)
+extern int miku_Hook(void *address, void *replace_call, void **origin_call)
 {
 	int page_size = sysconf(_SC_PAGE_SIZE);
 	uintptr_t addr_start = (uintptr_t)address & ~(page_size - 1);
@@ -12,7 +12,7 @@ extern int atri_Hook(void *address, void *replace_call, void **origin_call)
     return ret;
 }
 
-extern int atri_UnHook(void *address)
+extern int miku_UnHook(void *address)
 {
     return DobbyDestroy(address);
 }

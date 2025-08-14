@@ -63,6 +63,7 @@ namespace MikuLuaProfiler
             {
                 isLoadLuaSo = true;
                 _callBack.Invoke(ret);
+                hooker.Uninstall();
             }
             return ret;
         }
@@ -88,11 +89,11 @@ namespace MikuLuaProfiler
         private int stub = 0;
 
         #region native
-        [DllImport("libatri_hook.so", CallingConvention = CallingConvention.Cdecl)]
-        private static extern int atri_Hook(IntPtr func_addr, IntPtr new_addr, void**  orig_addr);
+        [DllImport("libmiku_hook.so", CallingConvention = CallingConvention.Cdecl)]
+        private static extern int miku_Hook(IntPtr func_addr, IntPtr new_addr, void**  orig_addr);
         
-        [DllImport("libatri_hook.so", CallingConvention = CallingConvention.Cdecl)]
-        private static extern int atri_UnHook(IntPtr stub);
+        [DllImport("libmiku_hook.so", CallingConvention = CallingConvention.Cdecl)]
+        private static extern int miku_UnHook(IntPtr stub);
         #endregion
         
         public void Init(IntPtr targetPtr, IntPtr replacementPtr)
@@ -105,7 +106,7 @@ namespace MikuLuaProfiler
         {
             fixed (void** addr = &_proxyFun)
             {
-                stub = atri_Hook( _targetPtr, _replacementPtr, addr);
+                stub = miku_Hook( _targetPtr, _replacementPtr, addr);
             }
         } 
 
@@ -113,7 +114,7 @@ namespace MikuLuaProfiler
         {
             if (stub != 0)
             {
-                atri_UnHook(_targetPtr);
+                miku_UnHook(_targetPtr);
                 _proxyFun = null;
                 stub = 0;
             }
