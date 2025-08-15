@@ -978,6 +978,8 @@ local cache_key = 'miku_record_prefix_cache'
 
 local BeginMikuSample = MikuLuaProfiler.LuaProfiler.BeginSample
 local EndMikuSample = miku_unpack_return_value
+local GetStackDepth = MikuLuaProfiler.LuaProfiler.GetStackDepth
+local EndSampleCortoutine = MikuLuaProfiler.LuaProfiler.EndSampleCortoutine
 
 local oldResume = coroutine.resume
 local oldWrap = coroutine.wrap
