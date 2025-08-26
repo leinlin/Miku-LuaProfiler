@@ -1044,11 +1044,7 @@ namespace MikuLuaProfiler
 
             LuaProfilerTreeViewItem item;
             string f = sample.fullName;
-            m_luaMemory = sample.currentLuaMemory;
-            m_monoMemory = sample.currentMonoMemory;
-            m_pssMemory = sample.pss;
-            m_fps = sample.fps;
-            m_power = sample.power;
+
             //if (isHistory)
             //{
             //    m_catchLuaMemory = sample.costLuaGC;
@@ -1065,7 +1061,11 @@ namespace MikuLuaProfiler
 
             if (string.IsNullOrEmpty(sample.name))
             {
-                
+                m_luaMemory = sample.currentLuaMemory;
+                m_monoMemory = sample.currentMonoMemory;
+                m_pssMemory = sample.pss;
+                m_fps = sample.fps;
+                m_power = sample.power;
                 return;
             }
 
