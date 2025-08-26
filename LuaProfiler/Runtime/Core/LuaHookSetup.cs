@@ -984,6 +984,7 @@ local EndSampleCortoutine = MikuLuaProfiler.LuaProfiler.EndSampleCortoutine
 local oldResume = coroutine.resume
 local oldWrap = coroutine.wrap
 local rawequal = rawequal
+local getinfo = debug.getinfo
 
 local weakKeyMeta = { __mode = 'k' }
 local coroutineInfoTb = setmetatable({}, weakKeyMeta)
@@ -997,7 +998,7 @@ end
 coroutine.resume = function(co, ...)
     local coInfo = coroutineInfoTb[co]
     if not coInfo then
-        local info = debug.getinfo(co, 1, 'nSl')
+        local info = getinfo(co, 1, 'nSl')
         if info then
             coInfo = string.format('[lua]:coroutine.resume %s,%s&line:%d', info.name, info.short_src, info.currentline)
             coroutineInfoTb[co] = coInfo
@@ -1019,7 +1020,7 @@ end
 coroutine.wrap = function(co)
     local coInfo = coroutineInfoTb[co]
     if not coInfo then
-        local info = debug.getinfo(co, 1, 'nSl')
+        local info = getinfo(co, 'nSl')
         if info then
             coInfo = string.format('[lua]:coroutine.resume %s,%s&line:%d', info.name, info.short_src, info.currentline)
             coroutineInfoTb[co] = coInfo
