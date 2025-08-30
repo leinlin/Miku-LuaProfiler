@@ -277,7 +277,9 @@ namespace MikuLuaProfiler
         public static void SendFrameSample()
         {
             var setting = LuaDeepProfilerSetting.Instance;
-            long memoryCount = LuaDLL.lua_gc(_mainL, LuaGCOptions.LUA_GCCOUNT, 0) * 1024;
+            long memoryCount = 0;
+            if (_mainL != IntPtr.Zero)
+                memoryCount = LuaDLL.lua_gc(_mainL, LuaGCOptions.LUA_GCCOUNT, 0) * 1024;
             Sample sample = Sample.Create(getcurrentTime, (int)memoryCount, "");
             if (!setting.isLocal)
             {
