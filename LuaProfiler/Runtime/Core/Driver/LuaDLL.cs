@@ -1055,7 +1055,17 @@ namespace MikuLuaProfiler
                     lua_alloc_fun luaFun = new lua_alloc_fun(lua_alloc_replace);
                     INativeHooker hooker = nativeUtil.CreateHook();
                     hooker.Init(handle, Marshal.GetFunctionPointerForDelegate(luaFun));
-                    hooker.Install();
+                    try
+                    {
+                        hooker.Install();
+                    }
+                    catch
+                    {
+                        hooker.Uninstall();
+                        hooker = nativeUtil.CreateHook();
+                        hooker.Init((IntPtr)((ulong)handle + 10), Marshal.GetFunctionPointerForDelegate(luaFun));
+                        hooker.Install();
+                    }
 
                     lua_alloc =
                         (lua_alloc_fun)hooker.GetProxyFun(typeof(lua_alloc_fun));
