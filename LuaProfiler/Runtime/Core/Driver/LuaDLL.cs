@@ -1045,36 +1045,15 @@ namespace MikuLuaProfiler
             {
                 if (lua_alloc_ptr != f)
                 {
-                    if (lua_alloc_hook != null)
-                    {
-                        lua_alloc_hook.Uninstall();
-                        lua_alloc_hook = null;
-                    }
-                    
-                    IntPtr handle = f;
-                    lua_alloc_fun luaFun = new lua_alloc_fun(lua_alloc_replace);
-                    INativeHooker hooker = nativeUtil.CreateHook();
-                    hooker.Init(handle, Marshal.GetFunctionPointerForDelegate(luaFun));
-                    try
-                    {
-                        hooker.Install();
-                    }
-                    catch
-                    {
-                        hooker.Uninstall();
-                        hooker = nativeUtil.CreateHook();
-                        hooker.Init((IntPtr)((ulong)handle + 10), Marshal.GetFunctionPointerForDelegate(luaFun));
-                        hooker.Install();
-                    }
-
-                    lua_alloc =
-                        (lua_alloc_fun)hooker.GetProxyFun(typeof(lua_alloc_fun));
-                    lua_alloc_hook = hooker;
+                    lua_alloc = (lua_alloc_fun)Marshal.GetDelegateForFunctionPointer(f, typeof(lua_alloc_fun));
 
                     lua_alloc_ptr = f;
                 }
             }
-            IntPtr luaState = lua_newstate(f, ud);
+
+            lua_alloc_fun luaFun = new lua_alloc_fun(lua_alloc_replace);
+            IntPtr rf = Marshal.GetFunctionPointerForDelegate(luaFun);
+            IntPtr luaState = lua_newstate(rf, ud);
 
             return luaState;
         }
