@@ -40,3 +40,5 @@ LuaDeepProfilerSetting.asset.meta
 Assembly-CSharp.csproj
 Assembly-CSharp-Editor.csproj
 /LuaProfiler/Tools/InjectLuaCPP/.vscode
+/LuaProfiler~/Tools/DobbyHook/Plugins
+/LuaProfiler~/Tools/DobbyHook/build_android

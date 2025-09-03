@@ -23,14 +23,18 @@
 ![](doc~/install_success.png)
 
 ### 如何使用
-- 编辑器使用推荐使用local模式，打开DeepLua开关即可
+- 编辑器使用推荐使用local模式，打开Profiler窗口运行游戏即可，去掉了deeplua这个开关
 ![](doc~/2022-12-14-21-50-20.png)
 
 - 真机目前只支持android系统，打包的时候加上宏 `USE_LUA_PROFILER`
-- 打包后，使用四根手指同时连续敲击屏幕5下以上后，就会出现以下菜单
-![](doc~/2022-12-14-21-58-59.png)
+- 打包后，在Unity的Application.persistentDataPath 目录下面建立 文件 need_hook_miku_lua
 
-- 点击 `Open Lua Profiler`就会打上标记，下一次启动游戏就会出现一个黑屏
+可以参考下面的指令
+```
+adb shell
+cd /sdcard/Android/data/{package_name}/files
+touch need_hook_miku_lua
+```
 
 编辑器中点击local mode 按钮就可以切换remote mode,输入手机ip就可以查看数据了
 
@@ -40,6 +44,30 @@
 adb forward tcp:2333 tcp:2333
 ```
 之后直接在ip栏中输入`127.0.0.1`即可
+
+- 这个工程hook了dlopen去寻找lua的native库，因为dlopen是系统库可能会导致莫名其妙的闪退，为了避免这个问题，我们可以自己指定lua库
+- 方法在CSharp-Assembly.dll 所在的库中建立如下脚本（注意防裁剪）
+```
+#if USE_LUA_PROFILER && UNITY_ANDROID && !UNITY_EDITOR
+namespace MikuLuaProfiler
+{
+    public class CustomLua : ILuaCustomSetting
+    {
+        const string LIB_NAME = "atri_hook";
+        
+        [DllImport(LIB_NAME, CallingConvention = CallingConvention.Cdecl)]
+        public static extern IntPtr atri_dlopen(string path, int mode);
+
+        public IntPtr GetPtr()
+        {
+            // 其他不用改就把 libxlua.so改了就好了
+            IntPtr result = atri_dlopen("libxlua.so", 2);
+            return result;
+        }
+    }
+}
+#endif
+```
 
 ### 数据说明
 | Name                    | Descriptions                                                                                              |
