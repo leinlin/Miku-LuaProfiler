@@ -27,7 +27,8 @@
 ![](doc~/2022-12-14-21-50-20.png)
 
 - 真机目前只支持android系统，打包的时候加上宏 `USE_LUA_PROFILER`
-- 打包后，在Unity的Application.persistentDataPath 目录下面建立 文件 need_hook_miku_lua
+- 打包后，在Unity的Application.persistentDataPath 目录下面建立 文件 need_hook_miku_lua，使用后会自动删除这个文件，第二次如果需要luaprofiler请重新创建
+ 
 
 可以参考下面的指令
 ```
@@ -53,7 +54,7 @@ namespace MikuLuaProfiler
 {
     public class CustomLua : ILuaCustomSetting
     {
-        const string LIB_NAME = "atri_hook";
+        const string LIB_NAME = "miku_hook";
         
         [DllImport(LIB_NAME, CallingConvention = CallingConvention.Cdecl)]
         public static extern IntPtr atri_dlopen(string path, int mode);
