@@ -27,6 +27,11 @@ namespace MikuLuaProfiler
 			return GetProcAddress(InModule, InProcName);
 		}
 
+		public bool NeedHookLua()
+		{
+			return true;
+		}
+
 		public INativeHooker CreateHook()
 		{
 			return new WindowsNativeHooker();

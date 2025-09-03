@@ -94,7 +94,6 @@ namespace MikuLuaProfiler
         private bool isShowPssChart = false;
         private bool isShowPowerChart = false;
         private bool isTouchInChart = false;
-		private bool isShowRef = true;
         static private int currentFrameIndex = 0;
 
         private Texture2D disableChart;
@@ -119,8 +118,7 @@ namespace MikuLuaProfiler
         private Texture2D oldStartT = null;
         private Texture2D oldEndT = null;
         public static Action DoClear;
-
-        private static LuaRefScrollView m_luaRefScrollView = null;
+        
         private static LuaDiffScrollView m_luaDiffScrollView = null;
         #endregion
 
@@ -128,7 +126,6 @@ namespace MikuLuaProfiler
         {
             currentFrameIndex = 0;
             m_TreeView.Clear(true);
-            m_luaRefScrollView.ClearRefInfo(true);
             m_luaDiffScrollView.Clear();
             ClearConsole();
         }
@@ -155,18 +152,13 @@ namespace MikuLuaProfiler
             if (m_TreeViewState == null)
                 m_TreeViewState = new TreeViewState();
 
-            if (m_luaRefScrollView == null)
-            {
-                m_luaRefScrollView = new LuaRefScrollView();
-            }
-
             if (m_luaDiffScrollView == null)
             {
                 m_luaDiffScrollView = new LuaDiffScrollView();
             }
 
             m_SearchField = new SearchField();
-            LuaDeepProfilerSetting.Instance.ProfilerWinOpen = true;
+            LuaDeepProfilerSetting.ProfilerWinOpen = true;
             LuaProfilerTreeView.m_nodeDict.Clear();
             startFrame = 0;
             endFrame = 0;
@@ -200,8 +192,6 @@ namespace MikuLuaProfiler
 
             EditorApplication.update -= m_TreeView.DequeueSample;
             EditorApplication.update += m_TreeView.DequeueSample;
-            EditorApplication.update -= m_luaRefScrollView.DequeueLuaInfo;
-            EditorApplication.update += m_luaRefScrollView.DequeueLuaInfo;
         }
 
         private void OnDisable()
@@ -220,9 +210,8 @@ namespace MikuLuaProfiler
             powrChart = null;
             Destory(boxTex);
             boxTex = null;
-            LuaDeepProfilerSetting.Instance.ProfilerWinOpen = false;
+            LuaDeepProfilerSetting.ProfilerWinOpen = false;
             EditorApplication.update -= m_TreeView.DequeueSample;
-            EditorApplication.update -= m_luaRefScrollView.DequeueLuaInfo;
         }
 
         void Destory(UnityEngine.Object o)
@@ -256,28 +245,6 @@ namespace MikuLuaProfiler
             DoTreeView();
 
             EditorGUILayout.EndVertical();
-
-            if (isShowRef)
-            {
-                EditorGUILayout.BeginVertical();
-                if (GUILayout.Button("log to file"))
-                {
-                    m_luaRefScrollView.LogToFile();
-                }
-
-                //if (LuaDeepProfilerSetting.Instance.isRecord)
-                //{
-                //    if (GUILayout.Button("log history"))
-                //    {
-                //        int startGameFrame = m_TreeView.GetFrameCount(startFrame);
-                //        int endGameFrame = m_TreeView.GetFrameCount(endFrame);
-                //        m_luaRefScrollView.LogRefHistory(startGameFrame, endGameFrame);
-                //    }
-                //}
-
-                m_luaRefScrollView.DoRefScroll();
-                EditorGUILayout.EndVertical();
-            }
 
             EditorGUILayout.EndHorizontal();
         }
@@ -335,7 +302,6 @@ namespace MikuLuaProfiler
             {
                 currentFrameIndex = 0;
                 m_TreeView.Clear(true);
-                m_luaRefScrollView.ClearRefInfo(true);
                 m_luaDiffScrollView.Clear();
                 ClearConsole();
             }
@@ -389,7 +355,6 @@ namespace MikuLuaProfiler
 
                         NetWorkMgrClient.Connect(LuaDeepProfilerSetting.Instance.ip, port);
                         Sample.RegAction(m_TreeView.LoadRootSample);
-                        LuaRefInfo.RegAction(m_luaRefScrollView.DelRefInfo);
                         //NetWorkServer.RegisterOnReceiveDiffInfo(m_luaDiffScrollView.DelDiffInfo);
                     
                     }
@@ -408,39 +373,7 @@ namespace MikuLuaProfiler
             else
             {
                 GUILayout.Space(10);
-                flag = GUILayout.Toggle(setting.isDeepLuaProfiler, "Deep Lua", EditorStyles.toolbarButton);
-                if (flag != setting.isDeepLuaProfiler)
-                {
-                    setting.isDeepLuaProfiler = flag;
-                    if (!flag)
-                    {
-                        setting.isCleanMode = false;
-                    }
-                    EditorApplication.isPlaying = false;
-                }
-
-                flag = GUILayout.Toggle(setting.discardInvalid, "Discard Invalid", EditorStyles.toolbarButton);
-                if (flag != setting.discardInvalid)
-                {
-                    setting.discardInvalid = flag;
-                }
-
-                flag = GUILayout.Toggle(setting.isCleanMode, "PreCompile Lua", EditorStyles.toolbarButton);
-                if (flag != setting.isCleanMode)
-                {
-                    setting.isCleanMode = flag;
-                    if (setting.isCleanMode)
-                    {
-                        setting.isDeepLuaProfiler = true;
-                        Selection.activeObject = LuaProfilerPrecompileSetting.Instance;
-#if UNITY_2018_2_OR_NEWER
-                        EditorApplication.ExecuteMenuItem("Window/General/Inspector");
-#else
-                        EditorApplication.ExecuteMenuItem("Window/Inspector");
-#endif
-                    }
-                    EditorApplication.isPlaying = false;
-                }
+                
 
                 if (GUILayout.Button("GC"))
                 {
@@ -534,7 +467,6 @@ namespace MikuLuaProfiler
                 m_TreeView.toggleMerge = GUILayout.Toggle(m_TreeView.toggleMerge, "merge", EditorStyles.toolbarButton, GUILayout.Height(30));
                 m_TreeView.rankMode = GUILayout.Toggle(m_TreeView.rankMode, "rankMode", EditorStyles.toolbarButton, GUILayout.Height(30));
             }
-			isShowRef = GUILayout.Toggle(isShowRef, "show refInfo", EditorStyles.toolbarButton, GUILayout.Height(30));
 
             EditorGUILayout.EndHorizontal();
         }
@@ -559,7 +491,6 @@ namespace MikuLuaProfiler
             if (!state && instance.isStartRecord)
             {
                 m_TreeView.Clear(true);
-                m_luaRefScrollView.ClearRefInfo(true);
                 //NetWorkServer.SendCmd(0);
             }
 
@@ -639,7 +570,6 @@ namespace MikuLuaProfiler
 
                 int startGameFrame = m_TreeView.GetFrameCount(startFrame);
                 int endGameFrame = m_TreeView.GetFrameCount(endFrame);
-                m_luaRefScrollView.LoadHistory(startGameFrame, endGameFrame);
                 if (EditorApplication.isPlaying)
                     EditorApplication.isPaused = true;
             }
@@ -1156,9 +1086,6 @@ namespace MikuLuaProfiler
                 endFrame = Mathf.Min(Mathf.Max(0, endFrame), metricCount);
 
                 m_TreeView.ReLoadSamples(startFrame, endFrame);
-                int startGameFrame = m_TreeView.GetFrameCount(startFrame);
-                int endGameFrame = m_TreeView.GetFrameCount(endFrame);
-                m_luaRefScrollView.LoadHistory(startGameFrame, endGameFrame);
             }
 
             Vector3 upPos = PointFromRect(0, metricCount, startFrame, 0, 1, 0, expandRect);
@@ -1188,7 +1115,6 @@ namespace MikuLuaProfiler
             Sample.UnRegAction();
             LuaRefInfo.UnRegAction();
             LuaProfiler.RegisterOnReceiveSample(m_TreeView.LoadRootSample);
-            LuaProfiler.RegisterOnReceiveRefInfo(m_luaRefScrollView.DelRefInfo);
             LuaProfiler.RegisterOnReceiveDiffInfo(m_luaDiffScrollView.DelDiffInfo);
         }
 

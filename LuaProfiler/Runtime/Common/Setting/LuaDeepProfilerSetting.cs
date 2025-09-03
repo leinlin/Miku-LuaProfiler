@@ -63,48 +63,11 @@ namespace MikuLuaProfiler
         
         #endregion
 
-        public bool ProfilerWinOpen {            
-            get
-            {
-                return m_profilerWinOpen;
-            }
-            set
-            {
-                if (m_profilerWinOpen != value)
-                {
-                    m_profilerWinOpen = value;
-                    Save();
-                }
-            } }
-            
-        public bool m_profilerWinOpen= false;
-
-        public bool isDeepLuaProfiler
-        {
-            get
-            {
-                return m_isDeepLuaProfiler;
-            }
-            set
-            {
-                if (m_isDeepLuaProfiler != value)
-                {
-                    m_isDeepLuaProfiler = value;
-                    Save();
-                }
-            }
-        }
+        public static bool ProfilerWinOpen = false;
 
         public bool isLocal
         {
-            get
-            {
-#if UNITY_5_6_OR_NEWER && UNITY_EDITOR_WIN
-                return m_isLocal;
-#else
-                return false;
-#endif
-            }
+            get => m_isLocal;
             set
             {
                 if (m_isLocal != value)
@@ -126,23 +89,6 @@ namespace MikuLuaProfiler
                 if (this.m_isCleanMode != value)
                 {
                     this.m_isCleanMode = value;
-                    Save();
-                }
-            }
-        }
-        
-
-        public bool discardInvalid
-        {
-            get
-            {
-                return m_discardInvalid;
-            }
-            set
-            {
-                if (m_discardInvalid != value)
-                {
-                    m_discardInvalid = value;
                     Save();
                 }
             }

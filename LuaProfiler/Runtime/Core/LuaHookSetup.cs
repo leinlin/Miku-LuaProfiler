@@ -36,6 +36,7 @@ __________#_______####_______####______________
 #if UNITY_EDITOR || USE_LUA_PROFILER
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using System.Threading;
 using UnityEngine;
@@ -43,12 +44,15 @@ using UnityEngine;
 namespace MikuLuaProfiler
 {
 
+    public interface ILuaCustomSetting
+    {
+        IntPtr GetPtr();
+    }
+
     #region monobehaviour
     public class HookLuaSetup : MonoBehaviour
     {
         #region field
-        public static LuaDeepProfilerSetting setting { private set; get; }
-
         public float showTime = 1f;
         private int count = 0;
         private float deltaTime = 0f;
@@ -65,91 +69,79 @@ namespace MikuLuaProfiler
         }
         #endregion
 
+        private static IntPtr CustomLuaSetting()
+        {
+            ILuaCustomSetting luaCustom = null;
+            var ass = AppDomain.CurrentDomain.GetAssemblies().FirstOrDefault(a => a.GetName().Name == "Assembly-CSharp");
+            var types = ass.GetTypes();
+            foreach (var t in types)
+            {
+                if (t.Namespace != "FlowAutoTest") continue;
+                var ifs = t.GetInterfaces();
+                if (ifs.Length == 1)
+                {
+                    if (ifs[0] == typeof(ILuaCustomSetting))
+                    {
+                        luaCustom = (ILuaCustomSetting)Activator.CreateInstance(t);
+                        break;
+                    }
+                }
+            }
+            return luaCustom?.GetPtr() ?? IntPtr.Zero;
+        }
 
 #if UNITY_5 || UNITY_2017_1_OR_NEWER
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
 #endif
         public static void OnStartGame()
         {
-#if UNITY_EDITOR_OSX
-            return;
+#if UNITY_EDITOR
+            if (!LuaDeepProfilerSetting.ProfilerWinOpen)
+            {
+                return;
+            }
 #endif
+            if (!LuaDLL.NeedHookLua())
+            {
+                return;
+            }
 #if UNITY_EDITOR
             if (!Application.isPlaying) return;
 #endif
             
             if (isInite) return;
-#if !UNITY_EDITOR
-            {
-                GameObject go = new GameObject();
-                go.name = "MikuLuaProfiler OpenMenu";
-                go.hideFlags = HideFlags.HideAndDontSave;
-                DontDestroyOnLoad(go);
-                go.AddComponent<OpenMenu>();
-            }
-            if (!LuaProfiler.CheckServerIsOpen())
-            {
-                return;       
-            }
-#endif
             isInite = true;
-            setting = LuaDeepProfilerSetting.Instance;
             LuaProfiler.mainThreadId = System.Threading.Thread.CurrentThread.ManagedThreadId;
             
-            if (setting.isDeepLuaProfiler || !setting.isLocal)
+            Debug.Log("<color=#00ff00>OnStartGame</color>");
+            LuaDLL.Uninstall();
+            IntPtr LuaModule = LuaDLL.CheckHasLuaDLL();
+            if (LuaModule == IntPtr.Zero)
             {
-#if UNITY_EDITOR
-                if (!setting.ProfilerWinOpen)
-                {
-                    return;
-                }
-#endif
-                Debug.Log("<color=#00ff00>OnStartGame</color>");
-                LuaDLL.Uninstall();
-                IntPtr LuaModule = LuaDLL.CheckHasLuaDLL();
-                if (LuaModule != IntPtr.Zero)
-                {
-                    LuaDLL.BindEasyHook(LuaModule);
-                }
-                else
-                {
-                    LuaDLL.HookLoadLibrary();
-                }
+                LuaModule = CustomLuaSetting();
             }
 
-            if (setting.isDeepLuaProfiler || setting.isCleanMode || !setting.isLocal)
+            if (LuaModule != IntPtr.Zero)
             {
-#if UNITY_EDITOR
-                if (!setting.ProfilerWinOpen)
-                {
-                    return;
-                }
-#endif
-                GameObject go = new GameObject();
-                go.name = "MikuLuaProfiler";
-                go.hideFlags = HideFlags.HideAndDontSave;
-                DontDestroyOnLoad(go);
-                go.AddComponent<HookLuaSetup>();
-                if (!setting.isLocal)
-                {
-                    {
-                        NetWorkMgr.BeginListen("0.0.0.0", setting.port);
-#if !UNITY_EDITOR
-                        while (!NetWorkMgr.CheckIsConnected())
-                        {
-                            Thread.Sleep(100);
-                        }
-#endif
-                    }
-
-
-                }
+                LuaDLL.BindEasyHook(LuaModule);
             }
+            else
+            {
+                LuaDLL.HookLoadLibrary();
+            }
+            
+            GameObject go = new GameObject();
+            go.name = "MikuLuaProfiler";
+            go.hideFlags = HideFlags.HideAndDontSave;
+            DontDestroyOnLoad(go);
+            go.AddComponent<HookLuaSetup>();
+            #if !UNITY_EDITOR
+            NetWorkMgr.BeginListen("0.0.0.0", 2333);
+            #endif
         }
 
         private void Awake()
         {
-            setting = LuaDeepProfilerSetting.Instance;
         }
 
         private void LateUpdate()
@@ -206,87 +198,6 @@ namespace MikuLuaProfiler
         }
 #endif
     }
-
-    public class OpenMenu : MonoBehaviour
-    {
-        private bool needShowMenu = false;
-        private int count = 0;
-
-        private float recordTime = 0;
-        private float DELTA_TIME = 2;
-        private void LateUpdate()
-        {
-            if (Input.touchCount == 4 || Input.GetKeyDown(KeyCode.Delete))
-            {
-                count++;
-                if (count >= 5)
-                {
-                    count = 0;
-                    needShowMenu = !needShowMenu;
-                    if (needShowMenu)
-                    {
-                        Menu.EnableMenu(gameObject);
-                    }
-                    else
-                    {
-                        Menu.DisableMenu();
-                    }
-                }
-            }
-            if (Time.time - recordTime > DELTA_TIME)
-            {
-                count = 0;
-                recordTime = Time.time;
-            }
-        }
-    }
-
-    public class Menu : MonoBehaviour
-    {
-        private static Menu m_menu;
-        public static void EnableMenu(GameObject go)
-        {
-            if (m_menu == null)
-            {
-                m_menu = go.AddComponent<Menu>();
-            }
-            m_menu.enabled = true;
-        }
-
-        public static void DisableMenu()
-        {
-            if (m_menu == null)
-            {
-                return;
-            }
-            m_menu.enabled = false;
-        }
-
-        private void OnGUI()
-        {
-            var setting = HookLuaSetup.setting;
-
-            if (GUI.Button(new Rect(0, 0, 200, 100), "Open Lua Profiler"))
-            {
-                LuaProfiler.OpenServer();
-            }
-            
-            if (GUI.Button(new Rect(220, 0, 200, 100), "Close Lua Profiler"))
-            {
-                LuaProfiler.CloseServer();
-            }
-            
-            if (GUI.Button(new Rect(440, 0, 200, 100), "Hide Menu"))
-            {
-                enabled = false;
-            }
-            
-            if (GUI.Button(new Rect(0, 150, 200, 100), "Quit Game"))
-            {
-                Application.Quit();
-            }
-        }
-    }
     #endregion
 
     public class LuaHook
@@ -330,22 +241,6 @@ namespace MikuLuaProfiler
             hookedValue = Parse.InsertSample(value, fileName);
             buff = Encoding.UTF8.GetBytes(hookedValue);
             return buff;
-        }
-
-        public static void HookRef(IntPtr L, int reference)
-        {
-            if (LuaDLL.isHook)
-            {
-                LuaLib.DoRefLuaFun(L, "lua_miku_add_ref_fun_info", reference);
-            }
-        }
-
-        public static void HookUnRef(IntPtr L, int reference)
-        {
-            if (LuaDLL.isHook)
-            {
-                LuaLib.DoRefLuaFun(L, "lua_miku_remove_ref_fun_info", reference);
-            }
         }
 
         #region luastring
@@ -739,31 +634,6 @@ namespace MikuLuaProfiler
             LuaDLL.isHook = true;
             LuaDLL.lua_settop(L, oldTop);
         }
-        public static void DoRefLuaFun(IntPtr L, string funName, int reference)
-        {
-            int moreOldTop = LuaDLL.lua_gettop(L);
-            LuaDLL.lua_getref(L, reference);
-
-            if (LuaDLL.lua_isfunction(L, -1) || LuaDLL.lua_istable(L, -1))
-            {
-                int oldTop = LuaDLL.lua_gettop(L);
-                LuaDLL.lua_getglobal(L, "miku_handle_error");
-                do
-                {
-                    LuaDLL.lua_getglobal(L, funName);
-                    if (!LuaDLL.lua_isfunction(L, -1)) break;
-                    LuaDLL.lua_pushvalue(L, oldTop);
-                    if (LuaDLL.lua_pcall(L, 1, 0, oldTop + 1) == 0)
-                    {
-                        LuaDLL.lua_remove(L, oldTop + 1);
-                    }
-
-                } while (false);
-                LuaDLL.lua_settop(L, oldTop);
-            }
-
-            LuaDLL.lua_settop(L, moreOldTop);
-        }
     }
 
     #region bind
@@ -777,8 +647,6 @@ namespace MikuLuaProfiler
         public static LuaCSFunction getStackDepth = new LuaCSFunction(GetStackDepth);
         public static LuaCSFunction endSampleCortoutine = new LuaCSFunction(EndSampleCortoutine);
         public static LuaCSFunction unpackReturnValue = new LuaCSFunction(UnpackReturnValue);
-        public static LuaCSFunction addRefFunInfo = new LuaCSFunction(AddRefFunInfo);
-        public static LuaCSFunction removeRefFunInfo = new LuaCSFunction(RemoveRefFunInfo);
         public static LuaCSFunction checkType = new LuaCSFunction(CheckType);
         public static LuaCSFunction handleError = new LuaCSFunction(HandleError);
         public static void __Register(IntPtr L)
@@ -829,12 +697,6 @@ namespace MikuLuaProfiler
 
             LuaDLL.lua_pushstdcallcfunction(L, unpackReturnValue);
             LuaDLL.lua_setglobal(L, "miku_unpack_return_value");
-
-            LuaDLL.lua_pushstdcallcfunction(L, addRefFunInfo);
-            LuaDLL.lua_setglobal(L, "miku_add_ref_fun_info");
-
-            LuaDLL.lua_pushstdcallcfunction(L, removeRefFunInfo);
-            LuaDLL.lua_setglobal(L, "miku_remove_ref_fun_info");
 
             LuaDLL.lua_pushstdcallcfunction(L, checkType);
             LuaDLL.lua_setglobal(L, "miku_check_type");
@@ -920,35 +782,6 @@ local function get_table_info(tb)
         funAddrTb[tb] = addr
     end
     return result,addr
-end
-
-function lua_miku_add_ref_fun_info(data)
-    local result = ''
-    local addr = ''
-    local t = 1
-    local typeStr = miku_check_type(data)
-    if typeStr == 1 then
-        result,addr = miku_get_fun_info(data)
-        t = 1
-    elseif typeStr == 2 then
-        result,addr = get_table_info(data)
-        t = 2
-    end
-    miku_add_ref_fun_info(result, addr, t)
-end
-
-function lua_miku_remove_ref_fun_info(data)
-    local result = infoTb[data]
-    local addr = funAddrTb[data]
-    local typeStr = miku_check_type(data)
-    local t = 1
-    if typeStr == 1 then
-        t = 1
-    elseif typeStr == 2 then
-        t = 2
-    end
-
-    miku_remove_ref_fun_info(result, addr, t)
 end
 ";
         const string null_script = @"
@@ -1058,12 +891,6 @@ function miku_do_record(val, prefix, key, record, history, null_list, staticReco
     if rawequal(val,miku_diff) then
         return
     end
-    if rawequal(val, lua_miku_remove_ref_fun_info) then
-        return
-    end
-    if rawequal(val, lua_miku_add_ref_fun_info) then
-        return
-    end
     if rawequal(val, history) then
         return
     end
@@ -1150,19 +977,17 @@ function miku_do_record(val, prefix, key, record, history, null_list, staticReco
         end
 
     elseif typeStr == 'function' then
-        if val ~= lua_miku_add_ref_fun_info and val ~= lua_miku_remove_ref_fun_info then
-            local i = 1
-            while true do
-                local k, v = debug.getupvalue(val, i)
-                if not k then
-                    break
-                end
-                if v and k ~= 'MikuSample' then
-                    local funPrefix = miku_get_fun_info(val)
-                    miku_do_record(v, funPrefix, k, record, history, null_list, staticRecord)
-                end
-                i = i + 1
+        local i = 1
+        while true do
+            local k, v = debug.getupvalue(val, i)
+            if not k then
+                break
             end
+            if v and k ~= 'MikuSample' then
+                local funPrefix = miku_get_fun_info(val)
+                miku_do_record(v, funPrefix, k, record, history, null_list, staticRecord)
+            end
+            i = i + 1
         end
     end
 
@@ -1239,26 +1064,6 @@ end
                 LuaDLL.lua_pushnumber(L, 0);
             }
             return 1;
-        }
-
-        [MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]
-        static int AddRefFunInfo(IntPtr L)
-        {
-            string funName = LuaHook.GetRefString(L, 1);
-            string funAddr = LuaHook.GetRefString(L, 2);
-            byte type = (byte)LuaDLL.lua_tonumber(L, 3);
-            LuaProfiler.AddRef(funName, funAddr, type);
-            return 0;
-        }
-
-        [MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]
-        static int RemoveRefFunInfo(IntPtr L)
-        {
-            string funName = LuaHook.GetRefString(L, 1);
-            string funAddr = LuaHook.GetRefString(L, 2);
-            byte type = (byte)LuaDLL.lua_tonumber(L, 3);
-            LuaProfiler.RemoveRef(funName, funAddr, type);
-            return 0;
         }
 
         [MonoPInvokeCallbackAttribute(typeof(LuaCSFunction))]

@@ -92,47 +92,6 @@ namespace MikuLuaProfiler
             }
         }
 
-        public bool CheckSampleValid()
-        {
-            bool result = false;
-            do
-            {
-                if (needShow)
-                {
-                    result = true;
-                    break;
-                }
-                var setting = LuaDeepProfilerSetting.Instance;
-                if (setting != null && !setting.discardInvalid)
-                {
-                    result = true;
-                    break;
-                }
-
-                if (costLuaGC != 0)
-                {
-                    result = true;
-                    break;
-                }
-
-                if (costMonoGC != 0)
-                {
-                    result = true;
-                    break;
-                }
-
-                if (costTime > 10000)
-                {
-                    result = true;
-                    break;
-                }
-
-            } while (false);
-
-
-            return result;
-        }
-
         private static Dictionary<object, Dictionary<object, string>> m_fullNamePool = new Dictionary<object, Dictionary<object, string>>();
         public string fullName
         {

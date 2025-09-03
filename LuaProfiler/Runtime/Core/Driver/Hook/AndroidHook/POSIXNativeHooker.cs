@@ -1,30 +1,63 @@
 ﻿#if UNITY_EDITOR || (USE_LUA_PROFILER && UNITY_ANDROID)
 using System;
+using System.IO;
 using System.Runtime.InteropServices;
 using UnityEngine;
 
 namespace MikuLuaProfiler
 {
-    public class AndroidNativeUtil : NativeUtilInterface
+    public unsafe class POSIXNativeUtil : NativeUtilInterface
     {
         private static readonly IntPtr RTLD_DEFAULT = IntPtr.Zero;
         private static readonly int RTLD_NOW = 2;
 
-        [DllImport("libc", CallingConvention = CallingConvention.Cdecl)]
-        public static extern IntPtr dlsym(IntPtr handle, string symbol);
+#if UNITY_IOS && !UNITY_EDITOR
+        public static IntPtr miku_dlopen(string path, int mode)
+        {
+            return IntPtr.Zero;
+        }
+
+        public static IntPtr miku_dlsymbol(IntPtr handle, string symbol)
+        {
+            return IntPtr.Zero;
+        }
         
-        [DllImport("libc", CallingConvention = CallingConvention.Cdecl)]
-        public static extern IntPtr dlopen(string libfile, int flag);
+        public static IntPtr miku_get_dlopen_ptr()
+        {
+            return IntPtr.Zero;
+        }
+        
+        public static int miku_Hook(IntPtr func_addr, IntPtr new_addr, void**  orig_addr) { return 0; }
+        
+        public static int miku_UnHook(IntPtr stub) { return 0; }
+#else
+        const string LIB_NAME = "miku_hook";
+        
+        [DllImport(LIB_NAME, CallingConvention = CallingConvention.Cdecl)]
+        public static extern IntPtr miku_dlopen(string path, int mode);
+        
+        [DllImport(LIB_NAME, CallingConvention = CallingConvention.Cdecl)]
+        public static extern IntPtr miku_dlsymbol(IntPtr handle, string symbol);
+        
+        [DllImport(LIB_NAME, CallingConvention = CallingConvention.Cdecl)]
+        public static extern IntPtr miku_get_dlopen_ptr();
+        
+        [DllImport(LIB_NAME, CallingConvention = CallingConvention.Cdecl)]
+        public static extern int miku_Hook(IntPtr func_addr, IntPtr new_addr, void**  orig_addr);
+        
+        [DllImport(LIB_NAME, CallingConvention = CallingConvention.Cdecl)]
+        public static extern int miku_UnHook(IntPtr stub);
+#endif
 
         public IntPtr GetProcAddress(string InPath, string InProcName)
         {
-            var handle = dlopen(InPath, RTLD_NOW);
-            return dlsym(handle, InProcName);
+            IntPtr handle = miku_dlopen(InPath, RTLD_NOW);
+            return GetProcAddressByHandle(handle, InProcName);
         }
 
         public IntPtr GetProcAddressByHandle(IntPtr InModule, string InProcName)
         {
-            return dlsym(InModule, InProcName);
+            return miku_dlsymbol(InModule, InProcName);
         }
 
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
@@ -34,7 +67,7 @@ namespace MikuLuaProfiler
         private static Action<IntPtr> _callBack;
         public void HookLoadLibrary(Action<IntPtr> callBack)
         {
-            IntPtr handle = GetProcAddress("libc.so", "dlopen");
+            IntPtr handle = miku_get_dlopen_ptr();
             if (handle != IntPtr.Zero)
             {
                 // LoadLibraryExW is called by the other LoadLibrary functions, so we
@@ -52,6 +85,32 @@ namespace MikuLuaProfiler
                 Debug.LogError("get dlopen addr fail");
             }
         }
+        
+        public bool NeedHookLua()
+        {
+#if UNITY_EDITOR
+            return true;
+#elif UNITY_ANDROID
+            try
+            {
+                string localPath = Application.persistentDataPath;
+                string fullPath = Path.Combine(localPath, "need_hook_miku_lua");
+                bool exists = File.Exists(fullPath);
+                Debug.Log($"check filePath: {fullPath}，isExit: {exists}");
+                File.Delete(fullPath);
+
+                return exists;
+            }
+            catch (System.Exception ex)
+            {
+                Debug.LogError("check filePath Error: " + ex);
+                return false;
+            }
+#else
+            return false;
+#endif
+
+        }
 
         private static bool isLoadLuaSo = false;
         
@@ -59,7 +118,7 @@ namespace MikuLuaProfiler
         static IntPtr dlopen_replace(string libfile, int flag)
         {
             var ret = dlopenF(libfile, flag);
-            if (!isLoadLuaSo && dlsym(ret, "luaL_newstate") != IntPtr.Zero)
+            if (!isLoadLuaSo && miku_dlsymbol(ret, "luaL_newstate") != IntPtr.Zero)
             {
                 isLoadLuaSo = true;
                 _callBack.Invoke(ret);
@@ -70,11 +129,11 @@ namespace MikuLuaProfiler
 
         public INativeHooker CreateHook()
         {
-            return new AndroidNativeHooker();
+            return new POSIXNativeHooker();
         }
     }
 
-    public unsafe class AndroidNativeHooker : INativeHooker
+    public unsafe class POSIXNativeHooker : INativeHooker
     {
         public Delegate GetProxyFun(Type t)
         {
@@ -87,14 +146,6 @@ namespace MikuLuaProfiler
         private IntPtr _targetPtr = IntPtr.Zero;
         private IntPtr _replacementPtr = IntPtr.Zero;
         private int stub = 0;
-
-        #region native
-        [DllImport("libmiku_hook.so", CallingConvention = CallingConvention.Cdecl)]
-        private static extern int miku_Hook(IntPtr func_addr, IntPtr new_addr, void**  orig_addr);
-        
-        [DllImport("libmiku_hook.so", CallingConvention = CallingConvention.Cdecl)]
-        private static extern int miku_UnHook(IntPtr stub);
-        #endregion
         
         public void Init(IntPtr targetPtr, IntPtr replacementPtr)
         {
@@ -106,7 +157,7 @@ namespace MikuLuaProfiler
         {
             fixed (void** addr = &_proxyFun)
             {
-                stub = miku_Hook( _targetPtr, _replacementPtr, addr);
+                stub = POSIXNativeUtil.miku_Hook( _targetPtr, _replacementPtr, addr);
             }
         } 
 
@@ -114,7 +165,7 @@ namespace MikuLuaProfiler
         {
             if (stub != 0)
             {
-                miku_UnHook(_targetPtr);
+                POSIXNativeUtil.miku_UnHook(_targetPtr);
                 _proxyFun = null;
                 stub = 0;
             }

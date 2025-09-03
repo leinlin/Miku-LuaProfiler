@@ -8,6 +8,7 @@ namespace MikuLuaProfiler
         IntPtr GetProcAddress(string InPath, string InProcName);
         IntPtr GetProcAddressByHandle(IntPtr InModule, string InProcName);
         void HookLoadLibrary(Action<IntPtr> callBack);
+        bool NeedHookLua();
         INativeHooker CreateHook();
     }
 

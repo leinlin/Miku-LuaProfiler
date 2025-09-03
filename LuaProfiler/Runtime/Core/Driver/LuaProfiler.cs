@@ -60,32 +60,6 @@ namespace MikuLuaProfiler
         
         private const string SERVER_CONFIG_NAME = "/LUAPROFILER_SERVER";
 
-        public static bool CheckServerIsOpen()
-        {
-            return File.Exists(Application.persistentDataPath + SERVER_CONFIG_NAME);
-        }
-
-        public static void OpenServer()
-        {
-            string path = Application.persistentDataPath + SERVER_CONFIG_NAME;
-            if (!File.Exists(path))
-            {
-                File.WriteAllText(path, "1");
-            }
-            
-            Debug.Log("open lua profiler server success");
-        }
-
-        public static void CloseServer()
-        {
-            string path = Application.persistentDataPath + SERVER_CONFIG_NAME;
-            if (File.Exists(path))
-            {
-                File.Delete(path);
-            }
-            Debug.Log("close lua profiler server success");
-        }
-
         private static Action<Sample> m_onReceiveSample;
         private static Action<LuaRefInfo> m_onReceiveRef;
         private static Action<LuaDiffInfo> m_onReceiveDiff;
@@ -245,27 +219,19 @@ namespace MikuLuaProfiler
             sample.currentMonoMemory = (int)nowMonoCount;
             sample.costLuaGC = (int)luaGC;
             sample.costMonoGC = (int)monoGC;
-
-            if (!sample.CheckSampleValid())
-            {
-                sample.Restore();
-                return;
-            }
+            
             sample.fahter = beginSampleMemoryStack.Count > 0 ? beginSampleMemoryStack.Peek() : null;
             //UnityEngine.Debug.Log(sample.name);
             if (beginSampleMemoryStack.Count == 0)
             {
                 LuaDLL.ClearFreeSize();
-                var setting = LuaDeepProfilerSetting.Instance;
-                if (setting == null) return;
-                if (!setting.isLocal)
-                {
-                    NetWorkMgr.SendCmd(sample);
-                }
-                else if(m_onReceiveSample != null)
-                {
+
+#if !UNITY_EDITOR
+                NetWorkMgr.SendCmd(sample);
+#else
+                if(m_onReceiveSample != null)
                     m_onReceiveSample(sample);
-                }
+#endif
             }
             //释放掉被累加的Sample
             if (beginSampleMemoryStack.Count != 0 && sample.fahter == null)
@@ -276,112 +242,18 @@ namespace MikuLuaProfiler
 
         public static void SendFrameSample()
         {
-            var setting = LuaDeepProfilerSetting.Instance;
             long memoryCount = 0;
             if (_mainL != IntPtr.Zero)
                 memoryCount = LuaDLL.lua_gc(_mainL, LuaGCOptions.LUA_GCCOUNT, 0) * 1024;
             Sample sample = Sample.Create(getcurrentTime, (int)memoryCount, "");
-            if (!setting.isLocal)
-            {
+#if !UNITY_EDITOR
                 NetWorkMgr.SendCmd(sample);
-            }
-            else if (m_onReceiveSample != null)
-            {
+#else
+            if(m_onReceiveSample != null)
                 m_onReceiveSample(sample);
-            }
+#endif
         }
 
-        #endregion
-
-        #region ref
-        private static Dictionary<byte, RefDict> m_refDict = new Dictionary<byte, RefDict>(4);
-
-        public static void AddRef(string refName, string refAddr, byte type)
-        {
-            RefDict refDict;
-            if (!m_refDict.TryGetValue(type, out refDict))
-            {
-                refDict = new RefDict(2048);
-                m_refDict.Add(type, refDict);
-            }
-
-            HashSet<string> addrList;
-            if (!refDict.TryGetValue(refName, out addrList))
-            {
-                addrList = new HashSet<string>();
-                refDict.Add(refName, addrList);
-            }
-            if (!addrList.Contains(refAddr))
-            {
-                addrList.Add(refAddr);
-            }
-            SendAddRef(refName, refAddr, type);
-        }
-        public static void SendAddRef(string funName, string funAddr, byte type)
-        {
-            LuaRefInfo refInfo = LuaRefInfo.Create(1, funName, funAddr, type);
-            var setting = LuaDeepProfilerSetting.Instance;
-            if (!setting.isLocal)
-            {
-                NetWorkMgr.SendCmd(refInfo);
-            }
-            else if (m_onReceiveRef != null)
-            {
-                m_onReceiveRef(refInfo);
-            }
-        }
-        public static void RemoveRef(string refName, string refAddr, byte type)
-        {
-            if (string.IsNullOrEmpty(refName)) return;
-            RefDict refDict;
-
-            if (!m_refDict.TryGetValue(type, out refDict))
-            {
-                return;
-            }
-
-            HashSet<string> addrList;
-            if (!refDict.TryGetValue(refName, out addrList))
-            {
-                return;
-            }
-            if (!addrList.Contains(refAddr))
-            {
-                return;
-            }
-            addrList.Remove(refAddr);
-            if (addrList.Count == 0)
-            {
-                refDict.Remove(refName);
-            }
-            SendRemoveRef(refName, refAddr, type);
-        }
-        public static void SendRemoveRef(string funName, string funAddr, byte type)
-        {
-            LuaRefInfo refInfo = LuaRefInfo.Create(0, funName, funAddr, type);
-            var setting = LuaDeepProfilerSetting.Instance;
-            if (!setting.isLocal)
-            {
-                NetWorkMgr.SendCmd(refInfo);
-            }
-            else if (m_onReceiveRef != null)
-            {
-                m_onReceiveRef(refInfo);
-            }
-        }
-        public static void SendAllRef()
-        {
-            foreach (var dictItem in m_refDict)
-            {
-                foreach (var hashList in dictItem.Value)
-                {
-                    foreach (var item in hashList.Value)
-                    {
-                        SendAddRef(hashList.Key, item, dictItem.Key);
-                    }
-                }
-            }
-        }
         #endregion
 
     }
