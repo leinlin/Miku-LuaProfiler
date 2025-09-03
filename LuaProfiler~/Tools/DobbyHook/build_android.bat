@@ -8,7 +8,7 @@ set STRIP=%NDKP%"strip.exe"
 
 rmdir /s /q build_android
 mkdir build_android && cd build_android
-cmake  -G "Unix Makefiles" -DANDROID_ABI=arm64-v8a -DCMAKE_TOOLCHAIN_FILE=%NDK%/build/cmake/android.toolchain.cmake -DANDROID_NATIVE_API_LEVEL=android-10 ../
+cmake  -G "Unix Makefiles" -DANDROID_ABI=arm64-v8a -DCMAKE_TOOLCHAIN_FILE=%NDK%/build/cmake/android.toolchain.cmake -DANDROID_NATIVE_API_LEVEL=android-21 ../
 cd ..
 cmake --build build_android --config Release -j8
 
@@ -23,7 +23,7 @@ set STRIP=%NDKP%"strip.exe"
 rmdir /s /q build_android
 mkdir build_android && cd build_android
 
-cmake  -G "Unix Makefiles" -DANDROID_ARM_MODE=arm -DANDROID_ABI=armeabi-v7a -DCMAKE_TOOLCHAIN_FILE=%NDK%/build/cmake/android.toolchain.cmake -DANDROID_NATIVE_API_LEVEL=android-10 ../
+cmake  -G "Unix Makefiles" -DANDROID_ARM_MODE=arm -DANDROID_ABI=armeabi-v7a -DCMAKE_TOOLCHAIN_FILE=%NDK%/build/cmake/android.toolchain.cmake -DANDROID_NATIVE_API_LEVEL=android-21 ../
 cd ..
 cmake --build build_android --config Release -j8
 
@@ -39,7 +39,7 @@ set STRIP=%NDKP%"strip.exe"
 rmdir /s /q build_android
 mkdir build_android && cd build_android
 
-cmake  -G "Unix Makefiles" -DANDROID_ABI=x86 -DCMAKE_TOOLCHAIN_FILE=%NDK%/build/cmake/android.toolchain.cmake -DANDROID_NATIVE_API_LEVEL=android-10 ../
+cmake  -G "Unix Makefiles" -DANDROID_ABI=x86 -DCMAKE_TOOLCHAIN_FILE=%NDK%/build/cmake/android.toolchain.cmake -DANDROID_NATIVE_API_LEVEL=android-21 ../
 cd ..
 cmake --build build_android --config Release -j8
 
