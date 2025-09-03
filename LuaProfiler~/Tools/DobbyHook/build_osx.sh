@@ -5,6 +5,6 @@ cmake -GXcode ../
 cd ..
 
 cmake --build build_osx --config Release
-mkdir -p Plugins/atri_hook.bundle/Contents/MacOS/
+mkdir -p Plugins/miku_hook.bundle/Contents/MacOS/
 
-cp build_osx/Release/atri_hook.bundle/Contents/MacOS/atri_hook Plugins/atri_hook.bundle/Contents/MacOS/atri_hook
+cp build_osx/Release/miku_hook.bundle/Contents/MacOS/miku_hook Plugins/miku_hook.bundle/Contents/MacOS/miku_hook
