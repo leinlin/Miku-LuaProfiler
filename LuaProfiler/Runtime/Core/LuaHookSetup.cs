@@ -833,7 +833,7 @@ coroutine.resume = function(co, ...)
     if not coInfo then
         local info = getinfo(co, 1, 'nSl')
         if info then
-            coInfo = string.format('[lua]:coroutine.resume %s,%s&line:%d', info.name, info.short_src, info.currentline)
+            coInfo = string.format('[lua]:coroutine.resume %s,%s&line:%d', tostring(info.name), tostring(info.short_src), info.currentline)
             coroutineInfoTb[co] = coInfo
         else
             coInfo = '[lua]:coroutine.resume'
@@ -855,7 +855,7 @@ coroutine.wrap = function(co)
     if not coInfo then
         local info = getinfo(co, 'nSl')
         if info then
-            coInfo = string.format('[lua]:coroutine.resume %s,%s&line:%d', info.name, info.short_src, info.currentline)
+            coInfo = string.format('[lua]:coroutine.resume %s,%s&line:%d', tostring(info.name), tostring(info.short_src), info.currentline)
             coroutineInfoTb[co] = coInfo
         else
             coInfo = '[lua]:coroutine.resume'
