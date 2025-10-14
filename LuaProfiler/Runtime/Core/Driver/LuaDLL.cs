@@ -990,6 +990,7 @@ namespace MikuLuaProfiler
             return allocSize;
         }
 
+        private static lua_alloc_fun luaAllocReplaceFun = null;
         [MonoPInvokeCallbackAttribute(typeof(lua_newstate_fun))]
         public static IntPtr lua_newstate_replace(IntPtr f, IntPtr ud)
         {
@@ -1003,8 +1004,8 @@ namespace MikuLuaProfiler
                 }
             }
 
-            lua_alloc_fun luaFun = new lua_alloc_fun(lua_alloc_replace);
-            IntPtr rf = Marshal.GetFunctionPointerForDelegate(luaFun);
+            luaAllocReplaceFun = new lua_alloc_fun(lua_alloc_replace);
+            IntPtr rf = Marshal.GetFunctionPointerForDelegate(luaAllocReplaceFun);
             IntPtr luaState = lua_newstate(rf, ud);
 
             return luaState;
