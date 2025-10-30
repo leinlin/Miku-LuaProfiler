@@ -870,6 +870,25 @@ namespace MikuLuaProfiler
                 }
 
                 {
+                    IntPtr handle = GetProcAddress(module, "luaL_ref");
+                    if (handle != IntPtr.Zero)
+                    {
+                        luaL_ref =
+                            (luaL_ref_fun)Marshal.GetDelegateForFunctionPointer(handle, typeof(luaL_ref_fun));
+                    }
+                }
+
+                {
+                    IntPtr handle = GetProcAddress(module, "luaL_unref");
+
+                    if (handle != IntPtr.Zero)
+                    {
+                        luaL_unref =
+                            (luaL_unref_fun)Marshal.GetDelegateForFunctionPointer(handle, typeof(luaL_unref_fun));
+                    }
+                }
+
+                {
                     if (LUA_VERSION >= 520)
                     {
                         IntPtr handle = GetProcAddress(module, "lua_callk");
