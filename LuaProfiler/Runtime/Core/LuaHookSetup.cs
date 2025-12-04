@@ -934,7 +934,7 @@ function miku_do_record(val, prefix, key, record, history, null_list, staticReco
     end
     tmp_prefix = prefixTb[strKey]
     if not tmp_prefix then
-        tmp_prefix = prefix.. (prefix == '' and '' or '.') .. string.format('[%s]', strKey)
+        tmp_prefix = prefix.. (prefix == '' and '' or '->') .. string.format('[%s]', strKey)
         prefixTb[strKey] = tmp_prefix
     end
 
@@ -950,18 +950,20 @@ function miku_do_record(val, prefix, key, record, history, null_list, staticReco
         end
     end
 
-    if record[val] then
-        table.insert(record[val], tmp_prefix)
+    local recrodVal = record[val]
+    if recrodVal then
+        table.insert(recrodVal, tmp_prefix)
         return
     end
     
-    if not record[val] then
-        record[val] = {}
+    if not recrodVal then
+        recrodVal = {}
+        record[val] = recrodVal
         if typeStr == 'function' then
             local funUrl = miku_get_fun_info(val)
-            table.insert(record[val], funUrl)
+            table.insert(recrodVal, funUrl)
         end
-        table.insert(record[val], tmp_prefix)
+        table.insert(recrodVal, tmp_prefix)
     end
 
     if typeStr == 'table' then
@@ -970,8 +972,8 @@ function miku_do_record(val, prefix, key, record, history, null_list, staticReco
             local typeVStr = type(v)
             local key = k
             if typeKStr == 'table' or typeKStr == 'userdata' or typeKStr == 'function' then
-                key = 'table:'
-                miku_do_record(k, tmp_prefix, 'table:', record, history, null_list, staticRecord)
+                key = typeKStr
+                miku_do_record(k, tmp_prefix, typeKStr, record, history, null_list, staticRecord)
             end
             miku_do_record(v, tmp_prefix, key, record, history, null_list, staticRecord)
         end
@@ -1007,15 +1009,16 @@ function miku_diff(record, staticRecord)
     miku_do_record(debug.getregistry(), '', '_R', add, record, null_list, staticRecord)
     local remain = { }
 
-    for key, val in pairs(record) do
-        if not add[key] and  not rawequal(key, cache_key) then
+    for key, _ in pairs(record) do
+        local addVal = add[key]
+        if not addVal and  not rawequal(key, cache_key) then
         else
             -- 如果打开UI前的快照没有这个数据
             -- 但是打开UI后及关闭并释放UI后的快照都拥有这个数据，视为泄漏
             if not staticRecord[key] 
 			    and not rawequal(key, staticRecord) 
 			    and not rawequal(key, cache_key) then
-                remain[key] = val
+                remain[key] = addVal
             end
             add[key] = nil
         end
