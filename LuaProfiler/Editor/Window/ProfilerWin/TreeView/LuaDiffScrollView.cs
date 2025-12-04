@@ -181,30 +181,52 @@ namespace MikuLuaProfiler
         public void ShowLog(string fileName, Dictionary<LuaTypes, HashSet<string>> refDict, Dictionary<string, List<string>> detailDict)
         {
             StringBuilder sb = new StringBuilder();
+            List<KeyValuePair<LuaTypes,HashSet<string>>> refList = new List<KeyValuePair<LuaTypes,HashSet<string>>>();
+            if(refDict.TryGetValue(LuaTypes.LUA_TFUNCTION, out var funcSet))
+            {
+                refList.Add(new KeyValuePair<LuaTypes, HashSet<string>>(LuaTypes.LUA_TFUNCTION, funcSet));
+            }
+
             foreach (var item in refDict)
             {
+                if(item.Key == LuaTypes.LUA_TFUNCTION)
+                {
+                    continue;
+                }
+                refList.Add(item);
+            }
+
+            for (int j = 0, jmax = refList.Count; j < jmax; j++)
+            {
+                var item = refList[j];
                 string typeStr = item.Key.ToString();
                 List<string> list = null;
+                sb.AppendLine("type:" + typeStr);
+                
                 foreach (var v in item.Value)
                 {
                     string key = v;
                     if (detailDict.TryGetValue(key, out list))
                     {
-                        sb.AppendLine("type:" + typeStr);
+                        sb.AppendLine(" └─object");
+
                         for (int i = 0, imax = list.Count; i < imax; i++)
                         {
                             if (i == imax - 1)
                             {
-                                sb.AppendLine(" └─ref" + (i + 1) + " url:" + list[i]);
+                                sb.AppendLine("   └─ref" + (i + 1) + " url:" + list[i]);
                             }
                             else
                             {
-                                sb.AppendLine(" ├─ref" + (i + 1) + " url:" + list[i]);
+                                sb.AppendLine("   ├─ref" + (i + 1) + " url:" + list[i]);
                             }
 
                         }
                     }
                 }
+                
+                sb.AppendLine("");
+                sb.AppendLine("");
             }
             LuaProfilerWindow.ClearConsole();
             if (!Directory.Exists(Application.dataPath.Replace("Assets", "Diff")))
