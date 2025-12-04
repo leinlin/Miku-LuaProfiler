@@ -927,6 +927,9 @@ function miku_do_record(val, prefix, key, record, history, null_list, staticReco
     if not strKey then
         strKey = 'empty'
     end
+    if typeStr == 'function' then
+        strKey = strKey .. '(' .. miku_get_fun_info(val) .. ')'
+    end
     local prefixTb = infoTb[prefix]
     if not prefixTb then
         prefixTb = {}
@@ -950,20 +953,20 @@ function miku_do_record(val, prefix, key, record, history, null_list, staticReco
         end
     end
 
-    local recrodVal = record[val]
-    if recrodVal then
-        table.insert(recrodVal, tmp_prefix)
+    local recordVal = record[val]
+    if recordVal then
+        table.insert(recordVal, tmp_prefix)
         return
     end
     
-    if not recrodVal then
-        recrodVal = {}
-        record[val] = recrodVal
+    if not recordVal then
+        recordVal = {}
+        record[val] = recordVal
         if typeStr == 'function' then
             local funUrl = miku_get_fun_info(val)
-            table.insert(recrodVal, funUrl)
+            table.insert(recordVal, funUrl)
         end
-        table.insert(recrodVal, tmp_prefix)
+        table.insert(recordVal, tmp_prefix)
     end
 
     if typeStr == 'table' then
@@ -986,8 +989,8 @@ function miku_do_record(val, prefix, key, record, history, null_list, staticReco
                 break
             end
             if v and k ~= 'MikuSample' then
-                local funPrefix = miku_get_fun_info(val)
-                miku_do_record(v, funPrefix, k, record, history, null_list, staticRecord)
+                -- local funPrefix = miku_get_fun_info(val)
+                miku_do_record(v, tmp_prefix, k, record, history, null_list, staticRecord)
             end
             i = i + 1
         end
