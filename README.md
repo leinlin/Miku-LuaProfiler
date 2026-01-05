@@ -57,12 +57,12 @@ namespace MikuLuaProfiler
         const string LIB_NAME = "miku_hook";
         
         [DllImport(LIB_NAME, CallingConvention = CallingConvention.Cdecl)]
-        public static extern IntPtr atri_dlopen(string path, int mode);
+        public static extern IntPtr miku_dlopen(string path, int mode);
 
         public IntPtr GetPtr()
         {
             // 其他不用改就把 libxlua.so改了就好了
-            IntPtr result = atri_dlopen("libxlua.so", 2);
+            IntPtr result = miku_dlopen("libxlua.so", 2);
             return result;
         }
     }
