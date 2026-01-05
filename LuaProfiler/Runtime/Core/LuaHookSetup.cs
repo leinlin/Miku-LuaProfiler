@@ -76,7 +76,7 @@ namespace MikuLuaProfiler
             var types = ass.GetTypes();
             foreach (var t in types)
             {
-                if (t.Namespace != "FlowAutoTest") continue;
+                if (t.Namespace != "MikuLuaProfiler") continue;
                 var ifs = t.GetInterfaces();
                 if (ifs.Length == 1)
                 {
