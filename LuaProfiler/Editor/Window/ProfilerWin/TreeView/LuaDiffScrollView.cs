@@ -152,7 +152,7 @@ namespace MikuLuaProfiler
             GUILayout.EndScrollView();
 
             GUILayout.BeginHorizontal();
-            EditorGUILayout.LabelField("Destory null values count:" + drawCount, GUILayout.Width(200));
+            EditorGUILayout.LabelField("Destroy null values count:" + drawCount, GUILayout.Width(200));
             if (GUILayout.Button("ShowLog", GUILayout.Width(100)))
             {
                 ShowLog("null", luaDiff.nullRef, luaDiff.nullDetail);

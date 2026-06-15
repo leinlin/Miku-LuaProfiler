@@ -111,7 +111,7 @@ namespace MikuLuaProfiler
             return result;
         }
 
-        private static bool IsMonoBehavior(TypeDefinition td)
+        private static bool IsMonoBehaviour(TypeDefinition td)
         {
             if (td == null) return false;
 
@@ -127,7 +127,7 @@ namespace MikuLuaProfiler
                 }
                 else
                 {
-                    return IsMonoBehavior(td.BaseType.Resolve());
+                    return IsMonoBehaviour(td.BaseType.Resolve());
                 }
             }
         }
@@ -192,7 +192,7 @@ namespace MikuLuaProfiler
                         {
                             continue;
                         }
-                        bool isMonoBehaviour = IsMonoBehavior(item.DeclaringType.BaseType.Resolve());
+                        bool isMonoBehaviour = IsMonoBehaviour(item.DeclaringType.BaseType.Resolve());
                         if (isMonoBehaviour)
                         {
                             continue;

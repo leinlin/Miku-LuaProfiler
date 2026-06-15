@@ -123,7 +123,7 @@ namespace MikuLuaProfiler_Editor
                         {
                             continue;
                         }
-                        bool isMonoBehaviour = IsMonoBehavior(item.DeclaringType.BaseType.Resolve());
+                        bool isMonoBehaviour = IsMonoBehaviour(item.DeclaringType.BaseType.Resolve());
                         if (isMonoBehaviour)
                         {
                             continue;
@@ -240,7 +240,7 @@ namespace MikuLuaProfiler_Editor
         }
 
         #region try finally
-        private static bool IsMonoBehavior(TypeDefinition td)
+        private static bool IsMonoBehaviour(TypeDefinition td)
         {
             if (td == null) return false;
 
@@ -256,7 +256,7 @@ namespace MikuLuaProfiler_Editor
                 }
                 else
                 {
-                    return IsMonoBehavior(td.BaseType.Resolve());
+                    return IsMonoBehaviour(td.BaseType.Resolve());
                 }
             }
         }

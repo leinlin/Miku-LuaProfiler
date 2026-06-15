@@ -115,7 +115,7 @@ namespace MikuLuaProfiler
                         while (f != null)
                         {
                             value = f.name + value;
-                            f = f.fahter;
+                            f = f.father;
                         }
                         _fullName = string.Intern(value);
                         childDict[name] = _fullName;
@@ -130,7 +130,7 @@ namespace MikuLuaProfiler
             }
         }
 
-        public Sample fahter
+        public Sample father
         {
             set
             {
@@ -175,8 +175,8 @@ namespace MikuLuaProfiler
             for (int i = s.childs.Count - 1; i >= 0; i--)
             {
                 var item = s.childs[i];
-                item.fahter = this;
-                if (item.fahter != s)
+                item.father = this;
+                if (item.father != s)
                 {
                     s.childs.RemoveAt(i);
                 }
@@ -247,7 +247,7 @@ namespace MikuLuaProfiler
             for (int i = 0; i < childCount; i++)
             {
                 Sample child = childs[i].Clone();
-                child.fahter = s;
+                child.father = s;
             }
 
             s.currentLuaMemory = currentLuaMemory;
@@ -260,16 +260,16 @@ namespace MikuLuaProfiler
 
         #region static
 
-        private static Action<Sample> OnReciveSample;
+        private static Action<Sample> OnReceiveSample;
 
         public static void RegAction(Action<Sample> action)
         {
-            OnReciveSample = action;
+            OnReceiveSample = action;
         }
 
         public static void UnRegAction()
         {
-            OnReciveSample = null;
+            OnReceiveSample = null;
         }
         #endregion
         
@@ -831,9 +831,9 @@ namespace MikuLuaProfiler
         
         public override void OnRun()
         {
-            if (OnReciveSample != null)
+            if (OnReceiveSample != null)
             {
-                OnReciveSample.Invoke(this); 
+                OnReceiveSample.Invoke(this); 
             }
         }
         

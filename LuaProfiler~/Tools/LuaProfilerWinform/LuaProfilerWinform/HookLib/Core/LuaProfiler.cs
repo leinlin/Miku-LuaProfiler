@@ -64,7 +64,7 @@ namespace MikuLuaProfiler
             m_onReceiveDiff = onReceive;
         }
 
-        public static void UnRegistReceive()
+        public static void UnRegisterReceive()
         {
             m_onReceiveSample = null;
             m_onReceiveRef = null;
@@ -144,7 +144,7 @@ namespace MikuLuaProfiler
             while(beginSampleMemoryStack.Count > 0)
             {
                 var item = beginSampleMemoryStack.Pop();
-                if (item.fahter == null)
+                if (item.father == null)
                 {
                     if (beginSampleMemoryStack.Count > 0)
                     {
@@ -172,7 +172,7 @@ namespace MikuLuaProfiler
                         item.currentLuaMemory = (int)LuaDLL.GetLuaMemory(luaState);
                         for (int i = 0, imax = popChilds.Count; i < imax; i++)
                         {
-                            popChilds[i].fahter = item;
+                            popChilds[i].father = item;
                         }
                         popChilds.Clear();
                         // TODO
@@ -225,7 +225,7 @@ namespace MikuLuaProfiler
                 sample.Restore();
                 return;
             }
-            sample.fahter = beginSampleMemoryStack.Count > 0 ? beginSampleMemoryStack.Peek() : null;
+            sample.father = beginSampleMemoryStack.Count > 0 ? beginSampleMemoryStack.Peek() : null;
             //UnityEngine.Debug.Log(sample.name);
             if (beginSampleMemoryStack.Count == 0)
             {
@@ -233,7 +233,7 @@ namespace MikuLuaProfiler
                 NetWorkClient.SendMessage(sample);
             }
             //释放掉被累加的Sample
-            if (beginSampleMemoryStack.Count != 0 && sample.fahter == null)
+            if (beginSampleMemoryStack.Count != 0 && sample.father == null)
             {
                 sample.Restore();
             }

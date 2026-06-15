@@ -171,21 +171,21 @@ namespace MikuLuaProfiler
         private void OnApplicationQuit()
         {
 #if UNITY_EDITOR
-            desotryCount = 0;
+            destroyCount = 0;
             Destroy(gameObject);
-            UnityEditor.EditorApplication.update += WaitDestory;
+            UnityEditor.EditorApplication.update += WaitDestroy;
 #endif
             NetWorkMgr.Close();
         }
         
 #if UNITY_EDITOR
-        int desotryCount = 0;
-        private void WaitDestory()
+        int destroyCount = 0;
+        private void WaitDestroy()
         {
-            desotryCount++;
-            if (desotryCount > 10)
+            destroyCount++;
+            if (destroyCount > 10)
             {
-                UnityEditor.EditorApplication.update -= WaitDestory;
+                UnityEditor.EditorApplication.update -= WaitDestroy;
                 if (LuaProfiler.mainL != IntPtr.Zero)
                 {
                     LuaDLL.lua_close(LuaProfiler.mainL);
@@ -193,7 +193,7 @@ namespace MikuLuaProfiler
                 LuaDLL.Uninstall();
                 LuaProfiler.mainL = IntPtr.Zero;
                 NetWorkMgr.Close();
-                desotryCount = 0;
+                destroyCount = 0;
             }
         }
 #endif

@@ -101,7 +101,7 @@ namespace MikuLuaProfiler
         private Texture2D monoChart;
         private Texture2D fpsChart;
         private Texture2D pssChart;
-        private Texture2D powrChart;
+        private Texture2D powerChart;
         private Texture2D boxTex;
         private GUIStyle currentStyle;
         private GUIStyle m_gs;
@@ -169,21 +169,21 @@ namespace MikuLuaProfiler
             }
             oldStartUrl = null;
             oldEndUrl = null;
-            Destory(oldStartT);
-            Destory(oldEndT);
+            Destroy(oldStartT);
+            Destroy(oldEndT);
             disableChart = null;
-            Destory(disableChart);
+            Destroy(disableChart);
             luaChart = null;
-            Destory(luaChart);
+            Destroy(luaChart);
             monoChart = null;
-            Destory(monoChart);
+            Destroy(monoChart);
             fpsChart = null;
-            Destory(fpsChart);
+            Destroy(fpsChart);
             pssChart = null;
-            Destory(pssChart);
-            powrChart = null;
-            Destory(powrChart);
-            Destory(boxTex);
+            Destroy(pssChart);
+            powerChart = null;
+            Destroy(powerChart);
+            Destroy(boxTex);
             boxTex = null;
             m_gs = null;
             currentStyle = null;
@@ -196,25 +196,25 @@ namespace MikuLuaProfiler
 
         private void OnDisable()
         {
-            Destory(disableChart);
+            Destroy(disableChart);
             disableChart = null;
-            Destory(luaChart);
+            Destroy(luaChart);
             luaChart = null;
-            Destory(monoChart);
+            Destroy(monoChart);
             monoChart = null;
-            Destory(fpsChart);
+            Destroy(fpsChart);
             fpsChart = null;
-            Destory(pssChart);
+            Destroy(pssChart);
             pssChart = null;
-            Destory(powrChart);
-            powrChart = null;
-            Destory(boxTex);
+            Destroy(powerChart);
+            powerChart = null;
+            Destroy(boxTex);
             boxTex = null;
             LuaDeepProfilerSetting.ProfilerWinOpen = false;
             EditorApplication.update -= m_TreeView.DequeueSample;
         }
 
-        void Destory(UnityEngine.Object o)
+        void Destroy(UnityEngine.Object o)
         {
             if (o == null) return;
             if (Application.isPlaying)
@@ -271,9 +271,9 @@ namespace MikuLuaProfiler
             {
                 pssChart = GenTextureColor(15, 15, pssColor);
             }
-            if (powrChart == null)
+            if (powerChart == null)
             {
-                powrChart = GenTextureColor(15, 15, powerColor);
+                powerChart = GenTextureColor(15, 15, powerColor);
             }
         }
 
@@ -349,7 +349,7 @@ namespace MikuLuaProfiler
                         NetWorkMgrClient.Disconnect();
                         currentFrameIndex = 0;
                         m_TreeView.Clear(true);
-                        LuaProfiler.UnRegistReceive();
+                        LuaProfiler.UnRegisterReceive();
                         Sample.UnRegAction();
                         LuaRefInfo.UnRegAction();
 
@@ -605,7 +605,7 @@ namespace MikuLuaProfiler
 
             GUILayout.Space(5);
             EditorGUILayout.BeginHorizontal();
-            t = isShowPowerChart ? powrChart : disableChart;
+            t = isShowPowerChart ? powerChart : disableChart;
             isShowPowerChart = GUILayout.Toggle(isShowPowerChart, t, EditorStyles.label, GUILayout.Width(15), GUILayout.Height(15));
             GUILayout.Label("Power", GUILayout.Width(40));
             GUILayout.Label(m_TreeView.GetPower());
@@ -659,7 +659,7 @@ namespace MikuLuaProfiler
                 currentStyle = new GUIStyle(EditorStyles.helpBox);
                 if (boxTex != null)
                 {
-                    Destory(boxTex);
+                    Destroy(boxTex);
                     boxTex = null;
                 }
                 boxTex = GenTextureColor(15, 15, boxColor);
@@ -1111,7 +1111,7 @@ namespace MikuLuaProfiler
             NetWorkMgrClient.Disconnect();
             currentFrameIndex = 0;
             m_TreeView.Clear(true);
-            LuaProfiler.UnRegistReceive();
+            LuaProfiler.UnRegisterReceive();
             Sample.UnRegAction();
             LuaRefInfo.UnRegAction();
             LuaProfiler.RegisterOnReceiveSample(m_TreeView.LoadRootSample);

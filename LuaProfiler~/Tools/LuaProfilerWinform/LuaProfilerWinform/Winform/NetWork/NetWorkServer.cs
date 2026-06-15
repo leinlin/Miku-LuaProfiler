@@ -307,7 +307,7 @@ namespace MikuLuaProfiler
             int count = br.ReadUInt16();
             for (int i = 0, imax = count; i < imax; i++)
             {
-                Deserialize(br).fahter = s;
+                Deserialize(br).father = s;
             }
 
             int lua_gc = 0;

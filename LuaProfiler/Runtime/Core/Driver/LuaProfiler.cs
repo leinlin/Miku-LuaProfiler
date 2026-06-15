@@ -76,7 +76,7 @@ namespace MikuLuaProfiler
             m_onReceiveDiff = onReceive;
         }
 
-        public static void UnRegistReceive()
+        public static void UnRegisterReceive()
         {
             m_onReceiveSample = null;
             m_onReceiveRef = null;
@@ -220,7 +220,7 @@ namespace MikuLuaProfiler
             sample.costLuaGC = (int)luaGC;
             sample.costMonoGC = (int)monoGC;
             
-            sample.fahter = beginSampleMemoryStack.Count > 0 ? beginSampleMemoryStack.Peek() : null;
+            sample.father = beginSampleMemoryStack.Count > 0 ? beginSampleMemoryStack.Peek() : null;
             //UnityEngine.Debug.Log(sample.name);
             if (beginSampleMemoryStack.Count == 0)
             {
@@ -234,7 +234,7 @@ namespace MikuLuaProfiler
 #endif
             }
             //释放掉被累加的Sample
-            if (beginSampleMemoryStack.Count != 0 && sample.fahter == null)
+            if (beginSampleMemoryStack.Count != 0 && sample.father == null)
             {
                 sample.Restore();
             }

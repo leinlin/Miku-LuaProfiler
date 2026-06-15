@@ -356,7 +356,7 @@ namespace MikuLuaProfiler
             for (int i = 0; i < childCount; i++)
             {
                 Sample child = childs[i].CopyToSample();
-                child.fahter = s;
+                child.father = s;
             }
             s.currentLuaMemory = 0;
             s.currentMonoMemory = 0;

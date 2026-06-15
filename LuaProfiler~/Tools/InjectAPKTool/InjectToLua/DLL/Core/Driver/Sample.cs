@@ -177,7 +177,7 @@ namespace MikuLuaProfiler
         }
 
         #region property
-        public Sample fahter
+        public Sample father
         {
             set
             {
@@ -263,8 +263,8 @@ namespace MikuLuaProfiler
             for (int i = s.childs.Count - 1; i >= 0; i--)
             {
                 var item = s.childs[i];
-                item.fahter = this;
-                if (item.fahter != s)
+                item.father = this;
+                if (item.father != s)
                 {
                     s.childs.RemoveAt(i);
                 }
@@ -303,7 +303,7 @@ namespace MikuLuaProfiler
             for (int i = 0; i < childCount; i++)
             {
                 Sample child = childs[i].Clone();
-                child.fahter = s;
+                child.father = s;
             }
 
             s.currentLuaMemory = currentLuaMemory;

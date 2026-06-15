@@ -62,16 +62,16 @@ namespace MikuLuaProfiler
 
         #region static
 
-        private static Action<LuaRefInfo> OnReciveSample;
+        private static Action<LuaRefInfo> OnReceiveSample;
 
         public static void RegAction(Action<LuaRefInfo> action)
         {
-            OnReciveSample = action;
+            OnReceiveSample = action;
         }
 
         public static void UnRegAction()
         {
-            OnReciveSample = null;
+            OnReceiveSample = null;
         }
         #endregion
 
@@ -95,9 +95,9 @@ namespace MikuLuaProfiler
 
         public override void OnRun()
         {
-            if (OnReciveSample != null)
+            if (OnReceiveSample != null)
             {
-                OnReciveSample.Invoke(this); 
+                OnReceiveSample.Invoke(this); 
             }
         }
 
