@@ -109,7 +109,6 @@ namespace MikuLuaProfiler
         #region hooks
         private static INativeHooker lua_newstate_hook;
         private static IntPtr lua_alloc_ptr = IntPtr.Zero;
-        private static INativeHooker lua_alloc_hook;
         private static INativeHooker lua_close_hook;
         
         private static INativeHooker lua_call_hook;
@@ -139,6 +138,18 @@ namespace MikuLuaProfiler
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
         public delegate IntPtr lua_alloc_fun(IntPtr ud, IntPtr ptr, IntPtr osize, IntPtr nsize);
         public static lua_alloc_fun lua_alloc { get; private set; }
+
+        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        public delegate IntPtr lua_getallocf_fun(IntPtr luaState, out IntPtr ud);
+        public static lua_getallocf_fun lua_getallocf { get; private set; }
+
+        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        public delegate void lua_setallocf_fun(IntPtr luaState, IntPtr allocator, IntPtr ud);
+        public static lua_setallocf_fun lua_setallocf { get; private set; }
+
+        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        public delegate IntPtr lua_topointer_fun(IntPtr luaState, int idx);
+        public static lua_topointer_fun lua_topointer { get; private set; }
 
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
         public delegate void lua_close_fun(IntPtr L);
@@ -393,6 +404,13 @@ namespace MikuLuaProfiler
 
         public static void Uninstall()
         {
+            RestoreLuaAllocator(LuaProfiler.mainL);
+            lua_alloc_ptr = IntPtr.Zero;
+            lua_alloc = null;
+            lua_getallocf = null;
+            lua_setallocf = null;
+            lua_topointer = null;
+
             if (lua_newstate_hook != null)
             {
                 lua_newstate_hook.Uninstall();
@@ -441,6 +459,10 @@ namespace MikuLuaProfiler
                 lua_pcallk_hook = null;
             }
 
+            m_hooked = false;
+            isHook = false;
+            IS_LUA_JIT = false;
+            ClearFreeSize();
         }
 
         private static bool isBinding = false;
@@ -452,10 +474,7 @@ namespace MikuLuaProfiler
 
                 if (module == IntPtr.Zero) return;
 
-                if (GetProcAddress(module, "luaopen_jit") != IntPtr.Zero)
-                {
-                    IS_LUA_JIT = true;
-                }
+                IS_LUA_JIT = GetProcAddress(module, "luaopen_jit") != IntPtr.Zero;
 
                 if (GetProcAddress(module, "lua_rotate") != IntPtr.Zero)
                 {
@@ -494,6 +513,25 @@ namespace MikuLuaProfiler
                 }
 
                 UnityEngine.Debug.Log("lua versin:" + LUA_VERSION);
+
+                {
+                    IntPtr handle = GetProcAddress(module, "lua_getallocf");
+                    if (handle == IntPtr.Zero)
+                    {
+                        throw new MissingMethodException("Lua allocator profiling requires lua_getallocf (Lua 5.1 or later).");
+                    }
+                    lua_getallocf = (lua_getallocf_fun)Marshal.GetDelegateForFunctionPointer(handle, typeof(lua_getallocf_fun));
+
+                    handle = GetProcAddress(module, "lua_setallocf");
+                    if (handle == IntPtr.Zero)
+                    {
+                        throw new MissingMethodException("Lua allocator profiling requires lua_setallocf (Lua 5.1 or later).");
+                    }
+                    lua_setallocf = (lua_setallocf_fun)Marshal.GetDelegateForFunctionPointer(handle, typeof(lua_setallocf_fun));
+
+                    handle = GetProcAddress(module, "lua_topointer");
+                    lua_topointer = (lua_topointer_fun)Marshal.GetDelegateForFunctionPointer(handle, typeof(lua_topointer_fun));
+                }
 
                 {
                     IntPtr handle = GetProcAddress(module, "luaL_newstate");
@@ -997,49 +1035,94 @@ namespace MikuLuaProfiler
             return result;
         }
         
-        private static int allocSize = 0;
+        private static long allocSize = 0;
         
         public static void ClearFreeSize()
         {
             allocSize = 0;
         }
 
-        public static int GetAllocSize()
+        public static long GetAllocSize()
         {
             return allocSize;
         }
 
-        private static lua_alloc_fun luaAllocReplaceFun = null;
+        private static readonly lua_alloc_fun luaAllocReplaceFun = new lua_alloc_fun(lua_alloc_replace);
+        private static readonly IntPtr luaAllocReplacePtr = Marshal.GetFunctionPointerForDelegate(luaAllocReplaceFun);
+
         [MonoPInvokeCallbackAttribute(typeof(lua_newstate_fun))]
         public static IntPtr lua_newstate_replace(IntPtr f, IntPtr ud)
         {
-            if (f != IntPtr.Zero)
+            // Keep state creation unchanged, then wrap the allocator and userdata reported by Lua.
+            IntPtr luaState = lua_newstate(f, ud);
+            if (luaState != IntPtr.Zero)
             {
-                if (lua_alloc_ptr != f)
+                try
                 {
-                    lua_alloc = (lua_alloc_fun)Marshal.GetDelegateForFunctionPointer(f, typeof(lua_alloc_fun));
-
-                    lua_alloc_ptr = f;
+                    WrapLuaAllocator(luaState);
+                }
+                catch
+                {
+                    lua_close_replace(luaState);
+                    throw;
                 }
             }
-
-            luaAllocReplaceFun = new lua_alloc_fun(lua_alloc_replace);
-            IntPtr rf = Marshal.GetFunctionPointerForDelegate(luaAllocReplaceFun);
-            IntPtr luaState = lua_newstate(rf, ud);
-
             return luaState;
         }
         
-        [MonoPInvokeCallbackAttribute(typeof(lua_alloc_fun))]
-        private static IntPtr lua_alloc_replace(IntPtr ud, IntPtr ptr, IntPtr osize, IntPtr nsize)
+        private static void WrapLuaAllocator(IntPtr luaState)
         {
-            int oldSize = (int)osize;
-            int newSize = (int)nsize;
+            IntPtr allocatorData;
+            IntPtr allocator = lua_getallocf(luaState, out allocatorData);
+            if (allocator == IntPtr.Zero)
+            {
+                throw new InvalidOperationException("Lua did not provide a valid allocator function.");
+            }
+
+            if (lua_alloc_ptr == IntPtr.Zero)
+            {
+                lua_alloc = (lua_alloc_fun)Marshal.GetDelegateForFunctionPointer(allocator, typeof(lua_alloc_fun));
+                lua_alloc_ptr = allocator;
+            }
+            else if (allocator != lua_alloc_ptr)
+            {
+                // Keep a different custom allocator intact instead of changing the shared delegate.
+                return;
+            }
+
+            lua_setallocf(luaState, luaAllocReplacePtr, allocatorData);
+        }
+
+        private static void RestoreLuaAllocator(IntPtr luaState)
+        {
+            if (luaState == IntPtr.Zero || lua_alloc_ptr == IntPtr.Zero ||
+                lua_getallocf == null || lua_setallocf == null)
+            {
+                return;
+            }
+            IntPtr allocatorData;
+            if (lua_getallocf(luaState, out allocatorData) == luaAllocReplacePtr)
+            {
+                // lua_close recognizes the original allocator to release LuaJIT's memory pool.
+                lua_setallocf(luaState, lua_alloc_ptr, allocatorData);
+            }
+        }
+
+        private static void RecordAllocation(IntPtr osize, IntPtr nsize)
+        {
+            long oldSize = (long)osize;
+            long newSize = (long)nsize;
             if (newSize > oldSize )
             {
                 allocSize += newSize - oldSize;
             }
 
+        }
+
+        [MonoPInvokeCallbackAttribute(typeof(lua_alloc_fun))]
+        private static IntPtr lua_alloc_replace(IntPtr ud, IntPtr ptr, IntPtr osize, IntPtr nsize)
+        {
+            RecordAllocation(osize, nsize);
             return lua_alloc(ud, ptr, osize, nsize);
         }
 
@@ -1067,9 +1150,17 @@ namespace MikuLuaProfiler
         {
             lock (m_Lock)
             {
+                bool isMainState = LuaProfiler.mainL == luaState;
+                if (!isMainState && LuaProfiler.mainL != IntPtr.Zero && lua_topointer != null)
+                {
+                    // Coroutines share a registry; independent states can share the same allocator and userdata.
+                    isMainState = lua_topointer(luaState, LuaIndexes.LUA_REGISTRYINDEX) ==
+                        lua_topointer(LuaProfiler.mainL, LuaIndexes.LUA_REGISTRYINDEX);
+                }
+                RestoreLuaAllocator(luaState);
                 if (isHook)
                 {
-                    if (LuaProfiler.mainL == luaState)
+                    if (isMainState)
                     {
                         LuaProfiler.mainL = IntPtr.Zero;
                     }
